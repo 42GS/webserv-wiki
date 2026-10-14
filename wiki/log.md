@@ -84,3 +84,6 @@
 - 해소: WNOHANG 동작 (raw/posix-waitpid.md:56-58, 132)
 - 정정: concepts/cgi에 근거 없이 사실로 적혀 있던 "회수하지 않으면 좀비가 쌓인다"를 미확인으로 바꿈
 - 검증: 공백 제외 20,136자 일치, 단어 diff 178건은 태그 경계 분리
+
+## [2026-10-15] schema | ingest 절차에 lint·커밋 단계 추가
+- 갱신: CLAUDE.md Ingest 7단계(lint), 8단계(소스 하나마다 커밋)
