@@ -1,7 +1,7 @@
 ---
 title: 설정 파일
 type: concept
-sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc9110.txt, raw/nginx-core-module.md, raw/nginx-request-processing.md, raw/posix-bind.md]
+sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc9110.txt, raw/nginx-core-module.md, raw/nginx-request-processing.md, raw/posix-bind.md, raw/nginx-index-module.md]
 updated: 2026-10-15
 ---
 
@@ -48,7 +48,7 @@ updated: 2026-10-15
 
 - subject는 정규식이 필요 없다고 하므로 (raw/subject.md:166) prefix 매칭(가장 긴 것)만 구현하면 된다.
 - 매칭에는 **query string을 뺀** URI 부분만 쓴다. 같은 인자를 여러 순서로 쓸 수 있기 때문이다 (raw/nginx-request-processing.md:147-152). `?` 뒤는 CGI에 `QUERY_STRING`으로 넘긴다 → [[concepts/cgi]].
-- **index와 CGI:** NGINX의 index는 찾은 index 파일로 **내부 리다이렉트**해서 location을 다시 찾는다. 그래서 `index.php`가 선택되면 CGI location에서 처리된다 (raw/nginx-request-processing.md:168). 과제에서도 디렉토리 요청에서 고른 index 파일의 확장자가 CGI라면 CGI로 실행할지 정해 두어야 한다 (**판단**).
+- **index와 CGI:** NGINX의 index는 찾은 index 파일로 **내부 리다이렉트**해서 location을 다시 찾는다. 그래서 `index.php`가 선택되면 CGI location에서 처리된다 (raw/nginx-request-processing.md:168). index 모듈 문서도 index 파일을 쓰면 내부 리다이렉트가 일어나 다른 location에서 처리될 수 있다고 한다 (raw/nginx-index-module.md:46-58). 과제에서도 디렉토리 요청에서 고른 index 파일의 확장자가 CGI라면 CGI로 실행할지 정해 두어야 한다 (**판단**).
 - 정규화 순서는 경로 공격 방어와 직결된다 → [[concepts/security]] 1절.
 
 ## server 선택 (NGINX 기준)
@@ -81,7 +81,7 @@ subject 기능을 NGINX에서는 어떤 지시자로 하는지 정리했다. 설
 | 응답 MIME 타입 | `types`, `default_type` | 확장자 → MIME 타입 매핑(대소문자 무시). 기본 타입 `text/plain` | raw/nginx-core-module.md:2003, raw/nginx-core-module.md:386-391 |
 | 리다이렉션 | `return` (rewrite 모듈) | 이 문서 범위 밖 → [[source-wishlist]] P2 | — |
 | 디렉토리 리스팅 | `autoindex` (autoindex 모듈) | 이 문서 범위 밖 → [[source-wishlist]] P2 | — |
-| 기본 파일 (index) | `index` (index 모듈) | 이 문서 범위 밖 → [[source-wishlist]] P2 | — |
+| 기본 파일 (index) | `index` (index 모듈) | `/`로 끝나는 요청을 처리. 기본값 `index.html`. 여러 파일을 적은 순서대로 확인. 찾으면 **내부 리다이렉트** | raw/nginx-index-module.md:12, raw/nginx-index-module.md:34-35, raw/nginx-index-module.md:40, raw/nginx-index-module.md:46 |
 
 - `limit_except`로 막힌 메서드에 NGINX가 어떤 코드를 보내는지는 문서로 확인하지 못했다 (**미확인**, NGINX 실측 필요). 이 과제에서는 RFC 기준 405 + `Allow`를 따른다 (raw/rfc9110.txt:7603-7607).
 - `error_page` 처리 중 또 에러가 나면 마지막 에러의 코드를 보낸다 (raw/nginx-core-module.md:568).
@@ -130,4 +130,4 @@ subject 기능을 NGINX에서는 어떤 지시자로 하는지 정리했다. 설
 
 ## 관련
 
-- [[concepts/http-features]], [[concepts/cgi]], [[sources/nginx-core-module]], [[sources/nginx-request-processing]], [[sources/posix-bind]]
+- [[concepts/http-features]], [[concepts/cgi]], [[sources/nginx-core-module]], [[sources/nginx-request-processing]], [[sources/posix-bind]], [[sources/nginx-index-module]]

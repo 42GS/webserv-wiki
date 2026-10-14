@@ -117,3 +117,8 @@
 - 갱신: concepts/cgi (좀비 해소, fd 닫힘과 EOF, 손자 프로세스, execve 실패 시 종료), concepts/resilience (종료 시 CGI 자식 정리), analysis/subject-vs-evaluation (1.4를 허용 함수 목록 범위로 확장: <ctime>, exit), overview, index, source-wishlist
 - 해소: 회수하지 않은 자식은 좀비로 남음 (raw/posix-exit.md:58-64)
 - 메모: exit/_exit가 허용 함수 목록에 없음을 subject:113에서 확인
+
+## [2026-10-15] ingest | NGINX ngx_http_index_module
+- 생성: raw/nginx-index-module.md (HTML → markdown 변환, verify_md PASS), raw/nginx-index-module.source.html (원본), sources/nginx-index-module
+- 갱신: concepts/configuration-file (지시자 대응표 index 행, index와 CGI 근거), overview, index, source-wishlist
+- 남음: index 파일이 없을 때의 응답, 끝에 `/`가 없는 디렉토리 요청 → autoindex 모듈·NGINX 실측

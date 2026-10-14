@@ -29,6 +29,7 @@ updated: 2026-10-15
 | [[sources/siege]] | siege 매뉴얼 — 옵션(-c·-r·-t·-d·-b), Availability의 의미 | `raw/siege.pod` |
 | [[sources/siegerc]] | siege 기본 설정 템플릿 — connection=close, protocol, timeout, failures | `raw/siegerc.in` |
 | [[sources/posix-exit]] | POSIX `_Exit()` — 프로세스 종료의 결과(좀비, fd 닫힘, 자식 입양) | `raw/posix-exit.md` |
+| [[sources/nginx-index-module]] | NGINX index 모듈 — `/`로 끝나는 요청, 파일 목록 순서, 내부 리다이렉트 | `raw/nginx-index-module.md` |
 | [[sources/evaluation-sheet]] | 평가표 한국어 정리본 — **구버전, 영어 원문으로 대체됨** | `raw/evaluation-sheet.md` |
 
 ## Concepts
