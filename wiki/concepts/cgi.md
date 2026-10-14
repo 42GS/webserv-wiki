@@ -1,7 +1,7 @@
 ---
 title: CGI
 type: concept
-sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc3875.txt, raw/rfc9112.txt, raw/rfc9110.txt, raw/posix-poll.md, raw/posix-signal-h.md, raw/posix-waitpid.md, raw/posix-bind.md, raw/posix-exit.md, raw/php-cgi-force-redirect.md, raw/php-ini-core.md, raw/rfc6265.txt]
+sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc3875.txt, raw/rfc9112.txt, raw/rfc9110.txt, raw/posix-poll.md, raw/posix-signal-h.md, raw/posix-waitpid.md, raw/posix-bind.md, raw/posix-exit.md, raw/php-cgi-force-redirect.md, raw/php-ini-core.md, raw/rfc6265.txt, raw/posix-fcntl.md]
 updated: 2026-10-15
 ---
 
@@ -32,7 +32,7 @@ updated: 2026-10-15
 | 1-1. `..` 처리 | 경로를 script-path와 extra-path로 **나누기 전에** `..`를 제거하거나 해석 | raw/rfc3875.txt:1801-1803 → [[concepts/security]] |
 | 2. 본문 준비 | chunked 등 transfer coding을 제거하고 `CONTENT_LENGTH`를 다시 계산 (MUST). 불가능하면 요청 거부 (SHOULD) | raw/rfc3875.txt:1093-1097, raw/subject.md:179 |
 | 3. 환경 구성 | 메타변수를 환경 변수로 전달 (아래 표) | raw/rfc3875.txt:1554-1557 |
-| 4. 실행 | `fork` 후 자식에서 작업 디렉토리를 스크립트 디렉토리로 바꾸고 (SHOULD) `execve` | raw/rfc3875.txt:1564-1566, raw/subject.md:113 |
+| 4. 실행 | `fork` 후 자식에서 표준 입출력을 pipe로 연결하고, **필요 없는 fd(listen 소켓, 다른 클라이언트 소켓, 다른 CGI pipe)를 닫은 뒤**, 작업 디렉토리를 스크립트 디렉토리로 바꾸고 (SHOULD) `execve` | raw/rfc3875.txt:1564-1566, raw/subject.md:113 |
 | 5. 입력 전달 | 본문은 스크립트의 표준 입력으로. 최소 `CONTENT_LENGTH` 바이트를 읽을 수 있게 해야 함 (MUST) | raw/rfc3875.txt:1073-1075, raw/rfc3875.txt:1081-1083 |
 | 6. 출력 수집 | 표준 출력을 **EOF까지 모두** 읽음 (MUST) | raw/rfc3875.txt:1249-1250, raw/rfc3875.txt:1522-1524 |
 | 7. 응답 변환 | CGI 응답을 파싱해 HTTP 응답으로 변환 (아래 3절) | raw/rfc3875.txt:1297-1299 |
@@ -40,6 +40,7 @@ updated: 2026-10-15
 설계 제약:
 - 스크립트와 연결한 pipe는 데이터를 기다릴 수 있는 fd라서 non-blocking + 단일 `poll()` 대상이다 (raw/subject.md:136, raw/evaluation-sheet-en.md:54) → [[concepts/io-multiplexing]]. 표준 입출력 연결은 허용 함수 `pipe`, `dup2`로 한다 (raw/subject.md:113).
 - 스크립트는 서버가 본문을 다 받기 전에 실행해도 된다 (raw/rfc3875.txt:533-536).
+- **자식이 물려받은 fd:** `FD_CLOEXEC`가 없는 fd는 exec 뒤에도 열려 있다 (raw/posix-fcntl.md:52). 자식이 다른 클라이언트 소켓을 쥐고 있으면 서버가 그 연결을 `close`해도 실제로는 닫히지 않을 수 있다 (**판단**). `FD_CLOEXEC`는 `F_SETFD`로 설정하는데 이 명령은 subject 허용 목록에 없으므로 (raw/subject.md:157) 자식에서 `execve` 전에 필요 없는 fd를 `close`한다 → [[analysis/subject-vs-evaluation]] 1.11절.
 - **출력 pipe의 `POLLHUP`:** 스크립트가 출력을 다 쓰고 pipe의 쓰는 쪽을 닫으면 `POLLHUP`이 온다. `POLLHUP`은 `POLLIN`과 동시에 올 수 있다 (raw/posix-poll.md:74). 즉 아직 읽지 않은 출력이 남아 있을 수 있으므로, `POLLHUP`을 보자마자 닫지 말고 `read()`가 0(EOF)을 돌려줄 때까지 읽는다. RFC 3875의 "EOF까지 모두 읽음 (MUST)"(raw/rfc3875.txt:1522-1524)을 지키는 방법이다.
 - **입력 pipe:** 스크립트가 본문을 다 읽지 않고 종료하면 서버의 입력 pipe 쓰기가 실패할 수 있다. POSIX는 write가 -1을 돌려줄 오류 상태를 `POLLERR`로 보고한다고 한다 (raw/posix-poll.md:70). 읽는 쪽이 모두 닫힌 pipe가 실제로 어떤 비트로 보고되는지는 이 문서에 없다 (**미확인**, OS별로 실측 필요). `POLLERR`와 `POLLHUP` 둘 다 "입력 전달 중단"으로 처리하면 안전하다. 신호(`SIGPIPE`) 처리는 [[concepts/resilience]].
 - 스크립트 출력의 헤더·본문 길이에는 제한이 없다. 고정 크기 버퍼를 가정하면 안 된다 (raw/rfc3875.txt:1760-1764).

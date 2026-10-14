@@ -1,7 +1,7 @@
 ---
 title: I/O 멀티플렉싱과 non-blocking 규칙
 type: concept
-sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/posix-poll.md, raw/posix-send.md, raw/posix-recv.md, raw/evaluation-sheet.md]
+sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/posix-poll.md, raw/posix-send.md, raw/posix-recv.md, raw/evaluation-sheet.md, raw/posix-fcntl.md]
 updated: 2026-10-15
 ---
 
@@ -49,7 +49,9 @@ updated: 2026-10-15
 - `select`, `poll`, `epoll_create`/`epoll_ctl`/`epoll_wait`, `kqueue`/`kevent` 중 무엇이든 가능 (raw/subject.md:113, raw/subject.md:121, raw/evaluation-sheet-en.md:50).
 - 해당 함수의 매크로·헬퍼(`FD_SET` 등)도 사용 가능 (raw/subject.md:138).
 - `fcntl()`은 `F_SETFL`, `O_NONBLOCK`, `FD_CLOEXEC` 플래그로만 사용 가능 (raw/subject.md:155-157).
-  `F_GETFL`은 목록에 없다. 기존 플래그를 읽어 OR 하는 관용구는 쓸 수 없다는 뜻으로 읽힌다.
+  - non-blocking 설정은 `fcntl(fd, F_SETFL, O_NONBLOCK)`이다. `F_SETFL`은 파일 상태 플래그를 인자 값으로 설정하고, 성공하면 -1이 아닌 값을 돌려준다 (raw/posix-fcntl.md:58-60, raw/posix-fcntl.md:198-200).
+  - POSIX는 `F_GETFL`로 읽어서 수정한 뒤 쓰라고 권하지만 (raw/posix-fcntl.md:391), `F_GETFL`은 허용 목록에 없다. 그래서 인자를 `O_NONBLOCK` 하나로 주면 다른 상태 플래그는 지워질 수 있다. `socket`·`accept`·`pipe`로 막 만든 fd에는 문제가 될 가능성이 낮다고 보지만 근거는 없다 (**판단**) → [[analysis/subject-vs-evaluation]] 1.11절.
+  - non-blocking을 지원하지 않는 fd라면 `O_NONBLOCK`이 무시될 수 있다 (raw/posix-fcntl.md:60). 일반 디스크 파일은 `poll()` 대상이 아니므로 상관없다 (raw/subject.md:134).
 
 > [!note] macOS 한정 문구
 > `fcntl()` 허용은 "For macOS only" 절에 있다 (raw/subject.md:153-157). Linux에서 `fcntl()` 사용이 허용되는지는 subject 문구만으로는 불분명하다. 허용 함수 목록(raw/subject.md:113)에는 `fcntl`이 들어 있다.

@@ -186,3 +186,8 @@
 - 결정 일관성: 411, readiness당 I/O 1회, 502·504, 403, Date, HEAD, SIGPIPE를 페이지 간 대조 → 일치
 - 미결 판단: root 밖 경로의 응답 코드(403 또는 404)
 - 기능별 언급: 업로드 16, 쿠키 13, 세션 12 (1차 lint 때 4·1·1). 가장 적은 것은 에러 페이지 6
+
+## [2026-10-15] ingest | POSIX fcntl()
+- 생성: raw/posix-fcntl.md (HTML → markdown 변환, verify_md PASS), raw/posix-fcntl.source.html (원본), sources/posix-fcntl
+- 갱신: concepts/io-multiplexing (fcntl 근거), concepts/cgi (자식에서 필요 없는 fd 닫기), analysis/subject-vs-evaluation (1.11 fcntl 허용 목록), overview, index, source-wishlist
+- 새 쟁점: F_GETFL 없이 F_SETFL만 가능, FD_CLOEXEC는 F_SETFD가 필요한데 허용 목록에 없음

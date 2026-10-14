@@ -1,7 +1,7 @@
 ---
 title: subject vs 평가표 — 차이와 모순
 type: analysis
-sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/evaluation-sheet.md, raw/rfc9110.txt, raw/rfc9112.txt, raw/rfc3875.txt, raw/nginx-core-module.md, raw/posix-poll.md, raw/posix-waitpid.md, raw/posix-bind.md, raw/posix-exit.md, raw/nginx-autoindex-module.md, raw/rfc6265.txt]
+sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/evaluation-sheet.md, raw/rfc9110.txt, raw/rfc9112.txt, raw/rfc3875.txt, raw/nginx-core-module.md, raw/posix-poll.md, raw/posix-waitpid.md, raw/posix-bind.md, raw/posix-exit.md, raw/nginx-autoindex-module.md, raw/rfc6265.txt, raw/posix-fcntl.md]
 updated: 2026-10-15
 ---
 
@@ -79,6 +79,13 @@ subject는 "허용된 syscall/라이브러리 호출" 목록을 준다 (raw/subj
 - `open`·`read`로 `/dev/urandom`을 읽을 수는 있다. 그러나 `poll()` 없이 읽어도 되는 예외는 "일반 디스크 파일"이다 (raw/subject.md:134). `/dev/urandom`은 장치 파일이라 이 예외에 들어가는지 불분명하다 (**미확인**).
 - 판단 보류. 확인 방법: 동료·평가자 합의. 보너스 항목이라 필수 평가에는 영향이 없다.
 
+### 1.11 fcntl 허용 목록 vs POSIX
+
+- subject: `fcntl()`은 `F_SETFL`, `O_NONBLOCK`, `FD_CLOEXEC`로만 사용 가능 (raw/subject.md:155-157).
+- **`F_GETFL` 없음:** POSIX는 플래그를 `F_GETFL`로 읽고 수정한 뒤 쓰라고 권한다. 잊는 것이 흔한 실수이고, 구현이 기본으로 다른 플래그를 켜 두는 경우도 있다고 한다 (raw/posix-fcntl.md:391). 허용 목록으로는 `F_SETFL`에 `O_NONBLOCK`만 주는 방법뿐이다.
+- **`FD_CLOEXEC`에는 `F_SETFD`가 필요:** `FD_CLOEXEC`는 파일 상태 플래그가 아니라 fd 플래그라서 `F_SETFD`로 설정한다 (raw/posix-fcntl.md:50-52). `F_SETFD`는 허용 목록에 없다. 목록의 `F_SETFL`과 `FD_CLOEXEC`는 함께 쓸 수 없는 조합이다.
+- 판단: non-blocking은 `fcntl(fd, F_SETFL, O_NONBLOCK)`로 한다. `FD_CLOEXEC` 대신 CGI 자식에서 `execve` 전에 필요 없는 fd를 `close`한다 → [[concepts/cgi]]. `F_SETFD`를 써도 되는지는 **미확인**(평가자 합의).
+
 ## 2. 평가표에만 있는 기준
 
 | 기준 | 근거 | 관련 페이지 |
@@ -137,3 +144,4 @@ subject·평가표 해석에 관한 질문만 모았다. 동작 확인이 필요
 - read/write 외 함수(`poll`, `bind`)의 실패 원인을 errno로 봐도 되는지 (1.8절)
 - `waitpid` 상태 매크로를 써도 되는지 (1.9절)
 - 세션 식별자용 `/dev/urandom` 읽기가 `poll()` 예외에 들어가는지 (1.10절)
+- `FD_CLOEXEC`를 위해 `F_SETFD`를 써도 되는지 (1.11절)
