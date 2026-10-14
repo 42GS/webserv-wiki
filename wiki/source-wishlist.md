@@ -49,7 +49,7 @@ URL은 2026-10-15에 접속해 HTTP 200을 확인했다. 받아서 넣은 소스
 | [ ] | P2 | Server names | <https://nginx.org/en/docs/http/server_names.html> | `server_name` 매칭 규칙 | `raw/nginx-server-names.md` |
 | [x] | P2 | ngx_http_index_module — `raw/nginx-index-module.md`로 ingest (2026-10-15) | <https://nginx.org/en/docs/http/ngx_http_index_module.html> | 디렉토리 기본 파일 | `raw/nginx-index-module.md` |
 | [x] | P2 | ngx_http_autoindex_module — `raw/nginx-autoindex-module.md`로 ingest (2026-10-15) | <https://nginx.org/en/docs/http/ngx_http_autoindex_module.html> | 디렉토리 리스팅 | `raw/nginx-autoindex-module.md` |
-| [ ] | P2 | ngx_http_rewrite_module | <https://nginx.org/en/docs/http/ngx_http_rewrite_module.html> | `return`으로 리다이렉트 | `raw/nginx-rewrite-module.md` |
+| [x] | P2 | ngx_http_rewrite_module — `raw/nginx-rewrite-module.md`로 ingest (2026-10-15) | <https://nginx.org/en/docs/http/ngx_http_rewrite_module.html> | `return`으로 리다이렉트 | `raw/nginx-rewrite-module.md` |
 
 ## 5. 시스템 콜 (POSIX.1-2024, man page)
 

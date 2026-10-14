@@ -111,6 +111,7 @@ updated: 2026-10-15
 | client redirect | `Location: 절대URI`만 | 서버가 **302** 응답 생성 (MUST) | raw/rfc3875.txt:1318-1326 |
 | client redirect + 본문 | `Location` + `Status` + `Content-Type` + 본문 | `Status`는 302 또는 다른 리다이렉트 코드 (MUST) | raw/rfc3875.txt:1330-1342 |
 
+- local redirect는 서버 안에서 요청을 다시 처리하는 내부 리다이렉트다. 스크립트가 자기 자신으로 local redirect를 반복하면 끝나지 않으므로 내부 리다이렉트 반복 상한을 적용한다 → [[concepts/resilience]].
 - local과 client는 `Location` 값이 `/`로 시작하는 경로인지, 스킴이 있는 절대 URI인지로 구분한다 (raw/rfc3875.txt:1411-1416, raw/rfc3875.txt:1430-1435).
 - HEAD 요청에 스크립트가 본문을 보내면 서버가 버린다 (MUST, raw/rfc3875.txt:1143-1145).
 

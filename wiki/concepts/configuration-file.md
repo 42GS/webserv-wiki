@@ -1,7 +1,7 @@
 ---
 title: 설정 파일
 type: concept
-sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc9110.txt, raw/nginx-core-module.md, raw/nginx-request-processing.md, raw/posix-bind.md, raw/nginx-index-module.md, raw/nginx-autoindex-module.md, raw/evaluation-sheet.md, raw/rfc3986.txt]
+sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc9110.txt, raw/nginx-core-module.md, raw/nginx-request-processing.md, raw/posix-bind.md, raw/nginx-index-module.md, raw/nginx-autoindex-module.md, raw/evaluation-sheet.md, raw/rfc3986.txt, raw/nginx-rewrite-module.md]
 updated: 2026-10-15
 ---
 
@@ -95,7 +95,7 @@ subject 기능을 NGINX에서는 어떤 지시자로 하는지 정리했다. 설
 | 허용 메서드 | `limit_except` | 허용할 메서드 지정. GET을 허용하면 HEAD도 허용 | raw/nginx-core-module.md:795 |
 | 디렉토리 매핑 | `root`, `alias` | 위 콜아웃 참고 | raw/nginx-core-module.md:1516, raw/nginx-core-module.md:132-140 |
 | 응답 MIME 타입 | `types`, `default_type` | 확장자 → MIME 타입 매핑(대소문자 무시). 기본 타입 `text/plain` | raw/nginx-core-module.md:2003, raw/nginx-core-module.md:386-391 |
-| 리다이렉션 | `return` (rewrite 모듈) | 이 문서 범위 밖 → [[source-wishlist]] P2 | — |
+| 리다이렉션 | `return` (rewrite 모듈) | `return 코드 URL`. URL을 쓸 수 있는 코드는 301·302·303·307·308. `return URL`만 쓰면 302. 처리를 멈추고 바로 응답 | raw/nginx-rewrite-module.md:107, raw/nginx-rewrite-module.md:113-117 |
 | 디렉토리 리스팅 | `autoindex` (autoindex 모듈) | 기본 `off`. 켜면 `/`로 끝나는 요청에 리스팅을 만든다. 기본 형식 html | raw/nginx-autoindex-module.md:12, raw/nginx-autoindex-module.md:35, raw/nginx-autoindex-module.md:63 |
 | 기본 파일 (index) | `index` (index 모듈) | `/`로 끝나는 요청을 처리. 기본값 `index.html`. 여러 파일을 적은 순서대로 확인. 찾으면 **내부 리다이렉트** | raw/nginx-index-module.md:12, raw/nginx-index-module.md:34-35, raw/nginx-index-module.md:40, raw/nginx-index-module.md:46 |
 
@@ -106,6 +106,8 @@ subject 기능을 NGINX에서는 어떤 지시자로 하는지 정리했다. 설
 
 - **허용 메서드:** 라우트에서 막은 메서드는 405로 응답하고 `Allow`에 허용 메서드 목록을 넣는다 (MUST, raw/rfc9110.txt:4724-4725, raw/rfc9110.txt:7605-7607). 서버가 아예 모르는 메서드는 501이다 (raw/rfc9110.txt:3800-3804).
 - **redirection:** 설정에 상태 코드를 같이 적게 하는 게 좋다. 영구/임시, 메서드 유지 여부에 따라 301·302·307·308이 갈린다 (raw/rfc9110.txt:7384-7387, raw/rfc9110.txt:7492-7494). `Location`을 보낸다 (raw/rfc9110.txt:7378-7379). 표는 [[concepts/status-codes]].
+  - 설정 형식은 NGINX `return`처럼 코드와 URL을 함께 받는다 (예: `return 301 /new/;`, raw/nginx-rewrite-module.md:107, raw/nginx-rewrite-module.md:115).
+  - NGINX는 로컬 경로를 scheme·server_name·port로 완전한 URL로 바꿔 보낸다 (raw/nginx-rewrite-module.md:115). RFC 9110은 `Location`에 상대 참조를 허용하므로 (raw/rfc9110.txt:4743-4745) 이 과제는 설정한 경로를 그대로 보낸다 (**판단**). 완전한 URL을 만들려면 Host나 server_name이 필요해 구현이 복잡해진다.
 - **root 매핑:** 매핑 결과가 root 밖으로 나가지 않게 막는다 (raw/rfc9110.txt:8563-8568) → [[concepts/security]].
 - **body 크기 제한:** 초과하면 413 (raw/rfc9110.txt:7710-7714).
 
