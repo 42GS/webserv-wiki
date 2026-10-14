@@ -37,6 +37,7 @@ updated: 2026-10-15
 | [[sources/nginx-rewrite-module]] | NGINX rewrite 모듈 — `return` 리다이렉트, 내부 리다이렉트 10회 상한 | `raw/nginx-rewrite-module.md` |
 | [[sources/php-cgi-force-redirect]] | PHP 매뉴얼 — cgi.force_redirect와 REDIRECT_STATUS | `raw/php-cgi-force-redirect.md` |
 | [[sources/php-ini-core]] | PHP 매뉴얼 — core php.ini 중 CGI 관련 설정과 기본값 | `raw/php-ini-core.md` |
+| [[sources/rfc6265]] | RFC 6265 쿠키 — Set-Cookie·Cookie 문법, 속성, 세션 식별자 | `raw/rfc6265.txt` |
 | [[sources/evaluation-sheet]] | 평가표 한국어 정리본 — **구버전, 영어 원문으로 대체됨** | `raw/evaluation-sheet.md` |
 
 ## Concepts
@@ -55,7 +56,7 @@ updated: 2026-10-15
 | [[concepts/resilience]] | 크래시·hang·누수 금지 요구, 내부 리다이렉트 반복 상한, 시그널 처리표 (SIGPIPE 무시, SIGINT 정리 후 종료) |
 | [[concepts/testing]] | tester·siege·curl 등 도구, siege 옵션·기본 설정과 Availability의 의미, 평가 시연 준비 |
 | [[concepts/build-and-submission]] | Makefile, C++98, README 형식, AI 규칙, 디펜스 수정 요청 |
-| [[concepts/bonus]] | 쿠키·세션, 복수 CGI |
+| [[concepts/bonus]] | 쿠키·세션 (Set-Cookie·Cookie 규칙, 헤더 저장 구조, 삭제, 세션 설계, 구현 방식), 복수 CGI |
 
 ## Analysis
 

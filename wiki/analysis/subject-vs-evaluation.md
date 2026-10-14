@@ -1,7 +1,7 @@
 ---
 title: subject vs 평가표 — 차이와 모순
 type: analysis
-sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/evaluation-sheet.md, raw/rfc9110.txt, raw/rfc9112.txt, raw/rfc3875.txt, raw/nginx-core-module.md, raw/posix-poll.md, raw/posix-waitpid.md, raw/posix-bind.md, raw/posix-exit.md, raw/nginx-autoindex-module.md]
+sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/evaluation-sheet.md, raw/rfc9110.txt, raw/rfc9112.txt, raw/rfc3875.txt, raw/nginx-core-module.md, raw/posix-poll.md, raw/posix-waitpid.md, raw/posix-bind.md, raw/posix-exit.md, raw/nginx-autoindex-module.md, raw/rfc6265.txt]
 updated: 2026-10-15
 ---
 
@@ -67,6 +67,12 @@ subject는 "허용된 syscall/라이브러리 호출" 목록을 준다 (raw/subj
 - 판단: errno를 보지 않고도 처리할 수 있다. `poll()`이 -1을 돌려주면 로그만 남기고 다음 루프로 넘어간다. 평가표는 errno를 로그에 남기는 것은 허용한다 (raw/evaluation-sheet-en.md:57). 이렇게 하면 해석 문제를 피할 수 있다.
 - `bind()`도 같은 성격이다. 실패하면 -1을 돌려주고 errno를 설정한다 (raw/posix-bind.md:58). 원인(`EADDRINUSE` 등)을 `strerror`로 출력하는 것은 read/write 뒤가 아니므로 금지 대상이 아닌 것으로 보인다. `strerror`도 허용 함수다 (raw/subject.md:113) (**판단**). 출력만 하고 동작은 바꾸지 않으면(실패하면 종료) 평가표의 "로그는 허용" 범위에도 들어간다.
 
+### 1.10 `/dev/urandom` 읽기와 poll() 예외 (질문)
+
+- 세션 식별자는 추측하기 어려워야 한다 (raw/rfc6265.txt:1716-1731). 허용 함수에는 난수 함수가 없다 (raw/subject.md:113).
+- `open`·`read`로 `/dev/urandom`을 읽을 수는 있다. 그러나 `poll()` 없이 읽어도 되는 예외는 "일반 디스크 파일"이다 (raw/subject.md:134). `/dev/urandom`은 장치 파일이라 이 예외에 들어가는지 불분명하다 (**미확인**).
+- 판단 보류. 확인 방법: 동료·평가자 합의. 보너스 항목이라 필수 평가에는 영향이 없다.
+
 ### 1.9 waitpid 상태 매크로 (질문)
 
 - POSIX: `waitpid`가 돌려준 status는 `WIFEXITED`, `WEXITSTATUS`, `WIFSIGNALED`, `WTERMSIG` 같은 매크로로 해석한다 (raw/posix-waitpid.md:72-92).
@@ -130,3 +136,4 @@ subject·평가표 해석에 관한 질문만 모았다. 동작 확인이 필요
 - `shutdown` 없이 TCP reset 문제를 줄이는 방법. NGINX `lingering_close` 방식(읽고 버리다가 닫기)을 따를 수 있으나 NGINX가 `shutdown`을 함께 쓰는지는 모름 (1.5절)
 - read/write 외 함수(`poll`, `bind`)의 실패 원인을 errno로 봐도 되는지 (1.8절)
 - `waitpid` 상태 매크로를 써도 되는지 (1.9절)
+- 세션 식별자용 `/dev/urandom` 읽기가 `poll()` 예외에 들어가는지 (1.10절)

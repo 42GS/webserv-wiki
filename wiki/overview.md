@@ -8,7 +8,7 @@ updated: 2026-10-15
 # webserv 개요
 
 C++98로 HTTP 서버를 만드는 42 과제. 실행은 `./webserv [configuration file]` (raw/subject.md:118).
-근거 소스: [[sources/subject]], [[sources/evaluation-sheet-en]] (평가표 영어 원문), [[sources/rfc9110]] (HTTP 의미론), [[sources/rfc9112]] (HTTP/1.1 메시지·연결), [[sources/rfc3875]] (CGI/1.1), [[sources/rfc7578]], [[sources/rfc2046]] (multipart/form-data), [[sources/rfc3986]] (URI), [[sources/php-cgi-force-redirect]], [[sources/php-ini-core]] (php-cgi), [[sources/nginx-core-module]], [[sources/nginx-request-processing]], [[sources/nginx-index-module]], [[sources/nginx-autoindex-module]], [[sources/nginx-rewrite-module]] (NGINX 비교 기준), [[sources/posix-poll]], [[sources/posix-signal-h]], [[sources/posix-send]], [[sources/posix-recv]], [[sources/posix-waitpid]], [[sources/posix-bind]], [[sources/posix-exit]] (POSIX), [[sources/siege]], [[sources/siegerc]] (부하 테스트 도구). 구버전 한국어 정리본 [[sources/evaluation-sheet]]은 이력용이다.
+근거 소스: [[sources/subject]], [[sources/evaluation-sheet-en]] (평가표 영어 원문), [[sources/rfc9110]] (HTTP 의미론), [[sources/rfc9112]] (HTTP/1.1 메시지·연결), [[sources/rfc3875]] (CGI/1.1), [[sources/rfc7578]], [[sources/rfc2046]] (multipart/form-data), [[sources/rfc3986]] (URI), [[sources/php-cgi-force-redirect]], [[sources/php-ini-core]] (php-cgi), [[sources/rfc6265]] (쿠키), [[sources/nginx-core-module]], [[sources/nginx-request-processing]], [[sources/nginx-index-module]], [[sources/nginx-autoindex-module]], [[sources/nginx-rewrite-module]] (NGINX 비교 기준), [[sources/posix-poll]], [[sources/posix-signal-h]], [[sources/posix-send]], [[sources/posix-recv]], [[sources/posix-waitpid]], [[sources/posix-bind]], [[sources/posix-exit]] (POSIX), [[sources/siege]], [[sources/siegerc]] (부하 테스트 도구). 구버전 한국어 정리본 [[sources/evaluation-sheet]]은 이력용이다.
 
 ## 무엇이 점수를 결정하나
 
@@ -47,6 +47,7 @@ C++98로 HTTP 서버를 만드는 42 과제. 실행은 `./webserv [configuration
 - 요청 경로는 query 분리 → 세그먼트 분할 → 한 번만 디코딩 → `%00`·`%2F` 거부 → `..` 제거 → 매핑 → root 안인지 확인 순서로 처리한다 → [[concepts/security]].
 - 리다이렉트 설정은 `return 코드 URL` 형식으로 받는다. index·`error_page`·CGI local redirect 같은 내부 리다이렉트는 반복 횟수에 상한을 두고 넘으면 500 → [[concepts/configuration-file]], [[concepts/resilience]].
 - php-cgi는 기본 설정에서 `REDIRECT_STATUS`가 없으면 실행을 거부한다. `REDIRECT_STATUS`와 `SCRIPT_FILENAME`을 RFC 3875 변수에 더해 넣는다 → [[concepts/cgi]].
+- 보너스 쿠키·세션: 응답 헤더 구조가 같은 이름의 `Set-Cookie` 여러 개를 담을 수 있어야 한다. 세션은 식별자만 쿠키에, 상태는 서버에 둔다 → [[concepts/bonus]].
 - 시연 준비물(기능별 설정 파일, 정적 사이트, CGI 정상/에러/무한 루프 스크립트)도 제출물이다 (raw/subject.md:184).
 
 ## 열린 질문
@@ -56,5 +57,5 @@ C++98로 HTTP 서버를 만드는 42 과제. 실행은 `./webserv [configuration
 - HEAD를 지원할지 (RFC는 MUST, subject는 요구 안 함) → [[analysis/subject-vs-evaluation]]
 - 허용 함수 목록이 `<ctime>`, `exit` 같은 표준 라이브러리에도 적용되는지 (Date 헤더, CGI 자식 종료) → [[analysis/subject-vs-evaluation]]
 - `shutdown` 없이 연결을 안전하게 닫는 방법 → [[concepts/connection-management]]
-- read/write 외 함수(`poll`, `bind`)의 errno를 봐도 되는지, `waitpid` 매크로를 써도 되는지 → [[analysis/subject-vs-evaluation]]
+- read/write 외 함수(`poll`, `bind`)의 errno를 봐도 되는지, `waitpid` 매크로를 써도 되는지, `/dev/urandom` 읽기가 `poll()` 예외인지 → [[analysis/subject-vs-evaluation]]
 - index 파일이 CGI 확장자일 때 CGI로 실행할지 → [[concepts/configuration-file]]

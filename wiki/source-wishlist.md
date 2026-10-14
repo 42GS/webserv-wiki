@@ -100,7 +100,7 @@ POSIX가 동작을 정하지 않아 OS별로 직접 확인해야 하는 것. 평
 
 | | 우선 | 소스 | URL | 해소할 것 | 제안 파일명 |
 |---|---|---|---|---|---|
-| [ ] | P3 | RFC 6265 — HTTP State Management Mechanism | <https://www.rfc-editor.org/rfc/rfc6265> | `Set-Cookie`/`Cookie` 형식 → [[concepts/bonus]] | `raw/rfc6265.txt` |
+| [x] | P3 | RFC 6265 — HTTP State Management Mechanism — `raw/rfc6265.txt`로 ingest (2026-10-15) | <https://www.rfc-editor.org/rfc/rfc6265> | `Set-Cookie`/`Cookie` 형식 → [[concepts/bonus]] | `raw/rfc6265.txt` |
 
 ## 넣지 않는 것
 

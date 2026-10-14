@@ -1,7 +1,7 @@
 ---
 title: CGI
 type: concept
-sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc3875.txt, raw/rfc9112.txt, raw/rfc9110.txt, raw/posix-poll.md, raw/posix-signal-h.md, raw/posix-waitpid.md, raw/posix-bind.md, raw/posix-exit.md, raw/php-cgi-force-redirect.md, raw/php-ini-core.md]
+sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc3875.txt, raw/rfc9112.txt, raw/rfc9110.txt, raw/posix-poll.md, raw/posix-signal-h.md, raw/posix-waitpid.md, raw/posix-bind.md, raw/posix-exit.md, raw/php-cgi-force-redirect.md, raw/php-ini-core.md, raw/rfc6265.txt]
 updated: 2026-10-15
 ---
 
@@ -105,6 +105,7 @@ RFC 3875 목록에 없는 비표준 변수다. 이 과제에서 CGI로 `php-cgi`
 | 줄바꿈(NL)은 LF. 서버는 CRLF도 받아들여야 함 | raw/rfc3875.txt:1579-1580 |
 | HTTP로 보낼 때 CGI 줄바꿈을 CRLF로 바꿔야 함 (MUST) | raw/rfc3875.txt:1487-1491 |
 | 본문이 있으면 `Content-Type` MUST. 없을 때 서버가 추측하지 말 것 (SHOULD NOT) | raw/rfc3875.txt:1383-1387 |
+| CGI가 출력한 `Set-Cookie` 여러 줄은 합치지 않고 모두 그대로 전달 (SHOULD NOT fold) → [[concepts/bonus]] | raw/rfc6265.txt:315-319 |
 | 클라이언트 연결에 영향을 주는 헤더는 스크립트가 보내면 안 됨. 서버는 제거할 수 있고 충돌을 해결해야 함 (SHOULD) | raw/rfc3875.txt:1493-1498 |
 
 ### Status

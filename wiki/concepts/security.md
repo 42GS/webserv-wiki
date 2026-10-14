@@ -1,7 +1,7 @@
 ---
 title: 보안 — 경로·주입·길이·splitting·smuggling
 type: concept
-sources: [raw/rfc9110.txt, raw/rfc9112.txt, raw/rfc3875.txt, raw/nginx-core-module.md, raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc7578.txt, raw/rfc3986.txt]
+sources: [raw/rfc9110.txt, raw/rfc9112.txt, raw/rfc3875.txt, raw/nginx-core-module.md, raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc7578.txt, raw/rfc3986.txt, raw/rfc6265.txt]
 updated: 2026-10-15
 ---
 
@@ -86,6 +86,11 @@ subject와 평가표에는 보안 항목이 따로 없다. 하지만 아래 문�
 과제 적용:
 - `Content-Length`와 `Transfer-Encoding`이 같이 오거나 `Content-Length`가 잘못된 요청은 규칙대로 처리하고 연결을 닫는다 → [[concepts/request-parsing]] 4절.
 - 관대한 파싱(여러 공백 허용 등)은 smuggling 위험이 있다 (raw/rfc9112.txt:385-388).
+
+## 6. 세션 (보너스)
+
+- 세션 식별자만 쿠키에 넣고 상태는 서버에 둔다 (raw/rfc6265.txt:1716-1720). session fixation을 피해야 한다 (SHOULD, raw/rfc6265.txt:1730-1731) → [[concepts/bonus]].
+- `Path` 속성은 보안 경계로 믿으면 안 된다 (raw/rfc6265.txt:647-649).
 
 ## 관련
 
