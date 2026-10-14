@@ -220,3 +220,6 @@ xcuserdata/
 **/xcshareddata/WorkspaceSettings.xcsettings
 
 # End of https://www.toptal.com/developers/gitignore/api/windows,linux,macos,vim,intellij+all,visualstudiocode,xcode
+
+### Obsidian ###
+.obsidian/workspace*.json
