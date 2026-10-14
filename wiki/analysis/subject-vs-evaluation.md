@@ -1,0 +1,118 @@
+---
+title: subject vs 평가표 — 차이와 모순
+type: analysis
+sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/evaluation-sheet.md, raw/rfc9110.txt, raw/rfc9112.txt, raw/rfc3875.txt, raw/nginx-core-module.md, raw/posix-poll.md]
+updated: 2026-10-15
+---
+
+# subject vs 평가표 — 차이와 모순
+
+평가표는 영어 원문 [[sources/evaluation-sheet-en]]을 기준으로 한다. 실제 채점은 평가표로 하므로, 둘이 다르면 **양쪽을 모두 만족하는 쪽으로 구현**한다.
+
+## 1. 모순
+
+### 1.1 EAGAIN까지 반복 vs errno 금지
+
+- 평가표: readiness 후 EAGAIN/EWOULDBLOCK이 나올 때까지 read/write해도 된다 (raw/evaluation-sheet-en.md:54).
+- subject: read/write 후 errno로 동작을 바꾸는 것은 엄격히 금지 (raw/subject.md:133).
+- 평가표 자체도 errno 검사는 0점이고 로그만 허용한다 (raw/evaluation-sheet-en.md:57).
+- EAGAIN 여부는 errno로만 알 수 있으므로 반복 허용과 errno 금지가 같이 성립하기 어렵다.
+- 판단: **readiness 1회에 read/write 1번**으로 구현한다. 두 문서를 모두 만족한다. → [[concepts/io-multiplexing]]
+
+### 1.2 virtual host — 해소됨
+
+- subject: virtual host는 범위 밖, 구현은 허용 (raw/subject.md:151).
+- 평가표 원문: 같은 interface:port에 여러 사이트를 설정하면 에러여야 한다. 단 virtual host를 구현했으면 둘 다 유효 (raw/evaluation-sheet-en.md:108).
+- 두 문서가 일치한다. 모순으로 보였던 것은 구버전 정리본의 호스트네임 테스트 항목 때문이었다 (raw/evaluation-sheet.md:65-68). → [[concepts/configuration-file]]
+
+### 1.3 HEAD — subject vs RFC 9110
+
+- RFC 9110: 범용 서버는 GET과 HEAD를 MUST로 지원 (raw/rfc9110.txt:3794-3795).
+- subject: GET·POST·DELETE만 요구 (raw/subject.md:147). 평가표도 HEAD를 테스트하지 않는다 (raw/evaluation-sheet-en.md:79).
+- 판단: 평가에는 영향이 없다. 구현 비용이 작아서 지원을 고려한다. 지원하지 않는다면 HEAD에 501로 응답한다 (raw/rfc9110.txt:3800-3801). → [[concepts/http-features]]
+
+### 1.4 Date 헤더 — 허용 함수 목록 vs RFC 9110 (질문)
+
+- RFC 9110: clock이 있는 origin server는 2xx·3xx·4xx 응답에 `Date` MUST. clock이 없으면 보내면 안 됨 (raw/rfc9110.txt:2313-2320).
+- subject: 허용 함수 목록에 시간 함수가 없다 (raw/subject.md:113). 이 목록이 C++ 표준 라이브러리(`<ctime>`)에도 적용되는지는 **미확인**.
+- 판단 보류. 확인 방법: 동료·평가자 합의 또는 42 공식 답변. → [[concepts/http-features]]
+
+### 1.5 half-close — 허용 함수 목록 vs RFC 9112
+
+- RFC 9112: 즉시 닫으면 TCP reset 때문에 클라이언트가 마지막 응답을 못 읽을 수 있다. 그래서 서버는 보통 write 쪽만 먼저 닫는다 (raw/rfc9112.txt:1539-1555).
+- subject: half-close에 쓰는 `shutdown`이 허용 함수 목록에 없다 (raw/subject.md:113).
+- 판단: `close()`만 쓴다. 대안으로 응답 후 짧게 읽기만 하다가 닫는다. NGINX의 기본 동작 `lingering_close`가 이 방식이고, 바로 닫는 것은 "프로토콜을 깨므로 쓰지 말라"고 한다 (raw/nginx-core-module.md:888-892). NGINX가 이때 `shutdown`을 쓰는지는 **미확인**. → [[concepts/connection-management]]
+
+### 1.6 HTTP/1.0 기준점 vs HTTP/1.1 기본 동작
+
+- subject: HTTP/1.0을 기준점으로 제안하지만 강제하지 않는다 (raw/subject.md:123).
+- RFC 9112: 받은 메시지가 HTTP/1.1이면 persistent가 기본이다 (raw/rfc9112.txt:1350-1351). HTTP/1.1 요청에는 Host가 MUST이고 없으면 400 (raw/rfc9112.txt:437, raw/rfc9112.txt:445-448). chunked 파싱은 MUST (raw/rfc9112.txt:1071-1072).
+- 브라우저는 HTTP/1.1 이상으로 요청한다 (**미확인**, 평가 시 브라우저 네트워크 탭에서 확인 가능, raw/evaluation-sheet-en.md:97-98).
+- 판단: 응답 버전을 HTTP/1.1로 하면 위 규칙을 따라야 한다. 다만 subject가 chunked 처리(raw/subject.md:179)를 요구하므로 어느 쪽이든 HTTP/1.1 파싱 규칙 대부분은 필요하다. → [[concepts/connection-management]], [[concepts/request-parsing]]
+
+### 1.7 REMOTE_ADDR — 허용 함수 목록 vs RFC 3875
+
+- RFC 3875: `REMOTE_ADDR`는 클라이언트 네트워크 주소로 MUST (raw/rfc3875.txt:836-837).
+- subject: 주소를 문자열로 바꾸는 `inet_ntoa`·`inet_ntop`가 허용 함수 목록에 없다. `ntohl`은 있다 (raw/subject.md:113).
+- 판단: `accept`로 받은 주소를 `ntohl`로 바꾼 뒤 점 표기 문자열을 직접 만든다. 모순이라기보다 구현 제약이다. → [[concepts/cgi]]
+
+### 1.8 poll() 실패 시 errno 확인 (질문)
+
+- POSIX: `poll()`은 실패하면 -1을 돌려주고 errno를 설정한다. 원인은 `EAGAIN`, `EINTR`(신호 수신), `EINVAL`이다 (raw/posix-poll.md:114, raw/posix-poll.md:120-132).
+- subject: errno 금지는 **read 또는 write 뒤**에 한정된다 (raw/subject.md:133). 평가표도 read/recv/write/send 뒤의 errno 검사를 0점으로 한다 (raw/evaluation-sheet-en.md:57).
+- 두 문장의 대상에 `poll()`은 없다. 그래서 `poll()` 실패 원인을 errno로 보는 것이 허용되는지는 문구만으로 판단할 수 없다 (**미확인**).
+- 판단: errno를 보지 않고도 처리할 수 있다. `poll()`이 -1을 돌려주면 로그만 남기고 다음 루프로 넘어간다. 평가표는 errno를 로그에 남기는 것은 허용한다 (raw/evaluation-sheet-en.md:57). 이렇게 하면 해석 문제를 피할 수 있다.
+
+## 2. 평가표에만 있는 기준
+
+| 기준 | 근거 | 관련 페이지 |
+|---|---|---|
+| `poll()`이 메인 루프 안에 | raw/evaluation-sheet-en.md:53 | [[concepts/io-multiplexing]] |
+| socket I/O 에러 시 클라이언트 제거 | raw/evaluation-sheet-en.md:55 | [[concepts/io-multiplexing]] |
+| 반환값 `-1`과 `0` 모두 처리 | raw/evaluation-sheet-en.md:56 | [[concepts/io-multiplexing]] |
+| 디스크 파일 동기 I/O가 이벤트 루프를 막지 않음 | raw/evaluation-sheet-en.md:59 | [[concepts/io-multiplexing]] |
+| README 필수 요소 누락 시 0점 | raw/evaluation-sheet-en.md:44 | [[concepts/build-and-submission]] |
+| 알 수 없는 메서드 처리 | raw/evaluation-sheet-en.md:80 | [[concepts/http-features]] |
+| CGI 무한 루프·에러 스크립트 | raw/evaluation-sheet-en.md:91 | [[concepts/cgi]] |
+| 같은 port 다중 프로그램 실행에도 일관 동작·크래시 없음 | raw/evaluation-sheet-en.md:109 | [[concepts/configuration-file]] |
+| `siege -b` availability 99.5% 초과, 무한 실행 | raw/evaluation-sheet-en.md:114, raw/evaluation-sheet-en.md:117 | [[concepts/testing]] |
+| 메모리 누수 검사 | raw/evaluation-sheet-en.md:25 | [[concepts/resilience]] |
+
+## 3. subject에만 있는 기준
+
+| 기준 | 근거 |
+|---|---|
+| 설정 파일을 인자 **또는 기본 경로**에서 읽기 | raw/subject.md:127 |
+| 기본 에러 페이지 내장 | raw/subject.md:143 |
+| `fork`는 CGI 전용 | raw/subject.md:144 |
+| chunked 요청 un-chunk 후 CGI에 전달 | raw/subject.md:179 |
+| `fcntl()` 플래그 제한 | raw/subject.md:157 |
+
+## 4. 한국어 정리본(구버전) vs 영어 원문
+
+| 항목 | 정리본 | 영어 원문 |
+|---|---|---|
+| README 검사 | 없음 | 필수 요소 누락 시 0점 (raw/evaluation-sheet-en.md:35-44) |
+| readiness 1회당 I/O 횟수 | 클라이언트당 read 1번 또는 write 1번 (raw/evaluation-sheet.md:50) | EAGAIN까지 반복 허용 (raw/evaluation-sheet-en.md:54) |
+| errno | 검사 시 0점 (raw/evaluation-sheet.md:54) | 같음. 단 로그는 허용 (raw/evaluation-sheet-en.md:57) |
+| 디스크 파일 | 언급 없음 | 예외로 명시, 루프를 막지 않는지 확인 (raw/evaluation-sheet-en.md:58-59) |
+| 여러 서버 설정 | 다른 포트 + 다른 호스트네임(`curl --resolve`) (raw/evaluation-sheet.md:64-68) | 다른 interface와 port (raw/evaluation-sheet-en.md:68) |
+| 같은 포트 중복 | 동작하면 안 됨 (raw/evaluation-sheet.md:112) | 에러. virtual host 구현 시 허용 (raw/evaluation-sheet-en.md:108) |
+| 공통 포트 동시 실행 | "서로 다른 설정의 서버" (raw/evaluation-sheet.md:113) | webserv **프로그램 여러 개**를 다른 설정 파일로 (raw/evaluation-sheet-en.md:109) |
+| siege 설치 | homebrew (raw/evaluation-sheet.md:43) | apt (raw/evaluation-sheet-en.md:48) |
+| siege 부하 조건 | 없음 | `-c`/`-d`/`-r`로 제한, 평가 대상과 합의 (raw/evaluation-sheet-en.md:118) |
+| 첨부 테스터 | `ubuntu_tester`, `ubuntu_cgi_tester` 포함 (raw/evaluation-sheet.md:32-33) | `tester`, `cgi_tester`만 (raw/evaluation-sheet-en.md:29-31) |
+
+## 5. 원문으로 해소된 미확인 항목
+
+| 항목 | 결과 |
+|---|---|
+| "Norm 에러" 플래그 | 원문에도 있다 (raw/evaluation-sheet-en.md:23). 정리 과정의 오류가 아니다. webserv subject에는 Norm 규칙이 없으므로(raw/subject.md:44-52) 공통 템플릿 문구로 보인다 |
+| body 제한 `curl` 명령의 URL 누락 | 원문에도 URL이 없다 (raw/evaluation-sheet-en.md:70) |
+| 1.6 세 번째 항목의 의미 | webserv 프로그램 여러 개를 다른 설정 파일로 동시에 실행하는 것 (raw/evaluation-sheet-en.md:109) |
+
+## 6. 남은 미확인
+
+- 42 EvalHub 원문이 intra의 현재 평가표와 같은지 → [[sources/evaluation-sheet-en]]
+- 허용 함수 목록이 `<ctime>` 등 C++ 표준 라이브러리에도 적용되는지 (Date 헤더, 1.4절)
+- `shutdown` 없이 TCP reset 문제를 줄이는 방법 (1.5절)

@@ -1,0 +1,60 @@
+---
+title: 안정성 (크래시·hang·누수)
+type: concept
+sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/posix-signal-h.md, raw/posix-send.md]
+updated: 2026-10-15
+---
+
+# 안정성 (크래시·hang·누수)
+
+subject와 평가표 모두 "서버가 항상 살아 있어야 한다"를 가장 강하게 요구한다.
+
+> [!danger] 0점 조건
+> - 어떤 경우에도(메모리 부족 포함) 크래시·예기치 않은 종료 → 0점 (raw/subject.md:46)
+> - 디펜스 중 segfault, 예기치 않은/조기/제어되지 않은 종료 → 즉시 0점 (raw/evaluation-sheet-en.md:24)
+
+## 요구 목록
+
+| 요구 | 근거 |
+|---|---|
+| 클라이언트 연결 끊김을 제대로 처리 | raw/subject.md:129 |
+| 요청이 무한히 hang하지 않음 | raw/subject.md:139 |
+| 스트레스 테스트에도 항상 가용 | raw/subject.md:148, raw/subject.md:190 |
+| heap 할당은 종료 전 모두 해제, 누수 검사 (`leaks`, `valgrind`, `e_fence`) | raw/evaluation-sheet-en.md:25 |
+| siege 중 프로세스 메모리가 무한히 늘지 않음 | raw/evaluation-sheet-en.md:115 |
+| hang 상태 연결 없음 | raw/evaluation-sheet-en.md:116 |
+| 재시작 없이 `siege -b`를 무한히 돌릴 수 있음 | raw/evaluation-sheet-en.md:117 |
+| CGI 에러·무한 루프에도 크래시 없이 에러가 보여야 함 | raw/evaluation-sheet-en.md:91-93 |
+
+## 설계로 이어지는 점
+
+- "메모리 부족에도 크래시 금지"(raw/subject.md:46) → `new` 실패(`std::bad_alloc`) 처리 방침이 필요하다.
+- hang 금지(raw/subject.md:139) → 클라이언트·CGI 타임아웃이 필요하다.
+- 시그널 처리 → 아래 절.
+
+## 시그널 처리
+
+허용 함수는 `signal`과 `kill`이다 (raw/subject.md:113). POSIX가 정한 기본 동작과 과제에서의 처리:
+
+| 시그널 | 기본 동작 | 과제에서 생기는 상황 | 처리 | 근거 |
+|---|---|---|---|---|
+| `SIGPIPE` | **비정상 종료** | 읽는 쪽이 없는 pipe에 씀 (CGI가 입력을 다 읽지 않고 종료), 연결이 끊긴 소켓에 `send` | `signal(SIGPIPE, SIG_IGN)`으로 무시 | raw/posix-signal-h.md:192-196, raw/posix-signal-h.md:296-298, raw/posix-signal-h.md:42-44 |
+| `SIGCHLD` | 무시 | CGI 자식 종료 | 기본 동작으로 둔다. 자식 회수는 `waitpid` | raw/posix-signal-h.md:146-154 |
+| `SIGINT`, `SIGTERM` | 비정상 종료 | 평가자가 Ctrl-C로 서버를 끔 | 아래 "정리 후 종료" | raw/posix-signal-h.md:180-184, raw/posix-signal-h.md:216-220 |
+
+> [!danger] SIGPIPE
+> 아무 처리도 하지 않으면 읽는 쪽이 없는 pipe에 쓰는 순간 서버 프로세스가 종료된다 (raw/posix-signal-h.md:192-196, raw/posix-signal-h.md:296-298). 디펜스 중 예기치 않은 종료는 0점이다 (raw/evaluation-sheet-en.md:24).
+> 소켓도 마찬가지다. 연결이 끊긴 SOCK_STREAM 소켓에 `send`하면 `EPIPE`로 실패하고, `MSG_NOSIGNAL`이 없으면 `SIGPIPE`가 발생한다 (raw/posix-send.md:118-120). `EPIPE` 실패는 시그널과 별개로 일어나므로, `SIGPIPE`를 무시하면 프로세스는 살고 `send`는 -1을 돌려준다(120줄에서 끌어낸 추론).
+>
+> 대안: `send`의 flags에 `MSG_NOSIGNAL`을 주면 `SIGPIPE` 없이 `EPIPE`만 돌려준다 (raw/posix-send.md:58-60). macOS가 이 플래그를 지원하는지는 **미확인**이다. 또 pipe(CGI)에 쓰는 `write`에는 flags가 없어 이 방법을 쓸 수 없다. 그래서 허용 함수 `signal`로 `SIGPIPE`를 무시하는 쪽을 기본으로 한다.
+
+### SIGINT·SIGTERM과 누수 검사
+
+- 평가표는 실행이 끝나기 전에 heap 할당을 모두 해제하라고 한다 (raw/evaluation-sheet-en.md:25).
+- `SIGINT`의 기본 동작은 비정상 종료라서 (raw/posix-signal-h.md:180-184) 해제 코드가 실행되지 않는다. 누수 검사 도구가 이 경우를 누수로 보고하는지는 **미확인**이다.
+- 판단: 시그널 핸들러에서는 종료 플래그만 세우고, 메인 루프가 플래그를 보고 연결·CGI 자식·메모리를 정리한 뒤 종료한다. `poll()` 대기 중 시그널이 오면 `poll()`이 -1로 돌아온다 (raw/posix-poll.md:128). 이때도 errno를 보지 않고 플래그만 확인하면 된다 → [[analysis/subject-vs-evaluation]] 1.8절.
+
+## 관련
+
+- [[concepts/io-multiplexing]], [[concepts/testing]], [[concepts/cgi]]
+- [[concepts/security]] — 길이 공격·느린 클라이언트도 크래시·hang 원인이 된다
