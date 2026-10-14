@@ -1,7 +1,7 @@
 ---
 title: CGI
 type: concept
-sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc3875.txt, raw/rfc9112.txt, raw/rfc9110.txt, raw/posix-poll.md, raw/posix-signal-h.md, raw/posix-waitpid.md, raw/posix-bind.md]
+sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc3875.txt, raw/rfc9112.txt, raw/rfc9110.txt, raw/posix-poll.md, raw/posix-signal-h.md, raw/posix-waitpid.md, raw/posix-bind.md, raw/posix-exit.md]
 updated: 2026-10-15
 ---
 
@@ -158,8 +158,10 @@ updated: 2026-10-15
 
 주의:
 - `SIGCHLD`를 `SIG_IGN`으로 두면 자식이 끝나도 종료 상태를 받을 수 없다 [XSI] (raw/posix-waitpid.md:323). `SIGCHLD`는 기본 동작으로 둔다 → [[concepts/resilience]].
-- `waitpid`는 직접 만든 자식만 대상으로 한다. 스크립트가 만든 손자 프로세스는 회수할 수 없다 (raw/posix-waitpid.md:329).
-- 회수하지 않은 자식이 좀비로 남는다는 정의는 이 문서에 없다 (**미확인**, [[source-wishlist]] P2 `_Exit()`).
+- `waitpid`는 직접 만든 자식만 대상으로 한다. 스크립트가 만든 손자 프로세스는 회수할 수 없다 (raw/posix-waitpid.md:329). 스크립트를 `kill`해도 손자 프로세스는 함께 끝나지 않는다 (raw/posix-exit.md:70).
+- **회수하지 않으면 좀비가 남는다.** 끝난 프로세스는 좀비가 되고, 부모가 `wait`/`waitpid`로 상태를 가져갈 때 수명이 끝난다 (raw/posix-exit.md:58-64). `SIGCHLD`를 `SIG_IGN`으로 두면 좀비 없이 사라지지만 종료 상태를 받을 수 없다 [XSI] (raw/posix-exit.md:50-54). 이 과제는 `SIGCHLD`를 기본 동작으로 두고 `waitpid`로 회수한다.
+- 스크립트가 끝나면 그 프로세스의 fd가 모두 닫힌다 (raw/posix-exit.md:48). 그래서 출력 pipe의 쓰는 쪽이 닫혀 서버에 `POLLHUP`과 EOF가 온다 → 1절 설계 제약.
+- 자식에서 `execve`가 실패하면 자식 프로세스를 끝내야 한다. `exit`·`_exit`가 허용 함수 목록에 없다는 문제는 [[analysis/subject-vs-evaluation]] 1.4절.
 
 ## 보너스
 

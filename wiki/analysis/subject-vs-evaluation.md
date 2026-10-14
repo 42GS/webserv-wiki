@@ -1,7 +1,7 @@
 ---
 title: subject vs 평가표 — 차이와 모순
 type: analysis
-sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/evaluation-sheet.md, raw/rfc9110.txt, raw/rfc9112.txt, raw/rfc3875.txt, raw/nginx-core-module.md, raw/posix-poll.md, raw/posix-waitpid.md, raw/posix-bind.md]
+sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/evaluation-sheet.md, raw/rfc9110.txt, raw/rfc9112.txt, raw/rfc3875.txt, raw/nginx-core-module.md, raw/posix-poll.md, raw/posix-waitpid.md, raw/posix-bind.md, raw/posix-exit.md]
 updated: 2026-10-15
 ---
 
@@ -31,11 +31,13 @@ updated: 2026-10-15
 - subject: GET·POST·DELETE만 요구 (raw/subject.md:147). 평가표도 HEAD를 테스트하지 않는다 (raw/evaluation-sheet-en.md:79).
 - 판단: 평가에는 영향이 없다. 구현 비용이 작아서 지원을 고려한다. 지원하지 않는다면 HEAD에 501로 응답한다 (raw/rfc9110.txt:3800-3801). → [[concepts/http-features]]
 
-### 1.4 Date 헤더 — 허용 함수 목록 vs RFC 9110 (질문)
+### 1.4 허용 함수 목록의 범위 — `<ctime>`, `exit` (질문)
 
-- RFC 9110: clock이 있는 origin server는 2xx·3xx·4xx 응답에 `Date` MUST. clock이 없으면 보내면 안 됨 (raw/rfc9110.txt:2313-2320).
-- subject: 허용 함수 목록에 시간 함수가 없다 (raw/subject.md:113). 이 목록이 C++ 표준 라이브러리(`<ctime>`)에도 적용되는지는 **미확인**.
-- 판단 보류. 확인 방법: 동료·평가자 합의 또는 42 공식 답변. → [[concepts/http-features]]
+subject는 "허용된 syscall/라이브러리 호출" 목록을 준다 (raw/subject.md:111-113). 이 목록이 C/C++ 표준 라이브러리 함수에도 적용되는지가 문구만으로 불분명하다 (**미확인**). 이 질문에 걸리는 경우:
+
+- **Date 헤더:** RFC 9110상 clock이 있는 origin server는 2xx·3xx·4xx 응답에 `Date` MUST, clock이 없으면 보내면 안 됨 (raw/rfc9110.txt:2313-2320). 목록에 시간 함수가 없다 (raw/subject.md:113). → [[concepts/http-features]]
+- **CGI 자식 종료:** `execve`가 실패한 자식은 끝나야 한다. `exit`·`_exit`가 목록에 없다 (raw/subject.md:113). POSIX는 보통 `exit()`을 권하지만 (raw/posix-exit.md:122), `_exit`은 stream을 flush하지 않아 fork된 자식에서 부모의 버퍼를 다시 내보내지 않는다 (raw/posix-exit.md:36). → [[concepts/cgi]]
+- 판단 보류. 확인 방법: 동료·평가자 합의 또는 42 공식 답변.
 
 ### 1.5 half-close — 허용 함수 목록 vs RFC 9112
 
@@ -121,5 +123,5 @@ updated: 2026-10-15
 ## 6. 남은 미확인
 
 - 42 EvalHub 원문이 intra의 현재 평가표와 같은지 → [[sources/evaluation-sheet-en]]
-- 허용 함수 목록이 `<ctime>` 등 C++ 표준 라이브러리에도 적용되는지 (Date 헤더, 1.4절)
+- 허용 함수 목록이 `<ctime>`, `exit` 등 표준 라이브러리에도 적용되는지 (Date 헤더, CGI 자식 종료, 1.4절)
 - `shutdown` 없이 TCP reset 문제를 줄이는 방법 (1.5절)

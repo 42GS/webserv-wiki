@@ -59,7 +59,7 @@ URL은 2026-10-15에 접속해 HTTP 200을 확인했다. 받아서 넣은 소스
 | [x] | P1 | `send()` / `recv()` — `raw/posix-send.md`, `raw/posix-recv.md`로 ingest (2026-10-15) | <https://pubs.opengroup.org/onlinepubs/9799919799/functions/send.html>, <https://pubs.opengroup.org/onlinepubs/9799919799/functions/recv.html> | 반환값 `-1`/`0` 의미, `SIGPIPE` 발생 조건 | `raw/posix-send.md`, `raw/posix-recv.md` |
 | [ ] | P2 | `fcntl()` | <https://pubs.opengroup.org/onlinepubs/9799919799/functions/fcntl.html> | `F_SETFL`만으로 non-blocking 설정 | `raw/posix-fcntl.md` |
 | [x] | P2 | `waitpid()` — `raw/posix-waitpid.md`로 ingest (2026-10-15) | <https://pubs.opengroup.org/onlinepubs/9799919799/functions/waitpid.html> | `WNOHANG`으로 CGI 자식 회수 | `raw/posix-waitpid.md` |
-| [ ] | P2 | `_Exit()` — "Consequences of Process Termination" | <https://pubs.opengroup.org/onlinepubs/9799919799/functions/_Exit.html> | 회수하지 않은 자식이 좀비가 되는지 (2026-10-15 페이지에 "zombie process" 문장 있음 확인) → [[concepts/cgi]] | `raw/posix-exit.md` |
+| [x] | P2 | `_Exit()` — "Consequences of Process Termination" — `raw/posix-exit.md`로 ingest (2026-10-15) | <https://pubs.opengroup.org/onlinepubs/9799919799/functions/_Exit.html> | 회수하지 않은 자식이 좀비가 되는지 (2026-10-15 페이지에 "zombie process" 문장 있음 확인) → [[concepts/cgi]] | `raw/posix-exit.md` |
 | [x] | P2 | `bind()` — `raw/posix-bind.md`로 ingest (2026-10-15) | <https://pubs.opengroup.org/onlinepubs/9799919799/functions/bind.html> | 같은 포트 중복 bind 실패 (`EADDRINUSE`) | `raw/posix-bind.md` |
 | [ ] | P2 | Linux `epoll(7)` | <https://man7.org/linux/man-pages/man7/epoll.7.html> | Linux에서 epoll을 쓸 경우 | `raw/linux-epoll-7.md` |
 | [ ] | P2 | FreeBSD `kqueue(2)` | <https://man.freebsd.org/cgi/man.cgi?query=kqueue&sektion=2> | macOS에서 kqueue를 쓸 경우. macOS 자체 man page는 터미널 `man 2 kqueue`가 더 정확함 | `raw/kqueue-2.md` |

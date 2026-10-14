@@ -111,3 +111,9 @@
 - 갱신: concepts/testing (기본 설정표, 서버 구현에 주는 결론), concepts/connection-management (keep-alive 해소), concepts/resilience, overview, index, source-wishlist
 - 해소: siege 기본 keep-alive 여부 → connection = close (raw/siegerc.in:268). 단 템플릿이라 설치본과 같은지는 미확인
 - 모순: delay 기본값 매뉴얼 0.5초 vs 템플릿 0.0
+
+## [2026-10-15] ingest | POSIX _Exit() — Consequences of Process Termination
+- 생성: raw/posix-exit.md (HTML → markdown 변환, verify_md PASS), raw/posix-exit.source.html (원본), sources/posix-exit
+- 갱신: concepts/cgi (좀비 해소, fd 닫힘과 EOF, 손자 프로세스, execve 실패 시 종료), concepts/resilience (종료 시 CGI 자식 정리), analysis/subject-vs-evaluation (1.4를 허용 함수 목록 범위로 확장: <ctime>, exit), overview, index, source-wishlist
+- 해소: 회수하지 않은 자식은 좀비로 남음 (raw/posix-exit.md:58-64)
+- 메모: exit/_exit가 허용 함수 목록에 없음을 subject:113에서 확인

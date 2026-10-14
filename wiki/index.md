@@ -28,6 +28,7 @@ updated: 2026-10-15
 | [[sources/posix-bind]] | POSIX `bind()` — EADDRINUSE·EADDRNOTAVAIL, non-blocking 비동기 할당 | `raw/posix-bind.md` |
 | [[sources/siege]] | siege 매뉴얼 — 옵션(-c·-r·-t·-d·-b), Availability의 의미 | `raw/siege.pod` |
 | [[sources/siegerc]] | siege 기본 설정 템플릿 — connection=close, protocol, timeout, failures | `raw/siegerc.in` |
+| [[sources/posix-exit]] | POSIX `_Exit()` — 프로세스 종료의 결과(좀비, fd 닫힘, 자식 입양) | `raw/posix-exit.md` |
 | [[sources/evaluation-sheet]] | 평가표 한국어 정리본 — **구버전, 영어 원문으로 대체됨** | `raw/evaluation-sheet.md` |
 
 ## Concepts
@@ -51,4 +52,4 @@ updated: 2026-10-15
 
 | 페이지 | 요약 |
 |---|---|
-| [[analysis/subject-vs-evaluation]] | 모순·제약(EAGAIN vs errno, HEAD, Date, half-close, HTTP 버전, REMOTE_ADDR, read/write 외 errno, waitpid 매크로), 정리본 vs 원문 차이표, 해소된 미확인 |
+| [[analysis/subject-vs-evaluation]] | 모순·제약(EAGAIN vs errno, HEAD, 허용 함수 범위(Date·exit), half-close, HTTP 버전, REMOTE_ADDR, read/write 외 errno, waitpid 매크로), 정리본 vs 원문 차이표, 해소된 미확인 |

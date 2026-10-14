@@ -8,7 +8,7 @@ updated: 2026-10-15
 # webserv 개요
 
 C++98로 HTTP 서버를 만드는 42 과제. 실행은 `./webserv [configuration file]` (raw/subject.md:118).
-근거 소스: [[sources/subject]], [[sources/evaluation-sheet-en]] (평가표 영어 원문), [[sources/rfc9110]] (HTTP 의미론), [[sources/rfc9112]] (HTTP/1.1 메시지·연결), [[sources/rfc3875]] (CGI/1.1), [[sources/nginx-core-module]], [[sources/nginx-request-processing]] (NGINX 비교 기준), [[sources/posix-poll]], [[sources/posix-signal-h]], [[sources/posix-send]], [[sources/posix-recv]], [[sources/posix-waitpid]], [[sources/posix-bind]] (POSIX), [[sources/siege]], [[sources/siegerc]] (부하 테스트 도구). 구버전 한국어 정리본 [[sources/evaluation-sheet]]은 이력용이다.
+근거 소스: [[sources/subject]], [[sources/evaluation-sheet-en]] (평가표 영어 원문), [[sources/rfc9110]] (HTTP 의미론), [[sources/rfc9112]] (HTTP/1.1 메시지·연결), [[sources/rfc3875]] (CGI/1.1), [[sources/nginx-core-module]], [[sources/nginx-request-processing]] (NGINX 비교 기준), [[sources/posix-poll]], [[sources/posix-signal-h]], [[sources/posix-send]], [[sources/posix-recv]], [[sources/posix-waitpid]], [[sources/posix-bind]], [[sources/posix-exit]] (POSIX), [[sources/siege]], [[sources/siegerc]] (부하 테스트 도구). 구버전 한국어 정리본 [[sources/evaluation-sheet]]은 이력용이다.
 
 ## 무엇이 점수를 결정하나
 
@@ -39,7 +39,7 @@ C++98로 HTTP 서버를 만드는 42 과제. 실행은 `./webserv [configuration
 - `poll()`은 `POLLHUP`·`POLLERR`를 요청하지 않아도 알려 준다. `POLLOUT`은 보낼 데이터가 있을 때만 켜야 busy waiting을 피한다. CGI 출력은 `POLLHUP` 뒤에도 EOF까지 읽는다 → [[concepts/io-multiplexing]].
 - `SIGPIPE`의 기본 동작은 프로세스 종료이고, 끊긴 소켓에 `send`해도 발생한다. `signal(SIGPIPE, SIG_IGN)`으로 막아야 크래시 0점을 피한다 → [[concepts/resilience]].
 - `recv`가 0이면 상대가 정상 종료한 것, -1이면 에러다. 둘 다 errno 없이 클라이언트를 정리한다. readiness 1회에 I/O 1번이면 EAGAIN을 구분할 일이 생기지 않는다 → [[concepts/io-multiplexing]].
-- CGI 자식은 `waitpid(pid, &status, WNOHANG)`으로 회수한다. `WNOHANG`이 없으면 루프가 멈춘다. `SIGCHLD`는 `SIG_IGN`으로 바꾸지 않는다 → [[concepts/cgi]].
+- CGI 자식은 `waitpid(pid, &status, WNOHANG)`으로 회수한다. `WNOHANG`이 없으면 루프가 멈추고, 회수하지 않으면 좀비가 남는다. `SIGCHLD`는 `SIG_IGN`으로 바꾸지 않는다. 서버를 끌 때는 실행 중인 CGI도 끝낸다 → [[concepts/cgi]].
 - 같은 포트를 쓰는 webserv를 하나 더 띄우면 `bind`가 `EADDRINUSE`로 실패한다. 이때 에러 메시지와 함께 정상 종료해야 한다. 한 설정 안의 중복은 파싱 단계에서 거부한다 → [[concepts/configuration-file]].
 - siege의 Availability는 소켓 연결 성공률이다. 4xx·5xx는 깎이지 않고 연결 거부·끊김·타임아웃이 깎인다. 기본 설정의 siege는 요청마다 새 연결을 맺으므로 `accept`와 응답 후 종료 처리가 핵심이다 → [[concepts/testing]].
 - 시연 준비물(기능별 설정 파일, 정적 사이트, CGI 정상/에러/무한 루프 스크립트)도 제출물이다 (raw/subject.md:184).
@@ -49,7 +49,7 @@ C++98로 HTTP 서버를 만드는 42 과제. 실행은 `./webserv [configuration
 - virtual host를 구현할지 (선택 사항, 디펜스에서 이유 설명) → [[concepts/configuration-file]]
 - 42 EvalHub 원문이 intra 현재 평가표와 같은지 → [[sources/evaluation-sheet-en]]
 - HEAD를 지원할지 (RFC는 MUST, subject는 요구 안 함) → [[analysis/subject-vs-evaluation]]
-- Date 헤더: 허용 함수 목록이 `<ctime>`에도 적용되는지 → [[analysis/subject-vs-evaluation]]
+- 허용 함수 목록이 `<ctime>`, `exit` 같은 표준 라이브러리에도 적용되는지 (Date 헤더, CGI 자식 종료) → [[analysis/subject-vs-evaluation]]
 - `shutdown` 없이 연결을 안전하게 닫는 방법 → [[concepts/connection-management]]
 - read/write 외 함수(`poll`, `bind`)의 errno를 봐도 되는지, `waitpid` 매크로를 써도 되는지 → [[analysis/subject-vs-evaluation]]
 - `php-cgi`가 추가로 요구하는 환경 변수 (PHP 매뉴얼 확인 필요) → [[concepts/cgi]]

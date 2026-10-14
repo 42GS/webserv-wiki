@@ -1,7 +1,7 @@
 ---
 title: 안정성 (크래시·hang·누수)
 type: concept
-sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/siege.pod, raw/siegerc.in, raw/posix-signal-h.md, raw/posix-send.md, raw/posix-waitpid.md, raw/posix-bind.md]
+sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/siege.pod, raw/siegerc.in, raw/posix-signal-h.md, raw/posix-send.md, raw/posix-waitpid.md, raw/posix-bind.md, raw/posix-exit.md]
 updated: 2026-10-15
 ---
 
@@ -54,7 +54,8 @@ subject와 평가표 모두 "서버가 항상 살아 있어야 한다"를 가장
 
 - 평가표는 실행이 끝나기 전에 heap 할당을 모두 해제하라고 한다 (raw/evaluation-sheet-en.md:25).
 - `SIGINT`의 기본 동작은 비정상 종료라서 (raw/posix-signal-h.md:180-184) 해제 코드가 실행되지 않는다. 누수 검사 도구가 이 경우를 누수로 보고하는지는 **미확인**이다.
-- 판단: 시그널 핸들러에서는 종료 플래그만 세우고, 메인 루프가 플래그를 보고 연결·CGI 자식·메모리를 정리한 뒤 종료한다. `poll()` 대기 중 시그널이 오면 `poll()`이 -1로 돌아온다 (raw/posix-poll.md:128). 이때도 errno를 보지 않고 플래그만 확인하면 된다 → [[analysis/subject-vs-evaluation]] 1.8절.
+- 판단: 시그널 핸들러에서는 종료 플래그만 세우고, 메인 루프가 플래그를 보고 연결·CGI 자식·메모리를 정리한 뒤 종료한다.
+- CGI 자식은 서버가 끝나도 같이 끝나지 않고 시스템 프로세스에 입양된다 (raw/posix-exit.md:70-72). 그래서 종료할 때 실행 중인 CGI를 `kill`로 끝내고 `waitpid`로 회수해야 한다. 그러지 않으면 무한 루프 스크립트가 서버가 꺼진 뒤에도 계속 돈다. `poll()` 대기 중 시그널이 오면 `poll()`이 -1로 돌아온다 (raw/posix-poll.md:128). 이때도 errno를 보지 않고 플래그만 확인하면 된다 → [[analysis/subject-vs-evaluation]] 1.8절.
 
 ## 관련
 
