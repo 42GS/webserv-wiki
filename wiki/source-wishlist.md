@@ -60,7 +60,7 @@ URL은 2026-10-15에 접속해 HTTP 200을 확인했다. 받아서 넣은 소스
 | [ ] | P2 | `fcntl()` | <https://pubs.opengroup.org/onlinepubs/9799919799/functions/fcntl.html> | `F_SETFL`만으로 non-blocking 설정 | `raw/posix-fcntl.md` |
 | [x] | P2 | `waitpid()` — `raw/posix-waitpid.md`로 ingest (2026-10-15) | <https://pubs.opengroup.org/onlinepubs/9799919799/functions/waitpid.html> | `WNOHANG`으로 CGI 자식 회수 | `raw/posix-waitpid.md` |
 | [ ] | P2 | `_Exit()` — "Consequences of Process Termination" | <https://pubs.opengroup.org/onlinepubs/9799919799/functions/_Exit.html> | 회수하지 않은 자식이 좀비가 되는지 (2026-10-15 페이지에 "zombie process" 문장 있음 확인) → [[concepts/cgi]] | `raw/posix-exit.md` |
-| [ ] | P2 | `bind()` | <https://pubs.opengroup.org/onlinepubs/9799919799/functions/bind.html> | 같은 포트 중복 bind 실패 (`EADDRINUSE`) | `raw/posix-bind.md` |
+| [x] | P2 | `bind()` — `raw/posix-bind.md`로 ingest (2026-10-15) | <https://pubs.opengroup.org/onlinepubs/9799919799/functions/bind.html> | 같은 포트 중복 bind 실패 (`EADDRINUSE`) | `raw/posix-bind.md` |
 | [ ] | P2 | Linux `epoll(7)` | <https://man7.org/linux/man-pages/man7/epoll.7.html> | Linux에서 epoll을 쓸 경우 | `raw/linux-epoll-7.md` |
 | [ ] | P2 | FreeBSD `kqueue(2)` | <https://man.freebsd.org/cgi/man.cgi?query=kqueue&sektion=2> | macOS에서 kqueue를 쓸 경우. macOS 자체 man page는 터미널 `man 2 kqueue`가 더 정확함 | `raw/kqueue-2.md` |
 
@@ -74,6 +74,16 @@ nginx.org에 정적 파일 모듈 문서가 없고(`ngx_http_static_module.html`
 | [ ] | P2 | `limit_except`로 막힌 메서드의 응답 코드 (403? 405?) | 같은 방법 | 같은 형식 |
 | [ ] | P2 | 리스팅 off + index 없는 디렉토리의 응답 코드 | 같은 방법 | 같은 형식 |
 | [ ] | P2 | Host 헤더 없는 HTTP/1.1 요청의 응답 코드 (RFC는 400 MUST) | 같은 방법 (`printf "GET / HTTP/1.1\r\n\r\n" \| nc ...` 등) | 같은 형식 |
+
+## 5-1. OS 실측 (POSIX 문서로 확인 불가)
+
+POSIX가 동작을 정하지 않아 OS별로 직접 확인해야 하는 것. 평가 환경(평가표는 apt 기준, raw/evaluation-sheet-en.md:48)과 개발 환경(macOS)에서 각각 확인한다.
+
+| | 우선 | 확인할 것 | 방법 | 결과 저장 |
+|---|---|---|---|---|
+| [ ] | P2 | 서버 재시작 직후 같은 포트 `bind` 실패 여부, `SO_REUSEADDR`의 효과 | 서버를 띄워 연결을 맺고 종료한 뒤 바로 재시작 | `raw/os-observed-<주제>.md` (OS, 명령, 출력 그대로) |
+| [ ] | P2 | `0.0.0.0:P`와 `127.0.0.1:P`를 함께 `bind`할 때 충돌 여부 | 작은 테스트 프로그램 | 같은 형식 |
+| [ ] | P2 | 읽는 쪽이 닫힌 pipe를 `poll`하면 어떤 비트가 오는지 (`POLLERR`/`POLLHUP`) | 작은 테스트 프로그램 | 같은 형식 |
 
 ## 6. 테스트 도구
 

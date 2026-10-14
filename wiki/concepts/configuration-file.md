@@ -1,7 +1,7 @@
 ---
 title: 설정 파일
 type: concept
-sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc9110.txt, raw/nginx-core-module.md, raw/nginx-request-processing.md]
+sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc9110.txt, raw/nginx-core-module.md, raw/nginx-request-processing.md, raw/posix-bind.md]
 updated: 2026-10-15
 ---
 
@@ -106,7 +106,17 @@ subject 기능을 NGINX에서는 어떤 지시자로 하는지 정리했다. 설
 | 같은 `interface:port`에 여러 사이트 | **에러**. 단 virtual host를 구현했다면 그대로 동작해도 됨. 둘 다 유효 | raw/evaluation-sheet-en.md:108 |
 | 서로 다른 설정 파일로 webserv **프로그램 여러 개**를 같은 interface:port로 동시 실행 | 동작하면 이유를 묻는다. 어떤 선택이든 동작이 일관되고 크래시가 없어야 함 | raw/evaluation-sheet-en.md:109 |
 
-- 세 번째 테스트에서 두 번째 프로세스의 `bind()`는 보통 실패한다. 실패했을 때 에러를 출력하고 정상 종료하는지, 크래시하지 않는지가 핵심이다. `bind()` 실패 조건(`EADDRINUSE`)은 POSIX `bind()` 문서로 확인한다 (**미확인**, [[source-wishlist]] P2).
+### bind() 기준 기대 동작
+
+| 테스트 | 실패 지점 | 처리 | 근거 |
+|---|---|---|---|
+| 한 설정 파일 안에 같은 `interface:port`가 두 번 (virtual host 미구현) | 두 번째 소켓의 `bind`가 실패할 수 있지만, 그 전에 잡는 게 낫다 | **설정 파싱 단계에서** 중복을 찾아 에러 메시지와 함께 시작하지 않음 (**판단**) | raw/evaluation-sheet-en.md:108 |
+| webserv 두 개를 같은 `interface:port`로 동시 실행 | 두 번째 프로세스의 `bind`가 `EADDRINUSE`로 실패 | 에러 메시지를 출력하고 정상 종료. 크래시하지 않음 | raw/posix-bind.md:66-68, raw/evaluation-sheet-en.md:109 |
+| 이 기계에 없는 IP를 `listen`에 설정 | `bind`가 `EADDRNOTAVAIL`로 실패 | 위와 같음 | raw/posix-bind.md:70-72 |
+
+- 일부 포트만 `bind`에 실패했을 때 나머지 포트로 계속 서비스할지, 전체를 종료할지는 과제 문서가 정하지 않는다. 평가표는 "어떤 선택이든 일관되고 크래시하지 않을 것"을 요구한다 (raw/evaluation-sheet-en.md:109). 디펜스에서 선택 이유를 설명한다 (**판단**).
+- non-blocking 소켓의 `bind`는 바로 할당할 수 없으면 `EINPROGRESS`로 실패하고 나중에 완료될 수 있다 (raw/posix-bind.md:50). `socket` → `bind` → `listen`을 마친 뒤 `O_NONBLOCK`을 켜면 이 경우를 피할 수 있다 (**판단**).
+- 서버 재시작 직후 같은 포트의 `bind` 실패 여부, `SO_REUSEADDR`(`setsockopt`, raw/subject.md:113)의 효과, `0.0.0.0`과 특정 IP를 같은 포트로 함께 설정했을 때의 충돌 여부는 POSIX 문서에 없다 (**미확인**, [[source-wishlist]] OS 실측).
 
 > [!note] virtual host 모순 해소 (2026-10-15)
 > 구버전 정리본은 "다른 호스트네임으로 여러 서버"를 `curl --resolve`로 테스트했다 (raw/evaluation-sheet.md:65-68). 영어 원문에는 이 항목이 없다 (raw/evaluation-sheet-en.md:63-73).
@@ -120,4 +130,4 @@ subject 기능을 NGINX에서는 어떤 지시자로 하는지 정리했다. 설
 
 ## 관련
 
-- [[concepts/http-features]], [[concepts/cgi]], [[sources/nginx-core-module]], [[sources/nginx-request-processing]]
+- [[concepts/http-features]], [[concepts/cgi]], [[sources/nginx-core-module]], [[sources/nginx-request-processing]], [[sources/posix-bind]]

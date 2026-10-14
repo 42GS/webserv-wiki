@@ -25,6 +25,7 @@ updated: 2026-10-15
 | [[sources/posix-send]] | POSIX `send()` — EPIPE와 SIGPIPE, MSG_NOSIGNAL, 반환값 | `raw/posix-send.md` |
 | [[sources/posix-recv]] | POSIX `recv()` — 반환값 0·-1의 의미, 스트림의 메시지 경계 | `raw/posix-recv.md` |
 | [[sources/posix-waitpid]] | POSIX `wait()`·`waitpid()` — WNOHANG, 반환값, 종료 상태 매크로, SIGCHLD | `raw/posix-waitpid.md` |
+| [[sources/posix-bind]] | POSIX `bind()` — EADDRINUSE·EADDRNOTAVAIL, non-blocking 비동기 할당 | `raw/posix-bind.md` |
 | [[sources/evaluation-sheet]] | 평가표 한국어 정리본 — **구버전, 영어 원문으로 대체됨** | `raw/evaluation-sheet.md` |
 
 ## Concepts
@@ -48,4 +49,4 @@ updated: 2026-10-15
 
 | 페이지 | 요약 |
 |---|---|
-| [[analysis/subject-vs-evaluation]] | 모순·제약(EAGAIN vs errno, HEAD, Date, half-close, HTTP 버전, REMOTE_ADDR, poll 실패 errno, waitpid 매크로), 정리본 vs 원문 차이표, 해소된 미확인 |
+| [[analysis/subject-vs-evaluation]] | 모순·제약(EAGAIN vs errno, HEAD, Date, half-close, HTTP 버전, REMOTE_ADDR, read/write 외 errno, waitpid 매크로), 정리본 vs 원문 차이표, 해소된 미확인 |

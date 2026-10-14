@@ -87,3 +87,9 @@
 
 ## [2026-10-15] schema | ingest 절차에 lint·커밋 단계 추가
 - 갱신: CLAUDE.md Ingest 7단계(lint), 8단계(소스 하나마다 커밋)
+
+## [2026-10-15] ingest | POSIX bind()
+- 생성: raw/posix-bind.md (HTML → markdown 변환), raw/posix-bind.source.html (원본), sources/posix-bind
+- 갱신: concepts/configuration-file ("bind() 기준 기대 동작" 표), concepts/resilience (시작 단계 실패), analysis/subject-vs-evaluation (1.8을 read/write 외 함수의 errno로 확장), overview, index, source-wishlist (5-1 OS 실측 절 추가)
+- 해소: 같은 포트 중복 bind 실패 조건 EADDRINUSE (raw/posix-bind.md:66-68)
+- 검증: 공백 제외 6,463자 일치, 단어 diff 24건은 태그 경계 분리

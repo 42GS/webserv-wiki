@@ -1,7 +1,7 @@
 ---
 title: subject vs 평가표 — 차이와 모순
 type: analysis
-sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/evaluation-sheet.md, raw/rfc9110.txt, raw/rfc9112.txt, raw/rfc3875.txt, raw/nginx-core-module.md, raw/posix-poll.md, raw/posix-waitpid.md]
+sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/evaluation-sheet.md, raw/rfc9110.txt, raw/rfc9112.txt, raw/rfc3875.txt, raw/nginx-core-module.md, raw/posix-poll.md, raw/posix-waitpid.md, raw/posix-bind.md]
 updated: 2026-10-15
 ---
 
@@ -56,12 +56,13 @@ updated: 2026-10-15
 - subject: 주소를 문자열로 바꾸는 `inet_ntoa`·`inet_ntop`가 허용 함수 목록에 없다. `ntohl`은 있다 (raw/subject.md:113).
 - 판단: `accept`로 받은 주소를 `ntohl`로 바꾼 뒤 점 표기 문자열을 직접 만든다. 모순이라기보다 구현 제약이다. → [[concepts/cgi]]
 
-### 1.8 poll() 실패 시 errno 확인 (질문)
+### 1.8 read/write 외 함수의 errno 확인 (질문)
 
 - POSIX: `poll()`은 실패하면 -1을 돌려주고 errno를 설정한다. 원인은 `EAGAIN`, `EINTR`(신호 수신), `EINVAL`이다 (raw/posix-poll.md:114, raw/posix-poll.md:120-132).
 - subject: errno 금지는 **read 또는 write 뒤**에 한정된다 (raw/subject.md:133). 평가표도 read/recv/write/send 뒤의 errno 검사를 0점으로 한다 (raw/evaluation-sheet-en.md:57).
 - 두 문장의 대상에 `poll()`은 없다. 그래서 `poll()` 실패 원인을 errno로 보는 것이 허용되는지는 문구만으로 판단할 수 없다 (**미확인**).
 - 판단: errno를 보지 않고도 처리할 수 있다. `poll()`이 -1을 돌려주면 로그만 남기고 다음 루프로 넘어간다. 평가표는 errno를 로그에 남기는 것은 허용한다 (raw/evaluation-sheet-en.md:57). 이렇게 하면 해석 문제를 피할 수 있다.
+- `bind()`도 같은 성격이다. 실패하면 -1을 돌려주고 errno를 설정한다 (raw/posix-bind.md:58). 원인(`EADDRINUSE` 등)을 `strerror`로 출력하는 것은 read/write 뒤가 아니므로 금지 대상이 아닌 것으로 보인다. `strerror`도 허용 함수다 (raw/subject.md:113) (**판단**). 출력만 하고 동작은 바꾸지 않으면(실패하면 종료) 평가표의 "로그는 허용" 범위에도 들어간다.
 
 ### 1.9 waitpid 상태 매크로 (질문)
 

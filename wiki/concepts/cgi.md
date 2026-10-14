@@ -1,7 +1,7 @@
 ---
 title: CGI
 type: concept
-sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc3875.txt, raw/rfc9112.txt, raw/rfc9110.txt, raw/posix-poll.md, raw/posix-signal-h.md, raw/posix-waitpid.md]
+sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc3875.txt, raw/rfc9112.txt, raw/rfc9110.txt, raw/posix-poll.md, raw/posix-signal-h.md, raw/posix-waitpid.md, raw/posix-bind.md]
 updated: 2026-10-15
 ---
 
@@ -67,6 +67,10 @@ updated: 2026-10-15
 | `HTTP_*` | SHOULD | 요청 헤더. 이름을 대문자로, `-`를 `_`로 바꾸고 `HTTP_`를 붙임 | raw/rfc3875.txt:1030, raw/rfc3875.txt:1038-1042 |
 | `AUTH_TYPE`, `REMOTE_USER` | 인증을 할 때만 MUST | 과제에 인증이 없으므로 설정하지 않는다 | raw/rfc3875.txt:609-611, raw/rfc3875.txt:903-906 |
 | `REMOTE_IDENT` | MAY | 설정하지 않는다 | raw/rfc3875.txt:876-880 |
+
+값을 얻는 곳:
+- `SERVER_PORT`·`SERVER_NAME`(주소): 요청을 받은 소켓에 할당된 주소는 `getsockname()`으로 얻는다 (raw/posix-bind.md:202). 허용 함수다 (raw/subject.md:113).
+- `REMOTE_ADDR`: `accept`가 돌려준 클라이언트 주소를 `ntohl`로 바꾼 뒤 점 표기 문자열을 직접 만든다. 변환 함수 `inet_ntoa`·`inet_ntop`는 허용 함수가 아니다 → [[analysis/subject-vs-evaluation]] 1.7절.
 
 `HTTP_*` 세부 규칙:
 - 같은 이름의 헤더가 여러 줄이면 의미가 같은 하나의 값으로 합친다 (MUST, raw/rfc3875.txt:1044-1046).

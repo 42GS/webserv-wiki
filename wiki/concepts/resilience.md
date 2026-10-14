@@ -1,7 +1,7 @@
 ---
 title: 안정성 (크래시·hang·누수)
 type: concept
-sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/posix-signal-h.md, raw/posix-send.md, raw/posix-waitpid.md]
+sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/posix-signal-h.md, raw/posix-send.md, raw/posix-waitpid.md, raw/posix-bind.md]
 updated: 2026-10-15
 ---
 
@@ -31,6 +31,7 @@ subject와 평가표 모두 "서버가 항상 살아 있어야 한다"를 가장
 - "메모리 부족에도 크래시 금지"(raw/subject.md:46) → `new` 실패(`std::bad_alloc`) 처리 방침이 필요하다.
 - hang 금지(raw/subject.md:139) → 클라이언트·CGI 타임아웃이 필요하다.
 - 시그널 처리 → 아래 절.
+- 시작 단계 실패(설정 파일 오류, `bind` 실패 등)는 크래시가 아니라 **원인을 담은 에러 메시지와 함께 정상 종료**해야 한다. `bind`는 실패하면 -1을 돌려준다 (raw/posix-bind.md:58). 원인은 `EADDRINUSE`, `EADDRNOTAVAIL` 등이다 (raw/posix-bind.md:66-72). 메시지에 errno를 쓰는 문제는 [[analysis/subject-vs-evaluation]] 1.8절.
 
 ## 시그널 처리
 
