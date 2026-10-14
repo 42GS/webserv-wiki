@@ -160,3 +160,8 @@
 - 생성: raw/nginx-rewrite-module.md (HTML → markdown 변환, verify_md PASS), raw/nginx-rewrite-module.source.html (원본), sources/nginx-rewrite-module
 - 갱신: concepts/configuration-file (지시자 대응표 마지막 빈칸, `return` 형식과 상대 Location 판단), concepts/resilience (내부 리다이렉트 반복 상한), concepts/cgi (local redirect 연결), overview, index, source-wishlist
 - 메모: NGINX 지시자 대응표의 빈칸이 모두 채워짐. rewrite는 정규식이라 과제 범위 밖
+
+## [2026-10-15] schema | 전처리 도구 extract_div.py 추가
+- 생성: tools/extract_div.py (id로 지정한 div만 추출, 사용자 댓글 등 제외)
+- 갱신: CLAUDE.md 도구 목록
+- 검증: php.net 페이지에서 일부러 공백을 지운 사본이 FAIL하는 것을 확인

@@ -61,7 +61,8 @@ tools/               웹 문서 → markdown 변환·검증 스크립트
 - 도구 (`tools/`):
   - `nginx2md.py <html> <url> <date>`: `div#content`를 markdown으로 변환. nginx.org 페이지용.
   - `posix_wrap.py <html>`: pubs.opengroup.org 페이지의 본문을 `div#content`로 감싼다. 결과를 `nginx2md.py`에 넣는다.
-  - `verify_md.py <html> <md>`: 변환 검증. opengroup 페이지는 `posix_wrap.py`를 거친 HTML로 검증한다.
+  - `extract_div.py <html> <id>`: 지정한 id의 `div` 하나만 잘라 `div#content`로 감싼다. php.net처럼 본문이 고유 id의 div에 있는 페이지용. 결과를 `nginx2md.py`에 넣는다.
+  - `verify_md.py <html> <md>`: 변환 검증. 전처리(`posix_wrap.py`, `extract_div.py`)를 거친 페이지는 전처리한 HTML로 검증한다.
 - **검증 기준: `verify_md.py`가 PASS여야 raw에 넣는다.** 두 검사를 모두 통과해야 한다.
   1. 공백을 뺀 문자열이 같다 (글자가 빠지거나 바뀌지 않음).
   2. 단어 목록이 같다. HTML 쪽은 블록 태그를 공백으로, 인라인 태그를 제거해 브라우저에 보이는 단어로 만든다 (공백이 사라지거나 생기지 않음).
