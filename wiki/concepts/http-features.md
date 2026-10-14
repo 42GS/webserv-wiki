@@ -16,7 +16,7 @@ updated: 2026-10-15
 | 정확한 status code | raw/subject.md:142 | raw/evaluation-sheet-en.md:67, raw/evaluation-sheet-en.md:81 |
 | 에러 페이지가 설정되지 않아도 기본 에러 페이지 | raw/subject.md:143 | — |
 | 완전한 정적 웹사이트 서빙 | raw/subject.md:145 | raw/evaluation-sheet-en.md:99 |
-| 파일 업로드 | raw/subject.md:146 | 업로드 후 다운로드 (raw/evaluation-sheet-en.md:82) |
+| 파일 업로드 | raw/subject.md:146 | 업로드 후 다운로드 (raw/evaluation-sheet-en.md:82) → [[concepts/file-upload]] |
 | 표준 브라우저 호환 | raw/subject.md:140 | 네트워크 탭으로 요청·응답 헤더 확인 (raw/evaluation-sheet-en.md:97-98) |
 | 여러 포트로 다른 콘텐츠 | raw/subject.md:149 | raw/evaluation-sheet-en.md:107 |
 | 요청이 무한히 hang하지 않음 | raw/subject.md:139 | raw/evaluation-sheet-en.md:116 |

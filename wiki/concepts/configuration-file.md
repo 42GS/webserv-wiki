@@ -25,7 +25,7 @@ updated: 2026-10-15
 | 라우트 → 디렉토리 매핑 (root) | raw/subject.md:169 | 라우트별 다른 디렉토리 (raw/evaluation-sheet-en.md:71) |
 | 디렉토리 리스팅 on/off | raw/subject.md:170 | 브라우저로 시도 (raw/evaluation-sheet-en.md:101) |
 | 디렉토리 요청 시 기본 파일 (index) | raw/subject.md:171 | raw/evaluation-sheet-en.md:72 |
-| 업로드 허용 + 저장 위치 | raw/subject.md:172 | 업로드 후 다운로드 (raw/evaluation-sheet-en.md:82) |
+| 업로드 허용 + 저장 위치 | raw/subject.md:172 | 업로드 후 다운로드 (raw/evaluation-sheet-en.md:82) → [[concepts/file-upload]] |
 | 확장자 기반 CGI 실행 | raw/subject.md:173 | [[concepts/cgi]] |
 
 - 라우트 매칭에 정규식은 필요 없음 (raw/subject.md:166).

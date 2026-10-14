@@ -1,7 +1,7 @@
 ---
 title: 보안 — 경로·주입·길이·splitting·smuggling
 type: concept
-sources: [raw/rfc9110.txt, raw/rfc9112.txt, raw/rfc3875.txt, raw/nginx-core-module.md, raw/subject.md, raw/evaluation-sheet-en.md]
+sources: [raw/rfc9110.txt, raw/rfc9112.txt, raw/rfc3875.txt, raw/nginx-core-module.md, raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc7578.txt]
 updated: 2026-10-15
 ---
 
@@ -19,7 +19,8 @@ subject와 평가표에는 보안 항목이 따로 없다. 하지만 아래 문�
 - root 매핑(raw/subject.md:169)으로 경로를 만든 뒤, 결과가 해당 라우트의 root 밖으로 나가지 않는지 확인한다. 응답 코드 선택은 [[concepts/status-codes]] 참고.
 - percent-encoding된 `..`(예: `%2e%2e`)도 디코딩한 뒤에 검사해야 한다. 디코딩 규칙은 RFC 3986에서 확인 (**미확인**, [[source-wishlist]] P2).
 - NGINX는 location 매칭 전에 `%XX` 디코딩 → `.`·`..` 해석 → 연속 `/` 합치기 순서로 URI를 정규화한다 (raw/nginx-core-module.md:1063). 같은 순서로 정규화한 뒤 매칭하고 경로를 만들면, 인코딩된 `..`로 우회하는 것을 막을 수 있다. 보안상 `/` 합치기를 끄지 말라고 권한다 (raw/nginx-core-module.md:1207).
-- 업로드 파일명(raw/subject.md:172)과 DELETE 대상 경로(raw/evaluation-sheet-en.md:73)에도 같은 검사를 적용한다.
+- 업로드 파일명(raw/subject.md:172)과 DELETE 대상 경로(raw/evaluation-sheet-en.md:73)에도 같은 검사를 적용한다. multipart의 `filename`은 그대로 쓰지 말고 들어 있는 디렉토리 경로를 쓰지 말라고 한다 (raw/rfc7578.txt:215-220). 기존 파일을 실수로 덮어쓰지 않게 한다 (raw/rfc7578.txt:497-499) → [[concepts/file-upload]].
+- 업로드된 파일에는 실행 가능한 내용이 들어 있을 수 있다 (raw/rfc7578.txt:529-530). 업로드 위치에서 CGI가 실행되지 않게 한다 (**판단**) → [[concepts/file-upload]].
 - CGI 경로는 script-path와 extra-path로 **나누기 전에** `..`를 제거하거나 해석한다. `PATH_TRANSLATED`를 만들 때도 예상 경로 밖으로 나가지 않게 한다 (raw/rfc3875.txt:1801-1806).
 - 서버는 `.`·`..` 경로 세그먼트를 금지할지, 일반 세그먼트로 볼지, 상대 URL 규칙으로 해석할지 정해 두어야 한다 (raw/rfc3875.txt:1631-1634).
 

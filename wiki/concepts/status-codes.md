@@ -19,7 +19,7 @@ RFC가 특정 코드를 직접 지정하지 않는 상황은 **판단**으로 �
 |---|---|---|---|
 | 정적 파일·index 파일 GET 성공 | 200 | raw/rfc9110.txt:6917 | |
 | 디렉토리 리스팅 생성 성공 | 200 | raw/rfc9110.txt:6917 | |
-| 업로드로 새 파일 생성 (POST) | 201 | raw/rfc9110.txt:4050-4053, raw/rfc9110.txt:6970-6974 | 만든 리소스를 가리키는 `Location`을 보낸다 (SHOULD) |
+| 업로드로 새 파일 생성 (POST) | 201 | raw/rfc9110.txt:4050-4053, raw/rfc9110.txt:6970-6974 | 만든 리소스를 가리키는 `Location`을 보낸다 (SHOULD)  → [[concepts/file-upload]] |
 | POST 처리 성공, 새 리소스 없음 (예: 폼 처리) | 200 | raw/rfc9110.txt:6917 | |
 | CGI document 응답 | CGI `Status` 값, 없으면 200 | raw/rfc3875.txt:1295-1296, raw/rfc3875.txt:1447 | 형식 `Status: 3자리코드 SP reason-phrase` |
 | DELETE 성공, 응답 본문 없음 | 204 | raw/rfc9110.txt:4235-4236 | 204에는 `Content-Length`를 보내면 안 됨 (MUST NOT, raw/rfc9110.txt:3238-3239) |
