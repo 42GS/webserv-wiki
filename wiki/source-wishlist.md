@@ -30,7 +30,8 @@ URL은 2026-10-15에 접속해 HTTP 200을 확인했다. 받아서 넣은 소스
 | [x] | P2 | RFC 3986 — URI: Generic Syntax — `raw/rfc3986.txt`로 ingest (2026-10-15) | <https://www.rfc-editor.org/rfc/rfc3986> | 요청 타깃 파싱, percent-encoding, `..` 경로 정규화 | `raw/rfc3986.txt` |
 | [x] | P1 | RFC 7578 — multipart/form-data — `raw/rfc7578.txt`로 ingest (2026-10-15, lint에서 업로드 공백이 드러나 P2→P1) | <https://www.rfc-editor.org/rfc/rfc7578> | 브라우저 파일 업로드 형식 | `raw/rfc7578.txt` |
 | [x] | P2 | RFC 2046 — MIME Media Types (5.1 Multipart) — `raw/rfc2046.txt`로 ingest (2026-10-15) | <https://www.rfc-editor.org/rfc/rfc2046> | multipart 구분자 문법, 마지막 구분자 `--boundary--` (5.1.1 Common Syntax, 2026-10-15 `close-delimiter` 규칙 존재 확인) → [[concepts/file-upload]] | `raw/rfc2046.txt` |
-| [ ] | P2 | IANA HTTP Status Code Registry | <https://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml> | 평가표 "status code 목록 검색해 둘 것" (raw/evaluation-sheet.md:63) | `raw/iana-status-codes.md` |
+| [x] | P2 | IANA HTTP Status Code Registry — `raw/iana-http-status-codes.txt`로 ingest (2026-10-15, txt 형식) | <https://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml> | 평가표 "status code 목록 검색해 둘 것" (raw/evaluation-sheet.md:63) | `raw/iana-status-codes.md` |
+| [ ] | P3 | RFC 6585 — Additional HTTP Status Codes | <https://www.rfc-editor.org/rfc/rfc6585> | 431 Request Header Fields Too Large의 정의 (5절, 2026-10-15 존재 확인) → [[concepts/status-codes]] | `raw/rfc6585.txt` |
 
 ## 3. CGI
 

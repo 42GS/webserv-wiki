@@ -1,7 +1,7 @@
 ---
 title: status code — 상황별 선택
 type: concept
-sources: [raw/rfc9110.txt, raw/rfc9112.txt, raw/rfc3875.txt, raw/nginx-core-module.md, raw/subject.md, raw/evaluation-sheet-en.md, raw/nginx-autoindex-module.md, raw/nginx-index-module.md]
+sources: [raw/rfc9110.txt, raw/rfc9112.txt, raw/rfc3875.txt, raw/nginx-core-module.md, raw/subject.md, raw/evaluation-sheet-en.md, raw/nginx-autoindex-module.md, raw/nginx-index-module.md, raw/iana-http-status-codes.txt]
 updated: 2026-10-15
 ---
 
@@ -58,7 +58,7 @@ RFC가 특정 코드를 직접 지정하지 않는 상황은 **판단**으로 �
 | chunked 요청을 받지 않기로 한 경우 | 411 | raw/rfc9110.txt:7692-7694, raw/rfc9112.txt:999-1000 | MAY. subject가 un-chunk를 요구하므로(raw/subject.md:179) 이 과제에서는 쓰지 않는다. `Content-Length`도 TE도 없는 요청은 본문 길이 0이다 (raw/rfc9112.txt:980-981) |
 | body가 `client_max_body_size` 초과 | 413 | raw/rfc9110.txt:7710-7714 | 평가 body 제한 테스트 (raw/evaluation-sheet-en.md:70). 남은 본문을 읽지 않으면 응답 후 연결을 닫아야 함 (raw/rfc9112.txt:1374-1377) |
 | URI가 너무 김 | 414 | raw/rfc9110.txt:7722-7724, raw/rfc9112.txt:393-395 | MUST  NGINX는 요청줄이 헤더 버퍼 하나보다 크면 414 (raw/nginx-core-module.md:781) |
-| 헤더 한 줄이 서버 상한보다 큼 | 400 또는 431 | raw/nginx-core-module.md:781 | NGINX는 헤더 한 줄이 버퍼 하나보다 크면 400을 보낸다 (raw/nginx-core-module.md:781). 431은 RFC 6585 정의로, 정확한 정의는 **미확인** (raw/rfc9110.txt:8628-8629) |
+| 헤더 한 줄이 서버 상한보다 큼 | 400 또는 431 | raw/nginx-core-module.md:781, raw/iana-http-status-codes.txt:108 | NGINX는 헤더 한 줄이 버퍼 하나보다 크면 400을 보낸다 (raw/nginx-core-module.md:781). 431의 이름은 "Request Header Fields Too Large"이고 RFC 6585 정의다 (raw/iana-http-status-codes.txt:108). 정의 내용은 **미확인** → [[source-wishlist]] |
 
 ## 서버 오류
 
@@ -71,6 +71,40 @@ RFC가 특정 코드를 직접 지정하지 않는 상황은 **판단**으로 �
 | CGI 출력이 CGI 응답 형식에 맞지 않음, 출력 없이 종료 | 502 | raw/rfc9110.txt:7882-7884, raw/rfc3875.txt:423 | 서버는 CGI에 대해 application gateway다 (raw/rfc3875.txt:423). 스크립트가 규격을 어겨도 서버가 올바른 응답 책임을 진다 (raw/rfc3875.txt:433-437). RFC 3875가 코드를 직접 지정하지는 않음 → [[concepts/cgi]] 5절 |
 | CGI가 제한 시간 안에 응답하지 않음 (무한 루프) | 504 | raw/rfc9110.txt:7901-7904, raw/rfc3875.txt:423 | 타임아웃 후 스크립트 종료는 MAY (raw/rfc3875.txt:1255-1258). 평가 무한 루프 테스트 (raw/evaluation-sheet-en.md:91) |
 | 일시적 과부하 | 503 | raw/rfc9110.txt:7888-7891 | 과부하에 반드시 쓸 필요는 없음 (raw/rfc9110.txt:7895-7897) |
+
+## reason phrase
+
+상태줄의 reason phrase는 IANA 레지스트리의 이름을 쓴다. reason phrase는 권장일 뿐이라 바꾸거나 빼도 프로토콜 위반은 아니다 (raw/rfc9110.txt:6841-6844).
+
+| 코드 | IANA 이름 | 근거 |
+|---|---|---|
+| 200 | OK | raw/iana-http-status-codes.txt:56 |
+| 201 | Created | raw/iana-http-status-codes.txt:57 |
+| 204 | No Content | raw/iana-http-status-codes.txt:60 |
+| 301 | Moved Permanently | raw/iana-http-status-codes.txt:69 |
+| 302 | Found | raw/iana-http-status-codes.txt:70 |
+| 303 | See Other | raw/iana-http-status-codes.txt:71 |
+| 307 | Temporary Redirect | raw/iana-http-status-codes.txt:75 |
+| 308 | Permanent Redirect | raw/iana-http-status-codes.txt:76 |
+| 400 | Bad Request | raw/iana-http-status-codes.txt:78 |
+| 403 | Forbidden | raw/iana-http-status-codes.txt:81 |
+| 404 | Not Found | raw/iana-http-status-codes.txt:82 |
+| 405 | Method Not Allowed | raw/iana-http-status-codes.txt:83 |
+| 408 | Request Timeout | raw/iana-http-status-codes.txt:86 |
+| 409 | Conflict | raw/iana-http-status-codes.txt:87 |
+| 411 | Length Required | raw/iana-http-status-codes.txt:89 |
+| 413 | Content Too Large | raw/iana-http-status-codes.txt:91 |
+| 414 | URI Too Long | raw/iana-http-status-codes.txt:92 |
+| 431 | Request Header Fields Too Large | raw/iana-http-status-codes.txt:108 |
+| 500 | Internal Server Error | raw/iana-http-status-codes.txt:112 |
+| 501 | Not Implemented | raw/iana-http-status-codes.txt:113 |
+| 502 | Bad Gateway | raw/iana-http-status-codes.txt:114 |
+| 503 | Service Unavailable | raw/iana-http-status-codes.txt:115 |
+| 504 | Gateway Timeout | raw/iana-http-status-codes.txt:116 |
+| 505 | HTTP Version Not Supported | raw/iana-http-status-codes.txt:117 |
+
+- 예전 RFC의 이름과 다른 것이 있다. NGINX 문서는 413을 "Request Entity Too Large"(raw/nginx-core-module.md:361), 414를 "Request-URI Too Large"(raw/nginx-core-module.md:781)로 부른다. 어느 쪽이든 틀린 응답은 아니다.
+- 업로드 중 디스크가 가득 찬 경우 507 "Insufficient Storage"(raw/iana-http-status-codes.txt:119)가 있지만 WebDAV(RFC 4918)용 코드라 이 과제는 500을 쓴다 (**판단**).
 
 ## 공통 규칙
 

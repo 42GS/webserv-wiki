@@ -191,3 +191,8 @@
 - 생성: raw/posix-fcntl.md (HTML → markdown 변환, verify_md PASS), raw/posix-fcntl.source.html (원본), sources/posix-fcntl
 - 갱신: concepts/io-multiplexing (fcntl 근거), concepts/cgi (자식에서 필요 없는 fd 닫기), analysis/subject-vs-evaluation (1.11 fcntl 허용 목록), overview, index, source-wishlist
 - 새 쟁점: F_GETFL 없이 F_SETFL만 가능, FD_CLOEXEC는 F_SETFD가 필요한데 허용 목록에 없음
+
+## [2026-10-15] ingest | IANA HTTP Status Code Registry
+- 생성: raw/iana-http-status-codes.txt (IANA txt 형식 그대로, 2025-09-15 갱신본), sources/iana-http-status-codes
+- 갱신: concepts/status-codes ("reason phrase" 표, 431 행), overview, index, source-wishlist (RFC 6585 추가)
+- 메모: reason phrase 표의 각 행은 스크립트로 IANA 원문 줄과 대조

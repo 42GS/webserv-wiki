@@ -39,6 +39,7 @@ updated: 2026-10-15
 | [[sources/php-ini-core]] | PHP 매뉴얼 — core php.ini 중 CGI 관련 설정과 기본값 | `raw/php-ini-core.md` |
 | [[sources/rfc6265]] | RFC 6265 쿠키 — Set-Cookie·Cookie 문법, 속성, 세션 식별자 | `raw/rfc6265.txt` |
 | [[sources/posix-fcntl]] | POSIX `fcntl()` — F_SETFL·O_NONBLOCK, F_SETFD·FD_CLOEXEC | `raw/posix-fcntl.md` |
+| [[sources/iana-http-status-codes]] | IANA status code 레지스트리 — 코드 이름(reason phrase)과 정의 문서 | `raw/iana-http-status-codes.txt` |
 | [[sources/evaluation-sheet]] | 평가표 한국어 정리본 — **구버전, 영어 원문으로 대체됨** | `raw/evaluation-sheet.md` |
 
 ## Concepts
@@ -49,7 +50,7 @@ updated: 2026-10-15
 | [[concepts/configuration-file]] | 필수 기능 10개와 평가 테스트 대응, root=NGINX alias 방식, location 매칭, server 선택, 디렉토리 요청 처리 순서, NGINX 지시자 대응표, Port issues, virtual host |
 | [[concepts/cgi]] | 호출 절차 7단계, 메타변수 표, CGI 응답 파싱(4가지 유형·Status), 실패 처리(502·504), 자식 회수(waitpid), php-cgi 추가 변수 |
 | [[concepts/http-features]] | 필수 기능, 메서드별 규칙(RFC 9110), 응답 헤더 규칙, HEAD·Date 쟁점 |
-| [[concepts/status-codes]] | 과제 상황별 status code 선택표 (정상·리다이렉트·4xx·5xx), RFC 근거 |
+| [[concepts/status-codes]] | 과제 상황별 status code 선택표 (정상·리다이렉트·4xx·5xx), RFC 근거, reason phrase(IANA 이름) |
 | [[concepts/request-parsing]] | 요청줄 → 헤더 → 본문 길이 결정 → chunked 디코딩, 단계별 에러 코드 |
 | [[concepts/connection-management]] | keep-alive 판단, 413 이후 처리, pipelining 순서, 타임아웃 4종, lingering close와 `shutdown` 쟁점 |
 | [[concepts/file-upload]] | 업로드 요구사항, multipart 구조·파싱 규칙(RFC 2046)과 처리 순서, filename 처리, 업로드 위치와 CGI 위험, 열린 설계 질문 |
