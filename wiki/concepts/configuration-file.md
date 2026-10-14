@@ -1,7 +1,7 @@
 ---
 title: 설정 파일
 type: concept
-sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc9110.txt, raw/nginx-core-module.md, raw/nginx-request-processing.md, raw/posix-bind.md, raw/nginx-index-module.md]
+sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc9110.txt, raw/nginx-core-module.md, raw/nginx-request-processing.md, raw/posix-bind.md, raw/nginx-index-module.md, raw/nginx-autoindex-module.md]
 updated: 2026-10-15
 ---
 
@@ -66,6 +66,18 @@ updated: 2026-10-15
 - virtual host를 구현하지 않으면 `address:port`마다 server가 하나뿐이므로 1단계에서 끝난다. 같은 `address:port`가 두 번 나오면 설정 에러로 거부한다 (raw/evaluation-sheet-en.md:108).
 - virtual host를 구현하면 위 2단계를 그대로 따르면 된다. Host가 없는 요청은 [[concepts/request-parsing]] 3절 참고.
 
+## 디렉토리 요청 처리 순서 (NGINX 기준)
+
+| 순서 | 상황 | 처리 | 근거 |
+|---|---|---|---|
+| 1 | 끝에 `/`가 없는 디렉토리 요청 | index·autoindex 모듈 모두 다루지 않는다. 301 여부는 **미확인** (NGINX 실측) | raw/nginx-index-module.md:12, raw/nginx-autoindex-module.md:12 |
+| 2 | `/`로 끝나는 디렉토리 요청 | index 모듈이 index 파일을 순서대로 찾는다. 찾으면 그 파일로 내부 리다이렉트 | raw/nginx-index-module.md:40, raw/nginx-index-module.md:46 |
+| 3 | index 파일이 없음 | 보통 autoindex 모듈로 넘어간다. `autoindex on`이면 리스팅 | raw/nginx-autoindex-module.md:12 |
+| 4 | index 파일이 없고 `autoindex off` | 응답 코드 **미확인** (NGINX 실측). 이 과제에서는 403으로 판단 → [[concepts/status-codes]] | — |
+
+- 리스팅 형식은 평가가 브라우저로 시도하므로 (raw/evaluation-sheet-en.md:101) HTML이면 된다. NGINX 기본도 html이다 (raw/nginx-autoindex-module.md:63).
+- 리스팅에 무엇을 보일지는 subject가 정하지 않는다 (raw/subject.md:170). NGINX는 크기와 시간도 보인다 (raw/nginx-autoindex-module.md:54, raw/nginx-autoindex-module.md:88). 시간 표시에는 시간 함수가 필요해 [[analysis/subject-vs-evaluation]] 1.4절의 질문에 걸린다. 이름만 보여도 요구사항은 충족한다 (**판단**).
+
 ## NGINX 지시자 대응표
 
 subject 기능을 NGINX에서는 어떤 지시자로 하는지 정리했다. 설정 문법을 NGINX와 비슷하게 맞추면 평가자가 이해하기 쉽다 (raw/subject.md:161).
@@ -80,7 +92,7 @@ subject 기능을 NGINX에서는 어떤 지시자로 하는지 정리했다. 설
 | 디렉토리 매핑 | `root`, `alias` | 위 콜아웃 참고 | raw/nginx-core-module.md:1516, raw/nginx-core-module.md:132-140 |
 | 응답 MIME 타입 | `types`, `default_type` | 확장자 → MIME 타입 매핑(대소문자 무시). 기본 타입 `text/plain` | raw/nginx-core-module.md:2003, raw/nginx-core-module.md:386-391 |
 | 리다이렉션 | `return` (rewrite 모듈) | 이 문서 범위 밖 → [[source-wishlist]] P2 | — |
-| 디렉토리 리스팅 | `autoindex` (autoindex 모듈) | 이 문서 범위 밖 → [[source-wishlist]] P2 | — |
+| 디렉토리 리스팅 | `autoindex` (autoindex 모듈) | 기본 `off`. 켜면 `/`로 끝나는 요청에 리스팅을 만든다. 기본 형식 html | raw/nginx-autoindex-module.md:12, raw/nginx-autoindex-module.md:35, raw/nginx-autoindex-module.md:63 |
 | 기본 파일 (index) | `index` (index 모듈) | `/`로 끝나는 요청을 처리. 기본값 `index.html`. 여러 파일을 적은 순서대로 확인. 찾으면 **내부 리다이렉트** | raw/nginx-index-module.md:12, raw/nginx-index-module.md:34-35, raw/nginx-index-module.md:40, raw/nginx-index-module.md:46 |
 
 - `limit_except`로 막힌 메서드에 NGINX가 어떤 코드를 보내는지는 문서로 확인하지 못했다 (**미확인**, NGINX 실측 필요). 이 과제에서는 RFC 기준 405 + `Allow`를 따른다 (raw/rfc9110.txt:7603-7607).
@@ -130,4 +142,4 @@ subject 기능을 NGINX에서는 어떤 지시자로 하는지 정리했다. 설
 
 ## 관련
 
-- [[concepts/http-features]], [[concepts/cgi]], [[sources/nginx-core-module]], [[sources/nginx-request-processing]], [[sources/posix-bind]], [[sources/nginx-index-module]]
+- [[concepts/http-features]], [[concepts/cgi]], [[sources/nginx-core-module]], [[sources/nginx-request-processing]], [[sources/posix-bind]], [[sources/nginx-index-module]], [[sources/nginx-autoindex-module]]

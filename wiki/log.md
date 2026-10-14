@@ -122,3 +122,9 @@
 - 생성: raw/nginx-index-module.md (HTML → markdown 변환, verify_md PASS), raw/nginx-index-module.source.html (원본), sources/nginx-index-module
 - 갱신: concepts/configuration-file (지시자 대응표 index 행, index와 CGI 근거), overview, index, source-wishlist
 - 남음: index 파일이 없을 때의 응답, 끝에 `/`가 없는 디렉토리 요청 → autoindex 모듈·NGINX 실측
+
+## [2026-10-15] ingest | NGINX ngx_http_autoindex_module
+- 생성: raw/nginx-autoindex-module.md (HTML → markdown 변환, verify_md PASS), raw/nginx-autoindex-module.source.html (원본), sources/nginx-autoindex-module
+- 갱신: concepts/configuration-file ("디렉토리 요청 처리 순서" 절, 지시자 대응표 리스팅 행), concepts/status-codes (403 판단 근거 보강), analysis/subject-vs-evaluation (1.4에 리스팅 시간 표시), overview, index, source-wishlist
+- 해소: index 파일이 없으면 보통 autoindex로 넘어감 (raw/nginx-autoindex-module.md:12)
+- 남음: autoindex off + index 없음의 응답 코드, `/` 없는 디렉토리 요청 → NGINX 실측

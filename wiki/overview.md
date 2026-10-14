@@ -8,7 +8,7 @@ updated: 2026-10-15
 # webserv 개요
 
 C++98로 HTTP 서버를 만드는 42 과제. 실행은 `./webserv [configuration file]` (raw/subject.md:118).
-근거 소스: [[sources/subject]], [[sources/evaluation-sheet-en]] (평가표 영어 원문), [[sources/rfc9110]] (HTTP 의미론), [[sources/rfc9112]] (HTTP/1.1 메시지·연결), [[sources/rfc3875]] (CGI/1.1), [[sources/nginx-core-module]], [[sources/nginx-request-processing]], [[sources/nginx-index-module]] (NGINX 비교 기준), [[sources/posix-poll]], [[sources/posix-signal-h]], [[sources/posix-send]], [[sources/posix-recv]], [[sources/posix-waitpid]], [[sources/posix-bind]], [[sources/posix-exit]] (POSIX), [[sources/siege]], [[sources/siegerc]] (부하 테스트 도구). 구버전 한국어 정리본 [[sources/evaluation-sheet]]은 이력용이다.
+근거 소스: [[sources/subject]], [[sources/evaluation-sheet-en]] (평가표 영어 원문), [[sources/rfc9110]] (HTTP 의미론), [[sources/rfc9112]] (HTTP/1.1 메시지·연결), [[sources/rfc3875]] (CGI/1.1), [[sources/nginx-core-module]], [[sources/nginx-request-processing]], [[sources/nginx-index-module]], [[sources/nginx-autoindex-module]] (NGINX 비교 기준), [[sources/posix-poll]], [[sources/posix-signal-h]], [[sources/posix-send]], [[sources/posix-recv]], [[sources/posix-waitpid]], [[sources/posix-bind]], [[sources/posix-exit]] (POSIX), [[sources/siege]], [[sources/siegerc]] (부하 테스트 도구). 구버전 한국어 정리본 [[sources/evaluation-sheet]]은 이력용이다.
 
 ## 무엇이 점수를 결정하나
 

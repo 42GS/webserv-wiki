@@ -47,7 +47,7 @@ URL은 2026-10-15에 접속해 HTTP 200을 확인했다. 받아서 넣은 소스
 | [x] | P1 | How nginx processes a request — `raw/nginx-request-processing.md`로 ingest (2026-10-15) | <https://nginx.org/en/docs/http/request_processing.html> | 같은 포트 + 다른 `server_name` 처리, default server → virtual host 모순 | `raw/nginx-request-processing.md` |
 | [ ] | P2 | Server names | <https://nginx.org/en/docs/http/server_names.html> | `server_name` 매칭 규칙 | `raw/nginx-server-names.md` |
 | [x] | P2 | ngx_http_index_module — `raw/nginx-index-module.md`로 ingest (2026-10-15) | <https://nginx.org/en/docs/http/ngx_http_index_module.html> | 디렉토리 기본 파일 | `raw/nginx-index-module.md` |
-| [ ] | P2 | ngx_http_autoindex_module | <https://nginx.org/en/docs/http/ngx_http_autoindex_module.html> | 디렉토리 리스팅 | `raw/nginx-autoindex-module.md` |
+| [x] | P2 | ngx_http_autoindex_module — `raw/nginx-autoindex-module.md`로 ingest (2026-10-15) | <https://nginx.org/en/docs/http/ngx_http_autoindex_module.html> | 디렉토리 리스팅 | `raw/nginx-autoindex-module.md` |
 | [ ] | P2 | ngx_http_rewrite_module | <https://nginx.org/en/docs/http/ngx_http_rewrite_module.html> | `return`으로 리다이렉트 | `raw/nginx-rewrite-module.md` |
 
 ## 5. 시스템 콜 (POSIX.1-2024, man page)
@@ -72,7 +72,7 @@ nginx.org에 정적 파일 모듈 문서가 없고(`ngx_http_static_module.html`
 |---|---|---|---|---|
 | [ ] | P2 | 끝에 `/`가 없는 디렉토리 요청에 301을 보내는지, `Location` 형식 | NGINX 설치 후 `curl -i`로 요청 | `raw/nginx-observed-<주제>.md` (명령과 출력 그대로) |
 | [ ] | P2 | `limit_except`로 막힌 메서드의 응답 코드 (403? 405?) | 같은 방법 | 같은 형식 |
-| [ ] | P2 | 리스팅 off + index 없는 디렉토리의 응답 코드 (index 모듈 문서에 없음, 2026-10-15 확인) | 같은 방법 | 같은 형식 |
+| [ ] | P2 | 리스팅 off + index 없는 디렉토리의 응답 코드 (index·autoindex 모듈 문서에 없음, 2026-10-15 확인) | 같은 방법 | 같은 형식 |
 | [ ] | P2 | Host 헤더 없는 HTTP/1.1 요청의 응답 코드 (RFC는 400 MUST) | 같은 방법 (`printf "GET / HTTP/1.1\r\n\r\n" \| nc ...` 등) | 같은 형식 |
 
 ## 5-1. OS 실측 (POSIX 문서로 확인 불가)

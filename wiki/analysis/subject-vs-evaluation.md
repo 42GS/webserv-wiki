@@ -36,6 +36,7 @@ updated: 2026-10-15
 subject는 "허용된 syscall/라이브러리 호출" 목록을 준다 (raw/subject.md:111-113). 이 목록이 C/C++ 표준 라이브러리 함수에도 적용되는지가 문구만으로 불분명하다 (**미확인**). 이 질문에 걸리는 경우:
 
 - **Date 헤더:** RFC 9110상 clock이 있는 origin server는 2xx·3xx·4xx 응답에 `Date` MUST, clock이 없으면 보내면 안 됨 (raw/rfc9110.txt:2313-2320). 목록에 시간 함수가 없다 (raw/subject.md:113). → [[concepts/http-features]]
+- **디렉토리 리스팅의 시간 표시:** NGINX 리스팅은 파일 시간을 보인다 (raw/nginx-autoindex-module.md:88). 시간 형식으로 바꾸려면 시간 함수가 필요하다. subject는 리스팅 내용을 정하지 않으므로 (raw/subject.md:170) 생략할 수 있다. → [[concepts/configuration-file]]
 - **CGI 자식 종료:** `execve`가 실패한 자식은 끝나야 한다. `exit`·`_exit`가 목록에 없다 (raw/subject.md:113). POSIX는 보통 `exit()`을 권하지만 (raw/posix-exit.md:122), `_exit`은 stream을 flush하지 않아 fork된 자식에서 부모의 버퍼를 다시 내보내지 않는다 (raw/posix-exit.md:36). → [[concepts/cgi]]
 - 판단 보류. 확인 방법: 동료·평가자 합의 또는 42 공식 답변.
 

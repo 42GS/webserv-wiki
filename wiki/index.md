@@ -30,6 +30,7 @@ updated: 2026-10-15
 | [[sources/siegerc]] | siege 기본 설정 템플릿 — connection=close, protocol, timeout, failures | `raw/siegerc.in` |
 | [[sources/posix-exit]] | POSIX `_Exit()` — 프로세스 종료의 결과(좀비, fd 닫힘, 자식 입양) | `raw/posix-exit.md` |
 | [[sources/nginx-index-module]] | NGINX index 모듈 — `/`로 끝나는 요청, 파일 목록 순서, 내부 리다이렉트 | `raw/nginx-index-module.md` |
+| [[sources/nginx-autoindex-module]] | NGINX autoindex 모듈 — index가 없을 때 리스팅, 기본 off, 형식 | `raw/nginx-autoindex-module.md` |
 | [[sources/evaluation-sheet]] | 평가표 한국어 정리본 — **구버전, 영어 원문으로 대체됨** | `raw/evaluation-sheet.md` |
 
 ## Concepts
@@ -37,7 +38,7 @@ updated: 2026-10-15
 | 페이지 | 요약 |
 |---|---|
 | [[concepts/io-multiplexing]] | 단일 `poll()`·non-blocking·`errno` 금지 등 9개 규칙, EAGAIN 반복 모순, `revents` 처리표, POLLOUT 관리, recv·send 반환값 처리표, 허용 함수 |
-| [[concepts/configuration-file]] | 필수 기능 10개와 평가 테스트 대응, root=NGINX alias 방식, location 매칭, server 선택, NGINX 지시자 대응표, Port issues, virtual host |
+| [[concepts/configuration-file]] | 필수 기능 10개와 평가 테스트 대응, root=NGINX alias 방식, location 매칭, server 선택, 디렉토리 요청 처리 순서, NGINX 지시자 대응표, Port issues, virtual host |
 | [[concepts/cgi]] | 호출 절차 7단계, 메타변수 표, CGI 응답 파싱(4가지 유형·Status), 실패 처리(502·504), 자식 회수(waitpid) |
 | [[concepts/http-features]] | 필수 기능, 메서드별 규칙(RFC 9110), 응답 헤더 규칙, HEAD·Date 쟁점 |
 | [[concepts/status-codes]] | 과제 상황별 status code 선택표 (정상·리다이렉트·4xx·5xx), RFC 근거 |

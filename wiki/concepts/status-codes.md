@@ -51,7 +51,7 @@ RFC가 특정 코드를 직접 지정하지 않는 상황은 **판단**으로 �
 | `Transfer-Encoding`의 마지막 coding이 chunked가 아님 | 400 | raw/rfc9112.txt:950-954 | MUST, 보낸 뒤 연결 닫음 |
 | 경로에 파일이 없음, 잘못된 URL | 404 | raw/rfc9110.txt:7589-7591 | 평가 "Try an incorrect URL" (raw/evaluation-sheet-en.md:100) |
 | 파일은 있지만 접근을 거부 (권한 없음 등) | 403 | raw/rfc9110.txt:7571-7572 | |
-| 리스팅 off이고 index 파일도 없는 디렉토리 | 403 | raw/rfc9110.txt:7571-7572 | **판단**. NGINX 동작과 같은지는 **미확인** |
+| 리스팅 off이고 index 파일도 없는 디렉토리 | 403 | raw/rfc9110.txt:7571-7572 | **판단**. NGINX index·autoindex 모듈 문서에도 이 경우의 코드가 없다 (raw/nginx-index-module.md:12, raw/nginx-autoindex-module.md:12). NGINX 실측으로 확인 → [[source-wishlist]] |
 | `..` 등으로 root 밖을 가리키는 경로 | 403 또는 404 | raw/rfc9110.txt:8563-8568 | **판단**. RFC는 접근을 피하라고만 하고 코드는 지정하지 않음. 404는 존재 여부를 숨긴다 (raw/rfc9110.txt:7589-7591) |
 | 라우트에서 허용하지 않은 메서드 (알려진 메서드) | 405 | raw/rfc9110.txt:3802-3804, raw/rfc9110.txt:7603-7607 | `Allow` 헤더 MUST. 평가 "DELETE with and without permission" (raw/evaluation-sheet-en.md:73) |
 | 클라이언트가 제한 시간 안에 요청을 다 보내지 않음 | 408 | raw/rfc9110.txt:7641-7643 | 닫기 전에 에러 응답을 보낼 수 있음 (MAY, raw/rfc9112.txt:1253-1255) → [[concepts/connection-management]]  NGINX는 헤더 전체 수신 시간, 본문 read 간격 기준으로 408을 보낸다 (raw/nginx-core-module.md:317, raw/nginx-core-module.md:347) |
