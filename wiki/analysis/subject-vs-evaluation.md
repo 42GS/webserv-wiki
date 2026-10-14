@@ -67,17 +67,17 @@ subject는 "허용된 syscall/라이브러리 호출" 목록을 준다 (raw/subj
 - 판단: errno를 보지 않고도 처리할 수 있다. `poll()`이 -1을 돌려주면 로그만 남기고 다음 루프로 넘어간다. 평가표는 errno를 로그에 남기는 것은 허용한다 (raw/evaluation-sheet-en.md:57). 이렇게 하면 해석 문제를 피할 수 있다.
 - `bind()`도 같은 성격이다. 실패하면 -1을 돌려주고 errno를 설정한다 (raw/posix-bind.md:58). 원인(`EADDRINUSE` 등)을 `strerror`로 출력하는 것은 read/write 뒤가 아니므로 금지 대상이 아닌 것으로 보인다. `strerror`도 허용 함수다 (raw/subject.md:113) (**판단**). 출력만 하고 동작은 바꾸지 않으면(실패하면 종료) 평가표의 "로그는 허용" 범위에도 들어간다.
 
-### 1.10 `/dev/urandom` 읽기와 poll() 예외 (질문)
-
-- 세션 식별자는 추측하기 어려워야 한다 (raw/rfc6265.txt:1716-1731). 허용 함수에는 난수 함수가 없다 (raw/subject.md:113).
-- `open`·`read`로 `/dev/urandom`을 읽을 수는 있다. 그러나 `poll()` 없이 읽어도 되는 예외는 "일반 디스크 파일"이다 (raw/subject.md:134). `/dev/urandom`은 장치 파일이라 이 예외에 들어가는지 불분명하다 (**미확인**).
-- 판단 보류. 확인 방법: 동료·평가자 합의. 보너스 항목이라 필수 평가에는 영향이 없다.
-
 ### 1.9 waitpid 상태 매크로 (질문)
 
 - POSIX: `waitpid`가 돌려준 status는 `WIFEXITED`, `WEXITSTATUS`, `WIFSIGNALED`, `WTERMSIG` 같은 매크로로 해석한다 (raw/posix-waitpid.md:72-92).
 - subject: 매크로·헬퍼 사용을 명시적으로 허용한 것은 `poll()`과 그 동등 함수뿐이다 (raw/subject.md:138). `waitpid`는 허용 함수지만 (raw/subject.md:113) 그 매크로에 대한 언급은 없다.
 - 판단 보류 (**미확인**). 매크로 없이도 CGI 처리는 가능하다. 성공 여부는 CGI 출력 형식으로 판단하고 (→ [[concepts/cgi]] 5절), status는 로그용으로만 쓴다.
+
+### 1.10 `/dev/urandom` 읽기와 poll() 예외 (질문)
+
+- 세션 식별자는 추측하기 어려워야 한다 (raw/rfc6265.txt:1716-1731). 허용 함수에는 난수 함수가 없다 (raw/subject.md:113).
+- `open`·`read`로 `/dev/urandom`을 읽을 수는 있다. 그러나 `poll()` 없이 읽어도 되는 예외는 "일반 디스크 파일"이다 (raw/subject.md:134). `/dev/urandom`은 장치 파일이라 이 예외에 들어가는지 불분명하다 (**미확인**).
+- 판단 보류. 확인 방법: 동료·평가자 합의. 보너스 항목이라 필수 평가에는 영향이 없다.
 
 ## 2. 평가표에만 있는 기준
 

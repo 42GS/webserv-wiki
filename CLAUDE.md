@@ -51,7 +51,7 @@ tools/               웹 문서 → markdown 변환·검증 스크립트
 4. 관련 concept/analysis 페이지를 갱신하거나 새로 만든다. 기존 주장과 충돌하면 모순으로 기록한다.
 5. `wiki/index.md`, `wiki/overview.md`를 갱신한다.
 6. `wiki/log.md`에 항목을 추가한다.
-7. 깨진 위키링크, 원본 범위를 벗어난 인용, 고아 페이지를 점검하고 새 인용을 원문 줄과 대조한다.
+7. `python3 -I tools/lint_wiki.py`로 기계 검사를 하고, 새 인용을 원문 줄과 대조한다.
 8. **소스 하나를 ingest할 때마다 커밋한다.** 소스 파일, 위키 변경, log를 한 커밋에 담는다.
 
 ### 웹 문서 받기 (HTML 소스)
@@ -76,7 +76,7 @@ tools/               웹 문서 → markdown 변환·검증 스크립트
 ### Lint (점검)
 - 페이지 간 모순, 오래된 주장, inbound 링크 없는 고아 페이지, 언급되지만 페이지가 없는 개념,
   인용 줄 번호가 원본과 맞는지, 깨진 위키링크를 점검한다.
-- 표의 칸 수가 헤더와 같은지, frontmatter `sources`에 본문에서 인용한 원본이 모두 있는지 점검한다.
+- 기계 검사는 `python3 -I tools/lint_wiki.py`로 한다: 깨진 링크, 인용 범위, 표 칸 수, frontmatter `sources` 누락, 고아 페이지.
 - 미확인 표시가 이미 해소된 항목에 남아 있지 않은지, `analysis/subject-vs-evaluation` "남은 미확인"과 `overview` "열린 질문"이 최신인지 대조한다.
 - 과제 필수 기능별로 위키가 다루는 정도를 세어 공백을 찾는다.
 - 결과와 수정 내역을 log에 남긴다.

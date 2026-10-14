@@ -177,3 +177,12 @@
 - 생성: raw/rfc6265.txt (원문 그대로), sources/rfc6265
 - 갱신: concepts/bonus ("쿠키와 세션" 절 신설), concepts/cgi (Set-Cookie 여러 줄 전달), concepts/security (6절 세션), analysis/subject-vs-evaluation (1.10 /dev/urandom), overview, index, source-wishlist
 - 메모: lint에서 1줄이던 쿠키·세션 공백을 채움. 같은 이름 헤더 여러 개를 담는 응답 구조가 필요
+
+## [2026-10-15] lint | 전체 점검 (2차)
+- 도구: tools/lint_wiki.py 추가. 일부러 깨진 링크·범위 밖 인용·표 칸 수 오류를 넣은 사본에서 3건 모두 검출 확인
+- 기계 검사: 44개 페이지, 문제 0건
+- 미확인 24곳 대조: 이미 해소됐는데 남은 표시 없음
+- 수정: analysis 1.9·1.10 절 순서 뒤바뀜 정정. overview 열린 질문에 업로드·쿠키 설계 질문과 1.4 범위(리스팅 시간) 추가
+- 결정 일관성: 411, readiness당 I/O 1회, 502·504, 403, Date, HEAD, SIGPIPE를 페이지 간 대조 → 일치
+- 미결 판단: root 밖 경로의 응답 코드(403 또는 404)
+- 기능별 언급: 업로드 16, 쿠키 13, 세션 12 (1차 lint 때 4·1·1). 가장 적은 것은 에러 페이지 6
