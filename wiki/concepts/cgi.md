@@ -1,7 +1,7 @@
 ---
 title: CGI
 type: concept
-sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc3875.txt, raw/rfc9112.txt, raw/rfc9110.txt, raw/posix-poll.md, raw/posix-signal-h.md, raw/posix-waitpid.md, raw/posix-bind.md, raw/posix-exit.md]
+sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc3875.txt, raw/rfc9112.txt, raw/rfc9110.txt, raw/posix-poll.md, raw/posix-signal-h.md, raw/posix-waitpid.md, raw/posix-bind.md, raw/posix-exit.md, raw/php-cgi-force-redirect.md, raw/php-ini-core.md]
 updated: 2026-10-15
 ---
 
@@ -77,8 +77,19 @@ updated: 2026-10-15
 - `Authorization` 같은 인증 헤더와, 다른 변수로 전달되는 `Content-Length`·`Content-Type`은 빼는 것이 좋다 (SHOULD, raw/rfc3875.txt:1051-1055). `Connection`도 뺄 수 있다 (MAY, raw/rfc3875.txt:1055-1057).
 - 서버 고유 변수는 `X_` 접두어를 쓴다 (SHOULD, raw/rfc3875.txt:587-588).
 
-> [!note] php-cgi
-> `php-cgi`는 이 표 외에 추가 변수를 요구할 수 있다. PHP 매뉴얼로 확인한다 (**미확인**, [[source-wishlist]] P2).
+### php-cgi가 추가로 요구하는 변수
+
+RFC 3875 목록에 없는 비표준 변수다. 이 과제에서 CGI로 `php-cgi`를 쓴다면 필요하다 (raw/subject.md:182).
+
+| 변수 | 필요한 이유 | 넣을 값 | 근거 |
+|---|---|---|---|
+| `REDIRECT_STATUS` | `cgi.force_redirect`(기본 켜짐)일 때 PHP는 이 변수로 웹 서버 리다이렉트를 거친 요청인지 판단한다. 없으면 실행을 거부한다 | 값의 조건은 문서에 없다 (**미확인**). 흔히 쓰는 `200`을 넣는다 (**판단**) | raw/php-cgi-force-redirect.md:8, raw/php-cgi-force-redirect.md:17, raw/php-ini-core.md:428, raw/php-ini-core.md:548 |
+| `SCRIPT_FILENAME` | `cgi.fix_pathinfo`(기본 켜짐)에서 PHP는 `PATH_TRANSLATED` 대신 `SCRIPT_FILENAME`을 쓰라고 한다 | 실행할 스크립트의 절대 경로 | raw/php-ini-core.md:426, raw/php-ini-core.md:544 |
+
+- php-cgi가 실행할 파일을 정확히 어느 변수로 찾는지는 문서에 없다 (**미확인**). `SCRIPT_FILENAME`과 `PATH_TRANSLATED`를 함께 설정한다 (**판단**).
+- `cgi.redirect_status_env`로 다른 변수 이름을 쓰게 할 수도 있지만 보안 주의가 붙어 있다 (raw/php-ini-core.md:558-564).
+- php-cgi는 기본 설정(`cgi.rfc2616_headers` = 0)에서 응답 코드를 RFC 3875 `Status:` 헤더로 보낸다 (raw/php-ini-core.md:434, raw/php-ini-core.md:568). 아래 3절의 Status 처리로 받는다. `cgi.nph` 기본값은 0이라 NPH로 동작하지 않는다 (raw/php-ini-core.md:430).
+- 위 값은 PHP 기본 설정 기준이다. 평가 PC의 php-cgi 설정은 **미확인**이다.
 
 ## 3. CGI 응답 파싱
 

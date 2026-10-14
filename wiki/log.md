@@ -165,3 +165,10 @@
 - 생성: tools/extract_div.py (id로 지정한 div만 추출, 사용자 댓글 등 제외)
 - 갱신: CLAUDE.md 도구 목록
 - 검증: php.net 페이지에서 일부러 공백을 지운 사본이 FAIL하는 것을 확인
+
+## [2026-10-15] ingest | PHP 매뉴얼 — cgi.force_redirect, core php.ini (CGI)
+- 생성: raw/php-cgi-force-redirect.md, raw/php-ini-core.md (HTML → markdown, extract_div → verify_md PASS), 각 .source.html, sources/php-cgi-force-redirect, sources/php-ini-core
+- 갱신: concepts/cgi ("php-cgi가 추가로 요구하는 변수" 절), overview (열린 질문에서 제거), index, source-wishlist
+- 해소: php-cgi 추가 변수 → REDIRECT_STATUS (force_redirect 기본 켜짐), SCRIPT_FILENAME
+- 남음: REDIRECT_STATUS 값의 조건, php-cgi가 스크립트를 찾는 변수, 평가 PC의 php.ini 값
+- 메모: 동작 페이지와 기본값 페이지가 짝이라 한 ingest로 묶음. 사용자 댓글은 비공식이라 제외

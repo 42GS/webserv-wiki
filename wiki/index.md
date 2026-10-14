@@ -35,6 +35,8 @@ updated: 2026-10-15
 | [[sources/rfc2046]] | RFC 2046 MIME — 5.1 multipart 문법 (구분자, 마지막 구분자, preamble) | `raw/rfc2046.txt` |
 | [[sources/rfc3986]] | RFC 3986 URI — percent-encoding, dot-segment 제거, 상대 경로 해석, 디코딩 순서 | `raw/rfc3986.txt` |
 | [[sources/nginx-rewrite-module]] | NGINX rewrite 모듈 — `return` 리다이렉트, 내부 리다이렉트 10회 상한 | `raw/nginx-rewrite-module.md` |
+| [[sources/php-cgi-force-redirect]] | PHP 매뉴얼 — cgi.force_redirect와 REDIRECT_STATUS | `raw/php-cgi-force-redirect.md` |
+| [[sources/php-ini-core]] | PHP 매뉴얼 — core php.ini 중 CGI 관련 설정과 기본값 | `raw/php-ini-core.md` |
 | [[sources/evaluation-sheet]] | 평가표 한국어 정리본 — **구버전, 영어 원문으로 대체됨** | `raw/evaluation-sheet.md` |
 
 ## Concepts
@@ -43,7 +45,7 @@ updated: 2026-10-15
 |---|---|
 | [[concepts/io-multiplexing]] | 단일 `poll()`·non-blocking·`errno` 금지 등 9개 규칙, EAGAIN 반복 모순, `revents` 처리표, POLLOUT 관리, recv·send 반환값 처리표, 허용 함수 |
 | [[concepts/configuration-file]] | 필수 기능 10개와 평가 테스트 대응, root=NGINX alias 방식, location 매칭, server 선택, 디렉토리 요청 처리 순서, NGINX 지시자 대응표, Port issues, virtual host |
-| [[concepts/cgi]] | 호출 절차 7단계, 메타변수 표, CGI 응답 파싱(4가지 유형·Status), 실패 처리(502·504), 자식 회수(waitpid) |
+| [[concepts/cgi]] | 호출 절차 7단계, 메타변수 표, CGI 응답 파싱(4가지 유형·Status), 실패 처리(502·504), 자식 회수(waitpid), php-cgi 추가 변수 |
 | [[concepts/http-features]] | 필수 기능, 메서드별 규칙(RFC 9110), 응답 헤더 규칙, HEAD·Date 쟁점 |
 | [[concepts/status-codes]] | 과제 상황별 status code 선택표 (정상·리다이렉트·4xx·5xx), RFC 근거 |
 | [[concepts/request-parsing]] | 요청줄 → 헤더 → 본문 길이 결정 → chunked 디코딩, 단계별 에러 코드 |
