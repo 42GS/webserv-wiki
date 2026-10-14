@@ -1,7 +1,7 @@
 ---
 title: subject vs 평가표 — 차이와 모순
 type: analysis
-sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/evaluation-sheet.md, raw/rfc9110.txt, raw/rfc9112.txt, raw/rfc3875.txt, raw/nginx-core-module.md, raw/posix-poll.md]
+sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/evaluation-sheet.md, raw/rfc9110.txt, raw/rfc9112.txt, raw/rfc3875.txt, raw/nginx-core-module.md, raw/posix-poll.md, raw/posix-waitpid.md]
 updated: 2026-10-15
 ---
 
@@ -62,6 +62,12 @@ updated: 2026-10-15
 - subject: errno 금지는 **read 또는 write 뒤**에 한정된다 (raw/subject.md:133). 평가표도 read/recv/write/send 뒤의 errno 검사를 0점으로 한다 (raw/evaluation-sheet-en.md:57).
 - 두 문장의 대상에 `poll()`은 없다. 그래서 `poll()` 실패 원인을 errno로 보는 것이 허용되는지는 문구만으로 판단할 수 없다 (**미확인**).
 - 판단: errno를 보지 않고도 처리할 수 있다. `poll()`이 -1을 돌려주면 로그만 남기고 다음 루프로 넘어간다. 평가표는 errno를 로그에 남기는 것은 허용한다 (raw/evaluation-sheet-en.md:57). 이렇게 하면 해석 문제를 피할 수 있다.
+
+### 1.9 waitpid 상태 매크로 (질문)
+
+- POSIX: `waitpid`가 돌려준 status는 `WIFEXITED`, `WEXITSTATUS`, `WIFSIGNALED`, `WTERMSIG` 같은 매크로로 해석한다 (raw/posix-waitpid.md:72-92).
+- subject: 매크로·헬퍼 사용을 명시적으로 허용한 것은 `poll()`과 그 동등 함수뿐이다 (raw/subject.md:138). `waitpid`는 허용 함수지만 (raw/subject.md:113) 그 매크로에 대한 언급은 없다.
+- 판단 보류 (**미확인**). 매크로 없이도 CGI 처리는 가능하다. 성공 여부는 CGI 출력 형식으로 판단하고 (→ [[concepts/cgi]] 5절), status는 로그용으로만 쓴다.
 
 ## 2. 평가표에만 있는 기준
 

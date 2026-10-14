@@ -1,7 +1,7 @@
 ---
 title: 안정성 (크래시·hang·누수)
 type: concept
-sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/posix-signal-h.md, raw/posix-send.md]
+sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/posix-signal-h.md, raw/posix-send.md, raw/posix-waitpid.md]
 updated: 2026-10-15
 ---
 
@@ -39,7 +39,7 @@ subject와 평가표 모두 "서버가 항상 살아 있어야 한다"를 가장
 | 시그널 | 기본 동작 | 과제에서 생기는 상황 | 처리 | 근거 |
 |---|---|---|---|---|
 | `SIGPIPE` | **비정상 종료** | 읽는 쪽이 없는 pipe에 씀 (CGI가 입력을 다 읽지 않고 종료), 연결이 끊긴 소켓에 `send` | `signal(SIGPIPE, SIG_IGN)`으로 무시 | raw/posix-signal-h.md:192-196, raw/posix-signal-h.md:296-298, raw/posix-signal-h.md:42-44 |
-| `SIGCHLD` | 무시 | CGI 자식 종료 | 기본 동작으로 둔다. 자식 회수는 `waitpid` | raw/posix-signal-h.md:146-154 |
+| `SIGCHLD` | 무시 | CGI 자식 종료 | 기본 동작으로 둔다. **`SIG_IGN`으로 바꾸면 안 된다**: 자식의 종료 상태를 받을 수 없게 된다 [XSI] (raw/posix-waitpid.md:323). 회수는 [[concepts/cgi]] "자식 회수" | raw/posix-signal-h.md:146-154 |
 | `SIGINT`, `SIGTERM` | 비정상 종료 | 평가자가 Ctrl-C로 서버를 끔 | 아래 "정리 후 종료" | raw/posix-signal-h.md:180-184, raw/posix-signal-h.md:216-220 |
 
 > [!danger] SIGPIPE

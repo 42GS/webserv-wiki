@@ -24,6 +24,7 @@ updated: 2026-10-15
 | [[sources/posix-signal-h]] | POSIX `<signal.h>` — 시그널 기본 동작 (SIGPIPE·SIGCHLD·SIGINT 등) | `raw/posix-signal-h.md` |
 | [[sources/posix-send]] | POSIX `send()` — EPIPE와 SIGPIPE, MSG_NOSIGNAL, 반환값 | `raw/posix-send.md` |
 | [[sources/posix-recv]] | POSIX `recv()` — 반환값 0·-1의 의미, 스트림의 메시지 경계 | `raw/posix-recv.md` |
+| [[sources/posix-waitpid]] | POSIX `wait()`·`waitpid()` — WNOHANG, 반환값, 종료 상태 매크로, SIGCHLD | `raw/posix-waitpid.md` |
 | [[sources/evaluation-sheet]] | 평가표 한국어 정리본 — **구버전, 영어 원문으로 대체됨** | `raw/evaluation-sheet.md` |
 
 ## Concepts
@@ -32,7 +33,7 @@ updated: 2026-10-15
 |---|---|
 | [[concepts/io-multiplexing]] | 단일 `poll()`·non-blocking·`errno` 금지 등 9개 규칙, EAGAIN 반복 모순, `revents` 처리표, POLLOUT 관리, recv·send 반환값 처리표, 허용 함수 |
 | [[concepts/configuration-file]] | 필수 기능 10개와 평가 테스트 대응, root=NGINX alias 방식, location 매칭, server 선택, NGINX 지시자 대응표, Port issues, virtual host |
-| [[concepts/cgi]] | 호출 절차 7단계, 메타변수 표, CGI 응답 파싱(4가지 유형·Status), 실패 처리(502·504) |
+| [[concepts/cgi]] | 호출 절차 7단계, 메타변수 표, CGI 응답 파싱(4가지 유형·Status), 실패 처리(502·504), 자식 회수(waitpid) |
 | [[concepts/http-features]] | 필수 기능, 메서드별 규칙(RFC 9110), 응답 헤더 규칙, HEAD·Date 쟁점 |
 | [[concepts/status-codes]] | 과제 상황별 status code 선택표 (정상·리다이렉트·4xx·5xx), RFC 근거 |
 | [[concepts/request-parsing]] | 요청줄 → 헤더 → 본문 길이 결정 → chunked 디코딩, 단계별 에러 코드 |
@@ -47,4 +48,4 @@ updated: 2026-10-15
 
 | 페이지 | 요약 |
 |---|---|
-| [[analysis/subject-vs-evaluation]] | 모순·제약(EAGAIN vs errno, HEAD, Date, half-close, HTTP 버전, REMOTE_ADDR, poll 실패 errno), 정리본 vs 원문 차이표, 해소된 미확인 |
+| [[analysis/subject-vs-evaluation]] | 모순·제약(EAGAIN vs errno, HEAD, Date, half-close, HTTP 버전, REMOTE_ADDR, poll 실패 errno, waitpid 매크로), 정리본 vs 원문 차이표, 해소된 미확인 |

@@ -1,7 +1,7 @@
 ---
 title: CGI
 type: concept
-sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc3875.txt, raw/rfc9112.txt, raw/rfc9110.txt, raw/posix-poll.md, raw/posix-signal-h.md]
+sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc3875.txt, raw/rfc9112.txt, raw/rfc9110.txt, raw/posix-poll.md, raw/posix-signal-h.md, raw/posix-waitpid.md]
 updated: 2026-10-15
 ---
 
@@ -129,8 +129,33 @@ updated: 2026-10-15
 | 출력이 CGI 응답 형식에 맞지 않음 (CGI 필드 없음, 헤더 문법 오류 등), 출력 없이 종료 | 502 | raw/rfc3875.txt:1247, raw/rfc3875.txt:1355-1357, 502 정의 (raw/rfc9110.txt:7882-7884) |
 | `fork`·`pipe` 실패 등 서버 내부 문제 | 500 | raw/rfc9110.txt:7865-7867 |
 
-- 타임아웃 시 `kill`로 종료하고 `waitpid`로 회수한다 (raw/subject.md:113). 스크립트가 잡거나 무시할 수 없는 시그널은 `SIGKILL`이다 (raw/posix-signal-h.md:186-190). `SIGTERM`은 스크립트가 잡을 수 있다 (raw/posix-signal-h.md:216-220). 회수하지 않으면 좀비 프로세스가 쌓인다. `WNOHANG` 동작은 POSIX 문서로 확인 (**미확인**, [[source-wishlist]] P2).
+- 타임아웃 시 `kill`로 종료하고 `waitpid`로 회수한다 (raw/subject.md:113). 스크립트가 잡거나 무시할 수 없는 시그널은 `SIGKILL`이다 (raw/posix-signal-h.md:186-190). `SIGTERM`은 스크립트가 잡을 수 있다 (raw/posix-signal-h.md:216-220).
 - 스크립트가 0이 아닌 종료 코드로 끝났지만 출력이 올바른 경우의 처리는 RFC가 정하지 않는다. 출력 기준으로 판단한다 (**판단**).
+
+### 자식 회수 (`waitpid`)
+
+호출 형태: `waitpid(자식pid, &status, WNOHANG)`.
+
+| 요소 | 이유 | 근거 |
+|---|---|---|
+| 자식 pid를 지정 | pid가 양수면 그 자식 하나만 대상. `wait()`나 pid -1은 다른 자식까지 회수할 수 있어 비권장 | raw/posix-waitpid.md:44, raw/posix-waitpid.md:321 |
+| `WNOHANG` | 끝난 자식이 없으면 호출한 쪽을 멈추지 않음. 없으면 이벤트 루프 전체가 자식 종료까지 멈춘다 | raw/posix-waitpid.md:56-58 |
+
+| 반환값 | 의미 | 할 일 | 근거 |
+|---|---|---|---|
+| 자식 pid | 상태를 회수함 | `status`로 종료 방식 확인 후 CGI 정리 | raw/posix-waitpid.md:132 |
+| 0 | `WNOHANG`이고 아직 끝나지 않음 | 다음 루프에서 다시 확인 | raw/posix-waitpid.md:132 |
+| -1 | 시그널에 의한 중단(`EINTR`), 이미 회수했거나 자식이 아님(`ECHILD`) 등 | errno를 보지 않고 그 CGI를 회수된 것으로 처리 (**판단**) | raw/posix-waitpid.md:132, raw/posix-waitpid.md:150-156 |
+
+종료 상태 해석 (raw/posix-waitpid.md:74-92):
+- `WIFEXITED(status)`가 참이면 정상 종료, `WEXITSTATUS(status)`가 종료 코드. status가 0이면 `exit(0)` 등으로 끝난 것이다 (raw/posix-waitpid.md:64-70).
+- `WIFSIGNALED(status)`가 참이면 잡지 않은 시그널로 종료, `WTERMSIG(status)`가 그 시그널. 타임아웃 후 보낸 `SIGKILL`이 여기에 해당한다.
+- subject가 매크로 사용을 명시적으로 허용한 것은 `poll()` 계열뿐이다 (raw/subject.md:138). `waitpid`용 매크로 허용 여부는 [[analysis/subject-vs-evaluation]] 1.9절.
+
+주의:
+- `SIGCHLD`를 `SIG_IGN`으로 두면 자식이 끝나도 종료 상태를 받을 수 없다 [XSI] (raw/posix-waitpid.md:323). `SIGCHLD`는 기본 동작으로 둔다 → [[concepts/resilience]].
+- `waitpid`는 직접 만든 자식만 대상으로 한다. 스크립트가 만든 손자 프로세스는 회수할 수 없다 (raw/posix-waitpid.md:329).
+- 회수하지 않은 자식이 좀비로 남는다는 정의는 이 문서에 없다 (**미확인**, [[source-wishlist]] P2 `_Exit()`).
 
 ## 보너스
 
