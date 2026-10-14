@@ -140,3 +140,8 @@
 - 생성: raw/rfc7578.txt (원문 그대로), sources/rfc7578, concepts/file-upload
 - 갱신: concepts/security (filename, 실행 가능한 업로드), concepts/configuration-file·http-features·status-codes (file-upload 연결), overview, index, source-wishlist (P2→P1 승격 후 체크, RFC 2046 추가)
 - 메모: lint에서 드러난 업로드 공백을 채움. 마지막 구분자 문법은 RFC 2046 소관이라 미확인
+
+## [2026-10-15] ingest | RFC 2046 — MIME Media Types (5.1 Multipart)
+- 생성: raw/rfc2046.txt (원문 그대로), sources/rfc2046 (5.1절만 다룸)
+- 갱신: concepts/file-upload ("파싱 규칙" 표, 파일 끝 CRLF 경고, part 헤더 문자 판단, 처리 순서 3단계 구체화), sources/rfc7578, overview, index, source-wishlist
+- 해소: 마지막 구분자 문법 `--boundary--` (raw/rfc2046.txt:1095-1101, 1251)

@@ -32,6 +32,7 @@ updated: 2026-10-15
 | [[sources/nginx-index-module]] | NGINX index 모듈 — `/`로 끝나는 요청, 파일 목록 순서, 내부 리다이렉트 | `raw/nginx-index-module.md` |
 | [[sources/nginx-autoindex-module]] | NGINX autoindex 모듈 — index가 없을 때 리스팅, 기본 off, 형식 | `raw/nginx-autoindex-module.md` |
 | [[sources/rfc7578]] | RFC 7578 multipart/form-data — part 구조, Content-Disposition, filename 주의 | `raw/rfc7578.txt` |
+| [[sources/rfc2046]] | RFC 2046 MIME — 5.1 multipart 문법 (구분자, 마지막 구분자, preamble) | `raw/rfc2046.txt` |
 | [[sources/evaluation-sheet]] | 평가표 한국어 정리본 — **구버전, 영어 원문으로 대체됨** | `raw/evaluation-sheet.md` |
 
 ## Concepts
@@ -45,7 +46,7 @@ updated: 2026-10-15
 | [[concepts/status-codes]] | 과제 상황별 status code 선택표 (정상·리다이렉트·4xx·5xx), RFC 근거 |
 | [[concepts/request-parsing]] | 요청줄 → 헤더 → 본문 길이 결정 → chunked 디코딩, 단계별 에러 코드 |
 | [[concepts/connection-management]] | keep-alive 판단, 413 이후 처리, pipelining 순서, 타임아웃 4종, lingering close와 `shutdown` 쟁점 |
-| [[concepts/file-upload]] | 업로드 요구사항, multipart 구조와 처리 순서, filename 처리, 업로드 위치와 CGI 위험, 열린 설계 질문 |
+| [[concepts/file-upload]] | 업로드 요구사항, multipart 구조·파싱 규칙(RFC 2046)과 처리 순서, filename 처리, 업로드 위치와 CGI 위험, 열린 설계 질문 |
 | [[concepts/security]] | 경로 공격(`..`), 명령 주입, 길이 공격, response splitting, request smuggling |
 | [[concepts/resilience]] | 크래시·hang·누수 금지 요구, 시그널 처리표 (SIGPIPE 무시, SIGINT 정리 후 종료) |
 | [[concepts/testing]] | tester·siege·curl 등 도구, siege 옵션·기본 설정과 Availability의 의미, 평가 시연 준비 |
