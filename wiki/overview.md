@@ -8,7 +8,7 @@ updated: 2026-10-15
 # webserv 개요
 
 C++98로 HTTP 서버를 만드는 42 과제. 실행은 `./webserv [configuration file]` (raw/subject.md:118).
-근거 소스: [[sources/subject]], [[sources/evaluation-sheet-en]] (평가표 영어 원문), [[sources/rfc9110]] (HTTP 의미론), [[sources/rfc9112]] (HTTP/1.1 메시지·연결), [[sources/rfc3875]] (CGI/1.1), [[sources/rfc7578]], [[sources/rfc2046]] (multipart/form-data), [[sources/nginx-core-module]], [[sources/nginx-request-processing]], [[sources/nginx-index-module]], [[sources/nginx-autoindex-module]] (NGINX 비교 기준), [[sources/posix-poll]], [[sources/posix-signal-h]], [[sources/posix-send]], [[sources/posix-recv]], [[sources/posix-waitpid]], [[sources/posix-bind]], [[sources/posix-exit]] (POSIX), [[sources/siege]], [[sources/siegerc]] (부하 테스트 도구). 구버전 한국어 정리본 [[sources/evaluation-sheet]]은 이력용이다.
+근거 소스: [[sources/subject]], [[sources/evaluation-sheet-en]] (평가표 영어 원문), [[sources/rfc9110]] (HTTP 의미론), [[sources/rfc9112]] (HTTP/1.1 메시지·연결), [[sources/rfc3875]] (CGI/1.1), [[sources/rfc7578]], [[sources/rfc2046]] (multipart/form-data), [[sources/rfc3986]] (URI), [[sources/nginx-core-module]], [[sources/nginx-request-processing]], [[sources/nginx-index-module]], [[sources/nginx-autoindex-module]] (NGINX 비교 기준), [[sources/posix-poll]], [[sources/posix-signal-h]], [[sources/posix-send]], [[sources/posix-recv]], [[sources/posix-waitpid]], [[sources/posix-bind]], [[sources/posix-exit]] (POSIX), [[sources/siege]], [[sources/siegerc]] (부하 테스트 도구). 구버전 한국어 정리본 [[sources/evaluation-sheet]]은 이력용이다.
 
 ## 무엇이 점수를 결정하나
 
@@ -44,6 +44,7 @@ C++98로 HTTP 서버를 만드는 42 과제. 실행은 `./webserv [configuration
 - siege의 Availability는 소켓 연결 성공률이다. 4xx·5xx는 깎이지 않고 연결 거부·끊김·타임아웃이 깎인다. 기본 설정의 siege는 요청마다 새 연결을 맺으므로 `accept`와 응답 후 종료 처리가 핵심이다 → [[concepts/testing]].
 - 브라우저 업로드는 `multipart/form-data`다. 구분자 앞의 CRLF는 파일 내용이 아니다(포함하면 파일이 손상된다). `filename`은 경로를 버리고 덮어쓰기를 막으며, 업로드 위치에서는 CGI를 실행하지 않는다 → [[concepts/file-upload]].
 - 문서로 정해지지 않는 응답은 판단으로 확정했다: 끝에 `/`가 없는 디렉토리 요청은 301, 리스팅 off + index 없음은 403. Host 없는 HTTP/1.1은 400, 막힌 메서드는 405 + `Allow` (RFC MUST) → [[concepts/configuration-file]], [[concepts/status-codes]].
+- 요청 경로는 query 분리 → 세그먼트 분할 → 한 번만 디코딩 → `%00`·`%2F` 거부 → `..` 제거 → 매핑 → root 안인지 확인 순서로 처리한다 → [[concepts/security]].
 - 시연 준비물(기능별 설정 파일, 정적 사이트, CGI 정상/에러/무한 루프 스크립트)도 제출물이다 (raw/subject.md:184).
 
 ## 열린 질문

@@ -1,7 +1,7 @@
 ---
 title: 요청 파싱 — 요청줄부터 chunked까지
 type: concept
-sources: [raw/rfc9112.txt, raw/rfc9110.txt, raw/subject.md, raw/nginx-request-processing.md, raw/posix-recv.md]
+sources: [raw/rfc9112.txt, raw/rfc9110.txt, raw/subject.md, raw/nginx-request-processing.md, raw/posix-recv.md, raw/rfc3986.txt]
 updated: 2026-10-15
 ---
 
@@ -46,6 +46,7 @@ RFC 9112 기준으로 서버가 요청을 읽는 순서대로 정리했다. 단�
 - 일반 요청은 **origin-form**: `absolute-path [ "?" query ]`. 경로가 비면 클라이언트가 `/`를 보낸다 (raw/rfc9112.txt:454-461).
 - 서버는 **absolute-form**(`GET http://host/path HTTP/1.1`)도 받아들여야 한다 (MUST, raw/rfc9112.txt:515-516). 이때 origin server는 Host 헤더를 무시하고 target의 host 정보를 쓴다 (MUST, raw/rfc9112.txt:508-511).
 - `?` 뒤의 query는 CGI에 전달해야 하는 정보다 (raw/subject.md:178) → [[concepts/cgi]].
+- path는 첫 `?`에서 끝난다 (raw/rfc3986.txt:1204-1206). path와 query를 **먼저 나눈 뒤** path만 디코딩한다. 디코딩을 먼저 하면 `%3F`가 `?`로 바뀌어 query 경계로 오해된다 (raw/rfc3986.txt:754-758). 디코딩과 `..` 처리 순서는 [[concepts/security]] "경로 정규화 절차".
 
 ## 3. 헤더
 

@@ -1,7 +1,7 @@
 ---
 title: 설정 파일
 type: concept
-sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc9110.txt, raw/nginx-core-module.md, raw/nginx-request-processing.md, raw/posix-bind.md, raw/nginx-index-module.md, raw/nginx-autoindex-module.md, raw/evaluation-sheet.md]
+sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc9110.txt, raw/nginx-core-module.md, raw/nginx-request-processing.md, raw/posix-bind.md, raw/nginx-index-module.md, raw/nginx-autoindex-module.md, raw/evaluation-sheet.md, raw/rfc3986.txt]
 updated: 2026-10-15
 ---
 
@@ -77,7 +77,7 @@ updated: 2026-10-15
 
 - **끝에 `/`가 없는 디렉토리 요청을 301로 보내는 이유 (판단):**
   - NGINX는 `/`로 끝나는 prefix location에 `/` 없는 URI가 오면 `/`를 붙인 URI로 301을 보낸다. 다만 문서상 이 동작은 `proxy_pass` 등을 쓰는 location에 대한 것이라 유사 사례다 (raw/nginx-core-module.md:1115).
-  - 리스팅이나 index 페이지 안의 상대 링크는 요청 URI를 기준으로 해석된다. `/dir`에서 `a.txt`는 `/a.txt`로, `/dir/`에서는 `/dir/a.txt`로 해석되므로 `/`가 있어야 링크가 맞는다. 상대 참조 해석 규칙은 RFC 3986 5절 소관이다 (**미확인**, [[source-wishlist]] P2).
+  - 리스팅이나 index 페이지 안의 상대 링크는 기준 URI 경로의 **마지막 세그먼트를 뺀 부분**에 붙는다 (raw/rfc3986.txt:1799-1803). 그래서 `/dir`에서 `a.txt`는 `/a.txt`로, `/dir/`에서는 `/dir/a.txt`로 해석된다 (예시: raw/rfc3986.txt:1970). 기준 URI는 응답을 받은 URI이고, 리다이렉트를 거쳤다면 마지막 URI다 (raw/rfc3986.txt:1640-1645). 따라서 `/dir` → 301 → `/dir/` 뒤에는 링크가 맞게 해석된다.
   - 301에는 `Location`을 보낸다 (SHOULD, raw/rfc9110.txt:7378-7379).
 - 리스팅 형식은 평가가 브라우저로 시도하므로 (raw/evaluation-sheet-en.md:101) HTML이면 된다. NGINX 기본도 html이다 (raw/nginx-autoindex-module.md:63).
 - 리스팅에 무엇을 보일지는 subject가 정하지 않는다 (raw/subject.md:170). NGINX는 크기와 시간도 보인다 (raw/nginx-autoindex-module.md:54, raw/nginx-autoindex-module.md:88). 시간 표시에는 시간 함수가 필요해 [[analysis/subject-vs-evaluation]] 1.4절의 질문에 걸린다. 이름만 보여도 요구사항은 충족한다 (**판단**).

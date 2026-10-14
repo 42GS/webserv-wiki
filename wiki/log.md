@@ -150,3 +150,8 @@
 - 닫음 (RFC 기준 확정): Host 없는 HTTP/1.1 → 400 (raw/rfc9112.txt:445-448), 막힌 메서드 → 405 + Allow (raw/rfc9110.txt:7603-7607)
 - 판단 확정, 실측은 선택으로 내림: 끝에 `/`가 없는 디렉토리 요청 → 301 (근거: NGINX 유사 동작 raw/nginx-core-module.md:1115, 상대 링크 해석은 RFC 3986 미확인), 리스팅 off + index 없음 → 403
 - 갱신: source-wishlist 4-1, concepts/configuration-file·request-parsing·status-codes, overview, sources/nginx-core-module·nginx-index-module·nginx-autoindex-module
+
+## [2026-10-15] ingest | RFC 3986 — URI Generic Syntax
+- 생성: raw/rfc3986.txt (원문 그대로), sources/rfc3986
+- 갱신: concepts/security (1절을 "경로 정규화 절차" 8단계로 재작성, NGINX와 순서 차이), concepts/configuration-file (301 판단 근거), concepts/request-parsing (query 분리 후 디코딩), overview, index, source-wishlist
+- 해소: `%2e%2e` 디코딩 규칙 (raw/rfc3986.txt:735-743), 상대 링크 해석으로 본 301 근거 (raw/rfc3986.txt:1799-1803, 1640-1645)
