@@ -43,6 +43,7 @@ C++98로 HTTP 서버를 만드는 42 과제. 실행은 `./webserv [configuration
 - 같은 포트를 쓰는 webserv를 하나 더 띄우면 `bind`가 `EADDRINUSE`로 실패한다. 이때 에러 메시지와 함께 정상 종료해야 한다. 한 설정 안의 중복은 파싱 단계에서 거부한다 → [[concepts/configuration-file]].
 - siege의 Availability는 소켓 연결 성공률이다. 4xx·5xx는 깎이지 않고 연결 거부·끊김·타임아웃이 깎인다. 기본 설정의 siege는 요청마다 새 연결을 맺으므로 `accept`와 응답 후 종료 처리가 핵심이다 → [[concepts/testing]].
 - 브라우저 업로드는 `multipart/form-data`다. 구분자 앞의 CRLF는 파일 내용이 아니다(포함하면 파일이 손상된다). `filename`은 경로를 버리고 덮어쓰기를 막으며, 업로드 위치에서는 CGI를 실행하지 않는다 → [[concepts/file-upload]].
+- 문서로 정해지지 않는 응답은 판단으로 확정했다: 끝에 `/`가 없는 디렉토리 요청은 301, 리스팅 off + index 없음은 403. Host 없는 HTTP/1.1은 400, 막힌 메서드는 405 + `Allow` (RFC MUST) → [[concepts/configuration-file]], [[concepts/status-codes]].
 - 시연 준비물(기능별 설정 파일, 정적 사이트, CGI 정상/에러/무한 루프 스크립트)도 제출물이다 (raw/subject.md:184).
 
 ## 열린 질문
@@ -54,5 +55,4 @@ C++98로 HTTP 서버를 만드는 42 과제. 실행은 `./webserv [configuration
 - `shutdown` 없이 연결을 안전하게 닫는 방법 → [[concepts/connection-management]]
 - read/write 외 함수(`poll`, `bind`)의 errno를 봐도 되는지, `waitpid` 매크로를 써도 되는지 → [[analysis/subject-vs-evaluation]]
 - `php-cgi`가 추가로 요구하는 환경 변수 (PHP 매뉴얼 확인 필요) → [[concepts/cgi]]
-- NGINX 실측이 필요한 동작: 끝에 `/`가 없는 디렉토리 요청의 301, 리스팅 off + index 없는 디렉토리의 코드, `limit_except`로 막힌 메서드의 코드, Host 없는 HTTP/1.1 요청의 코드 → [[source-wishlist]]
 - index 파일이 CGI 확장자일 때 CGI로 실행할지 → [[concepts/configuration-file]]

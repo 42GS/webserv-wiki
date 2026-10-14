@@ -61,7 +61,7 @@ RFC 9112 기준으로 서버가 요청을 읽는 순서대로 정리했다. 단�
 > [!note] Host가 없을 때
 > - **HTTP/1.1** 요청: 400 (MUST, raw/rfc9112.txt:445-448).
 > - **HTTP/1.0** 요청: RFC 9112의 400 규칙은 HTTP/1.1 요청에만 적용된다 (raw/rfc9112.txt:445-446). NGINX는 Host가 없는 요청을 그 포트의 default server로 보낸다 (raw/nginx-request-processing.md:34). 이 경우 default server로 처리한다.
-> - NGINX가 Host 없는 HTTP/1.1 요청에 실제로 400을 보내는지는 문서에 없다 (**미확인**, [[source-wishlist]] NGINX 실측).
+> - NGINX가 Host 없는 HTTP/1.1 요청에 실제로 400을 보내는지는 문서에 없지만, RFC 9112가 400을 MUST로 정하므로 이 과제는 400으로 확정한다.
 > - server 선택 순서는 [[concepts/configuration-file]] "server 선택" 절.
 
 - 헤더 전체 크기 상한은 RFC가 정하지 않는다. 길이 공격 대비로 서버가 정한다 → [[concepts/security]].

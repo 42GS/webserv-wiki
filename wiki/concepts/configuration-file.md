@@ -70,11 +70,15 @@ updated: 2026-10-15
 
 | 순서 | 상황 | 처리 | 근거 |
 |---|---|---|---|
-| 1 | 끝에 `/`가 없는 디렉토리 요청 | index·autoindex 모듈 모두 다루지 않는다. 301 여부는 **미확인** (NGINX 실측) | raw/nginx-index-module.md:12, raw/nginx-autoindex-module.md:12 |
+| 1 | 끝에 `/`가 없는 디렉토리 요청 | index·autoindex 모듈 모두 다루지 않는다. 이 과제는 끝에 `/`를 붙인 경로로 **301** (**판단**, 아래 설명) | raw/nginx-index-module.md:12, raw/nginx-autoindex-module.md:12 |
 | 2 | `/`로 끝나는 디렉토리 요청 | index 모듈이 index 파일을 순서대로 찾는다. 찾으면 그 파일로 내부 리다이렉트 | raw/nginx-index-module.md:40, raw/nginx-index-module.md:46 |
 | 3 | index 파일이 없음 | 보통 autoindex 모듈로 넘어간다. `autoindex on`이면 리스팅 | raw/nginx-autoindex-module.md:12 |
-| 4 | index 파일이 없고 `autoindex off` | 응답 코드 **미확인** (NGINX 실측). 이 과제에서는 403으로 판단 → [[concepts/status-codes]] | — |
+| 4 | index 파일이 없고 `autoindex off` | **403** (**판단**). RFC는 코드를 정하지 않고 NGINX 문서에도 없다 → [[concepts/status-codes]] | raw/rfc9110.txt:7571-7572 |
 
+- **끝에 `/`가 없는 디렉토리 요청을 301로 보내는 이유 (판단):**
+  - NGINX는 `/`로 끝나는 prefix location에 `/` 없는 URI가 오면 `/`를 붙인 URI로 301을 보낸다. 다만 문서상 이 동작은 `proxy_pass` 등을 쓰는 location에 대한 것이라 유사 사례다 (raw/nginx-core-module.md:1115).
+  - 리스팅이나 index 페이지 안의 상대 링크는 요청 URI를 기준으로 해석된다. `/dir`에서 `a.txt`는 `/a.txt`로, `/dir/`에서는 `/dir/a.txt`로 해석되므로 `/`가 있어야 링크가 맞는다. 상대 참조 해석 규칙은 RFC 3986 5절 소관이다 (**미확인**, [[source-wishlist]] P2).
+  - 301에는 `Location`을 보낸다 (SHOULD, raw/rfc9110.txt:7378-7379).
 - 리스팅 형식은 평가가 브라우저로 시도하므로 (raw/evaluation-sheet-en.md:101) HTML이면 된다. NGINX 기본도 html이다 (raw/nginx-autoindex-module.md:63).
 - 리스팅에 무엇을 보일지는 subject가 정하지 않는다 (raw/subject.md:170). NGINX는 크기와 시간도 보인다 (raw/nginx-autoindex-module.md:54, raw/nginx-autoindex-module.md:88). 시간 표시에는 시간 함수가 필요해 [[analysis/subject-vs-evaluation]] 1.4절의 질문에 걸린다. 이름만 보여도 요구사항은 충족한다 (**판단**).
 
@@ -95,7 +99,7 @@ subject 기능을 NGINX에서는 어떤 지시자로 하는지 정리했다. 설
 | 디렉토리 리스팅 | `autoindex` (autoindex 모듈) | 기본 `off`. 켜면 `/`로 끝나는 요청에 리스팅을 만든다. 기본 형식 html | raw/nginx-autoindex-module.md:12, raw/nginx-autoindex-module.md:35, raw/nginx-autoindex-module.md:63 |
 | 기본 파일 (index) | `index` (index 모듈) | `/`로 끝나는 요청을 처리. 기본값 `index.html`. 여러 파일을 적은 순서대로 확인. 찾으면 **내부 리다이렉트** | raw/nginx-index-module.md:12, raw/nginx-index-module.md:34-35, raw/nginx-index-module.md:40, raw/nginx-index-module.md:46 |
 
-- `limit_except`로 막힌 메서드에 NGINX가 어떤 코드를 보내는지는 문서로 확인하지 못했다 (**미확인**, NGINX 실측 필요). 이 과제에서는 RFC 기준 405 + `Allow`를 따른다 (raw/rfc9110.txt:7603-7607).
+- `limit_except`로 막힌 메서드에 NGINX가 어떤 코드를 보내는지는 문서에 없다. 이 과제는 RFC 기준 405 + `Allow`로 정한다 (MUST, raw/rfc9110.txt:7603-7607). NGINX 동작과 상관없이 RFC가 답을 정한다.
 - `error_page` 처리 중 또 에러가 나면 마지막 에러의 코드를 보낸다 (raw/nginx-core-module.md:568).
 
 ## 라우트 규칙을 응답으로 옮길 때 (RFC 9110)

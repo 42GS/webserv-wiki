@@ -145,3 +145,8 @@
 - 생성: raw/rfc2046.txt (원문 그대로), sources/rfc2046 (5.1절만 다룸)
 - 갱신: concepts/file-upload ("파싱 규칙" 표, 파일 끝 CRLF 경고, part 헤더 문자 판단, 처리 순서 3단계 구체화), sources/rfc7578, overview, index, source-wishlist
 - 해소: 마지막 구분자 문법 `--boundary--` (raw/rfc2046.txt:1095-1101, 1251)
+
+## [2026-10-15] schema | NGINX 실측 4건 정리
+- 닫음 (RFC 기준 확정): Host 없는 HTTP/1.1 → 400 (raw/rfc9112.txt:445-448), 막힌 메서드 → 405 + Allow (raw/rfc9110.txt:7603-7607)
+- 판단 확정, 실측은 선택으로 내림: 끝에 `/`가 없는 디렉토리 요청 → 301 (근거: NGINX 유사 동작 raw/nginx-core-module.md:1115, 상대 링크 해석은 RFC 3986 미확인), 리스팅 off + index 없음 → 403
+- 갱신: source-wishlist 4-1, concepts/configuration-file·request-parsing·status-codes, overview, sources/nginx-core-module·nginx-index-module·nginx-autoindex-module
