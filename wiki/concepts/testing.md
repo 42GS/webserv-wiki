@@ -1,7 +1,7 @@
 ---
 title: 테스트 도구와 평가 시연
 type: concept
-sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/siege.pod]
+sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/siege.pod, raw/siegerc.in]
 updated: 2026-10-15
 ---
 
@@ -59,9 +59,23 @@ curl -X POST -H "Content-Type: plain/text" \
 - Transactions는 리다이렉트와 페이지 요소 요청까지 센다 (raw/siege.pod:365-371). 평가는 빈 페이지라 요소가 없다.
 - Successful transactions는 응답 코드가 400 미만인 횟수다 (raw/siege.pod:411-412).
 
-### keep-alive
+### 기본 설정 (siegerc.in 템플릿)
 
-- 매뉴얼에는 연결 재사용(keep-alive) 설정이 나오지 않는다. 설정 파일로 정하는 속성으로 보인다 (raw/siege.pod:18-20). 기본 설정 템플릿 `doc/siegerc.in`으로 확인한다 (**미확인**, [[source-wishlist]]).
+| 설정 | 기본값 | 서버에 주는 의미 | 근거 |
+|---|---|---|---|
+| `connection` | `close` | **요청마다 새 TCP 연결.** keep-alive는 권장하지 않음 | raw/siegerc.in:255-268 |
+| `protocol` | `HTTP/1.1` | HTTP/1.1 파싱 규칙 적용 (Host 필수 등) → [[concepts/request-parsing]] | raw/siegerc.in:213 |
+| `timeout` | 30초 | 응답이 이보다 늦으면 연결 실패로 집계 → Availability 하락 | raw/siegerc.in:353-354 |
+| `failures` | 1024 | 연결 실패가 이만큼 쌓이면 siege 중단. 4xx·5xx는 세지 않음 | raw/siegerc.in:381-389 |
+| `concurrent` / `limit` | 25 / 255 | 기본 동시 사용자 / 상한 | raw/siegerc.in:277, raw/siegerc.in:202 |
+
+- 템플릿이므로 평가 PC의 실제 설정 파일과 다를 수 있다 (**미확인**). 평가 전에 평가자와 `~/.siege/siege.conf`의 `connection`, `protocol`, `timeout`을 함께 확인하면 좋다.
+- `delay` 기본값은 매뉴얼(0.5초, raw/siege.pod:186-187)과 템플릿(0.0, raw/siegerc.in:350)이 다르다. 평가는 `-b`라서 영향이 없다.
+
+### 서버 구현에 주는 결론
+
+- 기본 설정의 siege는 요청마다 연결을 새로 맺는다 (raw/siegerc.in:268). 그래서 99.5%를 좌우하는 것은 **`accept` 처리, 응답 후 연결 종료, 연결이 몰릴 때 거부되지 않는지**다.
+- siege가 요청에 `Connection: close` 헤더를 실제로 넣는지는 이 파일에 없다 (**미확인**). 넣는다면 서버는 응답 후 종료를 시작해야 한다 (MUST, raw/rfc9112.txt:1521-1526) → [[concepts/connection-management]].
 
 ## 권장 사항
 

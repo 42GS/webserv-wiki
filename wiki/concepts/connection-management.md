@@ -1,7 +1,7 @@
 ---
 title: 연결 관리 — keep-alive, 종료, 타임아웃
 type: concept
-sources: [raw/rfc9112.txt, raw/subject.md, raw/evaluation-sheet-en.md, raw/nginx-core-module.md]
+sources: [raw/rfc9112.txt, raw/subject.md, raw/evaluation-sheet-en.md, raw/nginx-core-module.md, raw/siegerc.in]
 updated: 2026-10-15
 ---
 
@@ -21,7 +21,7 @@ HTTP/1.1은 기본이 persistent connection이다. 구현은 이를 지원하는
 - 연결을 유지하려면 모든 메시지가 자체 길이 정보(`Content-Length` 또는 chunked)를 가져야 한다 (raw/rfc9112.txt:1372-1374). 응답에 길이를 넣지 않으면 연결 종료로 끝을 알려야 하므로 유지할 수 없다 (raw/rfc9112.txt:983-986).
 
 > [!note] siege와 keep-alive
-> 평가는 `siege -b`로 availability 99.5% 초과, 무한 실행을 요구한다 (raw/evaluation-sheet-en.md:114, raw/evaluation-sheet-en.md:117). siege 매뉴얼에는 keep-alive 설정이 없다. 설정 파일로 정하는 속성으로 보이며, 기본값은 `doc/siegerc.in`으로 확인한다 (**미확인**, [[source-wishlist]]). 어느 쪽이든 위 판단 규칙을 지키면 된다. Availability가 무엇을 재는지는 [[concepts/testing]] siege 절.
+> 평가는 `siege -b`로 availability 99.5% 초과, 무한 실행을 요구한다 (raw/evaluation-sheet-en.md:114, raw/evaluation-sheet-en.md:117). siege 기본 설정 템플릿은 `connection = close`다 (raw/siegerc.in:268). 기본 설정이라면 **요청마다 새 연결**이 생기므로, 연결 재사용보다 `accept`와 응답 후 종료 처리가 중요하다. 설치된 설정 파일이 템플릿과 같은지는 **미확인**이다. 어느 쪽이든 위 판단 규칙을 지키면 된다. Availability가 무엇을 재는지는 [[concepts/testing]] siege 절.
 
 ## 요청 본문을 다 읽지 않고 응답할 때 (413 등)
 

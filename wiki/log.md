@@ -105,3 +105,9 @@
 - 갱신: concepts/testing (siege 절: 평가 조건, 옵션표, Availability의 의미, keep-alive), concepts/resilience (99.5% 기준의 실체), concepts/connection-management (keep-alive 미확인 갱신), overview, index, source-wishlist (siegerc.in 추가)
 - 해소: -b 의미 (raw/siege.pod:199-202), Availability 정의 (raw/siege.pod:373-378)
 - 메모: Availability 계산식 문장은 원문 표현이 앞 문장과 맞지 않아 판단으로 표시. keep-alive는 siegerc.in으로 넘김
+
+## [2026-10-15] ingest | siege 기본 설정 템플릿 (siegerc.in)
+- 생성: raw/siegerc.in (원문 그대로, 커밋 9d9c08f), sources/siegerc
+- 갱신: concepts/testing (기본 설정표, 서버 구현에 주는 결론), concepts/connection-management (keep-alive 해소), concepts/resilience, overview, index, source-wishlist
+- 해소: siege 기본 keep-alive 여부 → connection = close (raw/siegerc.in:268). 단 템플릿이라 설치본과 같은지는 미확인
+- 모순: delay 기본값 매뉴얼 0.5초 vs 템플릿 0.0
