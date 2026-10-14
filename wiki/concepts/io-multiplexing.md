@@ -1,7 +1,7 @@
 ---
 title: I/O 멀티플렉싱과 non-blocking 규칙
 type: concept
-sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/posix-poll.md, raw/posix-send.md, raw/posix-recv.md]
+sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/posix-poll.md, raw/posix-send.md, raw/posix-recv.md, raw/evaluation-sheet.md]
 updated: 2026-10-15
 ---
 

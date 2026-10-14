@@ -1,7 +1,7 @@
 ---
 title: webserv 개요
 type: overview
-sources: [raw/subject.md, raw/evaluation-sheet-en.md]
+sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc9110.txt]
 updated: 2026-10-15
 ---
 
@@ -53,5 +53,5 @@ C++98로 HTTP 서버를 만드는 42 과제. 실행은 `./webserv [configuration
 - `shutdown` 없이 연결을 안전하게 닫는 방법 → [[concepts/connection-management]]
 - read/write 외 함수(`poll`, `bind`)의 errno를 봐도 되는지, `waitpid` 매크로를 써도 되는지 → [[analysis/subject-vs-evaluation]]
 - `php-cgi`가 추가로 요구하는 환경 변수 (PHP 매뉴얼 확인 필요) → [[concepts/cgi]]
-- NGINX 실측이 필요한 동작: 끝에 `/`가 없는 디렉토리 요청의 301, `limit_except`로 막힌 메서드의 코드, Host 없는 HTTP/1.1 요청의 코드 → [[source-wishlist]]
+- NGINX 실측이 필요한 동작: 끝에 `/`가 없는 디렉토리 요청의 301, 리스팅 off + index 없는 디렉토리의 코드, `limit_except`로 막힌 메서드의 코드, Host 없는 HTTP/1.1 요청의 코드 → [[source-wishlist]]
 - index 파일이 CGI 확장자일 때 CGI로 실행할지 → [[concepts/configuration-file]]

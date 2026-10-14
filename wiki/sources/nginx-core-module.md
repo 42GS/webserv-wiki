@@ -1,7 +1,7 @@
 ---
 title: NGINX ngx_http_core_module
 type: source
-sources: [raw/nginx-core-module.md]
+sources: [raw/nginx-core-module.md, raw/subject.md]
 updated: 2026-10-15
 ---
 

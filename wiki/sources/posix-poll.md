@@ -1,7 +1,7 @@
 ---
 title: POSIX poll()
 type: source
-sources: [raw/posix-poll.md]
+sources: [raw/posix-poll.md, raw/subject.md]
 updated: 2026-10-15
 ---
 

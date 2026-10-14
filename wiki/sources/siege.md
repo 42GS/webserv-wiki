@@ -1,7 +1,7 @@
 ---
 title: siege 매뉴얼 (siege.pod)
 type: source
-sources: [raw/siege.pod]
+sources: [raw/siege.pod, raw/evaluation-sheet-en.md]
 updated: 2026-10-15
 ---
 

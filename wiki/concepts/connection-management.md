@@ -1,7 +1,7 @@
 ---
 title: 연결 관리 — keep-alive, 종료, 타임아웃
 type: concept
-sources: [raw/rfc9112.txt, raw/subject.md, raw/evaluation-sheet-en.md, raw/nginx-core-module.md, raw/siegerc.in]
+sources: [raw/rfc9112.txt, raw/subject.md, raw/evaluation-sheet-en.md, raw/nginx-core-module.md, raw/siegerc.in, raw/rfc9110.txt]
 updated: 2026-10-15
 ---
 

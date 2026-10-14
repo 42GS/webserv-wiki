@@ -1,7 +1,7 @@
 ---
 title: webserv 평가표 영어 원문 (42 EvalHub)
 type: source
-sources: [raw/evaluation-sheet-en.md]
+sources: [raw/evaluation-sheet-en.md, raw/subject.md]
 updated: 2026-10-15
 ---
 

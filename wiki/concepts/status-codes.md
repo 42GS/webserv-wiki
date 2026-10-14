@@ -1,7 +1,7 @@
 ---
 title: status code — 상황별 선택
 type: concept
-sources: [raw/rfc9110.txt, raw/rfc9112.txt, raw/rfc3875.txt, raw/nginx-core-module.md, raw/subject.md, raw/evaluation-sheet-en.md]
+sources: [raw/rfc9110.txt, raw/rfc9112.txt, raw/rfc3875.txt, raw/nginx-core-module.md, raw/subject.md, raw/evaluation-sheet-en.md, raw/nginx-autoindex-module.md, raw/nginx-index-module.md]
 updated: 2026-10-15
 ---
 
@@ -38,7 +38,7 @@ RFC가 특정 코드를 직접 지정하지 않는 상황은 **판단**으로 �
 
 - 모든 3xx 응답에 `Location`을 보낸다. 301·302·307에서는 SHOULD다 (raw/rfc9110.txt:7378-7379, raw/rfc9110.txt:7400-7401, raw/rfc9110.txt:7499-7500). 303은 정의상 `Location`의 URI를 가리킨다 (raw/rfc9110.txt:7413-7415).
 - `Location`은 상대 참조도 된다. 대상 URI 기준으로 해석된다 (raw/rfc9110.txt:4743-4745).
-- 끝에 `/`가 없는 디렉토리 요청을 NGINX가 301로 보내는지는 **미확인**이다 (NGINX 문서로 확인, [[source-wishlist]]).
+- 끝에 `/`가 없는 디렉토리 요청을 NGINX가 301로 보내는지는 **미확인**이다. core·index·autoindex 모듈 문서에 없고 정적 파일 모듈 문서는 nginx.org에 없다 → NGINX 실측 ([[source-wishlist]], [[concepts/configuration-file]] "디렉토리 요청 처리 순서").
 
 ## 클라이언트 오류
 

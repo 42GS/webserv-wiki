@@ -128,3 +128,10 @@
 - 갱신: concepts/configuration-file ("디렉토리 요청 처리 순서" 절, 지시자 대응표 리스팅 행), concepts/status-codes (403 판단 근거 보강), analysis/subject-vs-evaluation (1.4에 리스팅 시간 표시), overview, index, source-wishlist
 - 해소: index 파일이 없으면 보통 autoindex로 넘어감 (raw/nginx-autoindex-module.md:12)
 - 남음: autoindex off + index 없음의 응답 코드, `/` 없는 디렉토리 요청 → NGINX 실측
+
+## [2026-10-15] lint | 전체 점검
+- 기계 검사: 깨진 링크 0, 인용 범위 0, 고아 페이지 0, 표 칸 수 0 (직전 ingest에서 1건 수정), frontmatter `sources` 누락 16건 → 자동 보완
+- 오래된 서술: concepts/status-codes의 "NGINX 문서로 확인"을 실측 대상으로 정정
+- 목록 동기화: analysis "남은 미확인"에 1.8·1.9 추가, 1.5 상태 갱신, 해석 질문과 실측 항목 구분. overview 실측 목록에 "리스팅 off + index 없음" 추가
+- 공백: 파일 업로드(필수 기능)가 4줄, multipart 0줄. 쿠키·세션(보너스) 각 1줄
+- 갱신: CLAUDE.md Lint 절에 표 칸 수, frontmatter, 미확인 목록 동기화, 기능별 공백 점검 추가

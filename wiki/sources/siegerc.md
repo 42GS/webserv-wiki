@@ -1,7 +1,7 @@
 ---
 title: siege 기본 설정 템플릿 (siegerc.in)
 type: source
-sources: [raw/siegerc.in]
+sources: [raw/siegerc.in, raw/siege.pod]
 updated: 2026-10-15
 ---
 

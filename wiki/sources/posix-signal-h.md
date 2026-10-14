@@ -1,7 +1,7 @@
 ---
 title: POSIX <signal.h>
 type: source
-sources: [raw/posix-signal-h.md]
+sources: [raw/posix-signal-h.md, raw/subject.md]
 updated: 2026-10-15
 ---
 

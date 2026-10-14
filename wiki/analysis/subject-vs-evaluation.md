@@ -1,7 +1,7 @@
 ---
 title: subject vs 평가표 — 차이와 모순
 type: analysis
-sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/evaluation-sheet.md, raw/rfc9110.txt, raw/rfc9112.txt, raw/rfc3875.txt, raw/nginx-core-module.md, raw/posix-poll.md, raw/posix-waitpid.md, raw/posix-bind.md, raw/posix-exit.md]
+sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/evaluation-sheet.md, raw/rfc9110.txt, raw/rfc9112.txt, raw/rfc3875.txt, raw/nginx-core-module.md, raw/posix-poll.md, raw/posix-waitpid.md, raw/posix-bind.md, raw/posix-exit.md, raw/nginx-autoindex-module.md]
 updated: 2026-10-15
 ---
 
@@ -123,6 +123,10 @@ subject는 "허용된 syscall/라이브러리 호출" 목록을 준다 (raw/subj
 
 ## 6. 남은 미확인
 
+subject·평가표 해석에 관한 질문만 모았다. 동작 확인이 필요한 항목(NGINX·OS 실측)은 [[source-wishlist]] 4-1·5-1절.
+
 - 42 EvalHub 원문이 intra의 현재 평가표와 같은지 → [[sources/evaluation-sheet-en]]
-- 허용 함수 목록이 `<ctime>`, `exit` 등 표준 라이브러리에도 적용되는지 (Date 헤더, CGI 자식 종료, 1.4절)
-- `shutdown` 없이 TCP reset 문제를 줄이는 방법 (1.5절)
+- 허용 함수 목록이 `<ctime>`, `exit` 등 표준 라이브러리에도 적용되는지 (Date 헤더, CGI 자식 종료, 리스팅 시간 표시, 1.4절)
+- `shutdown` 없이 TCP reset 문제를 줄이는 방법. NGINX `lingering_close` 방식(읽고 버리다가 닫기)을 따를 수 있으나 NGINX가 `shutdown`을 함께 쓰는지는 모름 (1.5절)
+- read/write 외 함수(`poll`, `bind`)의 실패 원인을 errno로 봐도 되는지 (1.8절)
+- `waitpid` 상태 매크로를 써도 되는지 (1.9절)

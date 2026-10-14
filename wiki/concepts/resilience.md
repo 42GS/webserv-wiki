@@ -1,7 +1,7 @@
 ---
 title: 안정성 (크래시·hang·누수)
 type: concept
-sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/siege.pod, raw/siegerc.in, raw/posix-signal-h.md, raw/posix-send.md, raw/posix-waitpid.md, raw/posix-bind.md, raw/posix-exit.md]
+sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/siege.pod, raw/siegerc.in, raw/posix-signal-h.md, raw/posix-send.md, raw/posix-waitpid.md, raw/posix-bind.md, raw/posix-exit.md, raw/posix-poll.md]
 updated: 2026-10-15
 ---
 
