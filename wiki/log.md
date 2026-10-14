@@ -93,3 +93,9 @@
 - 갱신: concepts/configuration-file ("bind() 기준 기대 동작" 표), concepts/resilience (시작 단계 실패), analysis/subject-vs-evaluation (1.8을 read/write 외 함수의 errno로 확장), overview, index, source-wishlist (5-1 OS 실측 절 추가)
 - 해소: 같은 포트 중복 bind 실패 조건 EADDRINUSE (raw/posix-bind.md:66-68)
 - 검증: 공백 제외 6,463자 일치, 단어 diff 24건은 태그 경계 분리
+
+## [2026-10-15] schema | 변환 도구를 저장소로 이동, 검증기 강화
+- 생성: tools/nginx2md.py, tools/posix_wrap.py, tools/verify_md.py
+- 갱신: CLAUDE.md (디렉토리 구조, "웹 문서 받기" 절과 검증 기준)
+- 정정: 이전 검증 방식(태그를 모두 공백으로 바꾼 뒤 비교)은 md에서 공백이 사라진 경우를 잡지 못했다. 블록 태그만 공백으로, 인라인 태그는 제거하도록 바꾸고 단어 목록 완전 일치로 검사한다. 일부러 공백을 지운 사본으로 FAIL을 확인했다
+- 재검증: 기존 변환본 8개(nginx 2, posix 6) 모두 새 기준 PASS

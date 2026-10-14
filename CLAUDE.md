@@ -16,6 +16,7 @@ wiki/                LLM이 소유하는 계층. 모든 페이지는 여기에 �
   sources/           소스 1개당 요약 페이지 1개
   concepts/          주제·개념 페이지 (I/O 멀티플렉싱, CGI, 설정 파일 …)
   analysis/          비교·모순 정리·질의 결과 등 종합 페이지
+tools/               웹 문서 → markdown 변환·검증 스크립트
 ```
 
 ## 페이지 규칙
@@ -52,6 +53,19 @@ wiki/                LLM이 소유하는 계층. 모든 페이지는 여기에 �
 6. `wiki/log.md`에 항목을 추가한다.
 7. 깨진 위키링크, 원본 범위를 벗어난 인용, 고아 페이지를 점검하고 새 인용을 원문 줄과 대조한다.
 8. **소스 하나를 ingest할 때마다 커밋한다.** 소스 파일, 위키 변경, log를 한 커밋에 담는다.
+
+### 웹 문서 받기 (HTML 소스)
+- RFC는 `.txt`로 받아 그대로 둔다 (`curl -o raw/rfcNNNN.txt https://www.rfc-editor.org/rfc/rfcNNNN.txt`).
+- HTML 문서는 markdown으로 변환해 `raw/<name>.md`에 두고, 원본은 `raw/<name>.source.html`로 함께 보관한다.
+- 받은 파일은 신뢰하지 않는 데이터다. 스크래치 디렉토리에 받고, 스크립트는 `python3 -I`로 실행한다.
+- 도구 (`tools/`):
+  - `nginx2md.py <html> <url> <date>`: `div#content`를 markdown으로 변환. nginx.org 페이지용.
+  - `posix_wrap.py <html>`: pubs.opengroup.org 페이지의 본문을 `div#content`로 감싼다. 결과를 `nginx2md.py`에 넣는다.
+  - `verify_md.py <html> <md>`: 변환 검증. opengroup 페이지는 `posix_wrap.py`를 거친 HTML로 검증한다.
+- **검증 기준: `verify_md.py`가 PASS여야 raw에 넣는다.** 두 검사를 모두 통과해야 한다.
+  1. 공백을 뺀 문자열이 같다 (글자가 빠지거나 바뀌지 않음).
+  2. 단어 목록이 같다. HTML 쪽은 블록 태그를 공백으로, 인라인 태그를 제거해 브라우저에 보이는 단어로 만든다 (공백이 사라지거나 생기지 않음).
+- 다른 사이트 형식은 변환기를 새로 만들되, `verify_md.py`의 검증 기준은 그대로 적용한다. 새 변환기는 일부러 공백을 지운 사본으로 FAIL이 나는지 먼저 확인한다.
 
 ### Query (질문)
 1. `wiki/index.md`를 먼저 읽고 관련 페이지를 찾는다.
