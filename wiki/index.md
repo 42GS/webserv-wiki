@@ -26,6 +26,7 @@ updated: 2026-10-15
 | [[sources/posix-recv]] | POSIX `recv()` — 반환값 0·-1의 의미, 스트림의 메시지 경계 | `raw/posix-recv.md` |
 | [[sources/posix-waitpid]] | POSIX `wait()`·`waitpid()` — WNOHANG, 반환값, 종료 상태 매크로, SIGCHLD | `raw/posix-waitpid.md` |
 | [[sources/posix-bind]] | POSIX `bind()` — EADDRINUSE·EADDRNOTAVAIL, non-blocking 비동기 할당 | `raw/posix-bind.md` |
+| [[sources/siege]] | siege 매뉴얼 — 옵션(-c·-r·-t·-d·-b), Availability의 의미 | `raw/siege.pod` |
 | [[sources/evaluation-sheet]] | 평가표 한국어 정리본 — **구버전, 영어 원문으로 대체됨** | `raw/evaluation-sheet.md` |
 
 ## Concepts
@@ -41,7 +42,7 @@ updated: 2026-10-15
 | [[concepts/connection-management]] | keep-alive 판단, 413 이후 처리, pipelining 순서, 타임아웃 4종, lingering close와 `shutdown` 쟁점 |
 | [[concepts/security]] | 경로 공격(`..`), 명령 주입, 길이 공격, response splitting, request smuggling |
 | [[concepts/resilience]] | 크래시·hang·누수 금지 요구, 시그널 처리표 (SIGPIPE 무시, SIGINT 정리 후 종료) |
-| [[concepts/testing]] | tester·siege·curl 등 도구, 평가 시연 준비 |
+| [[concepts/testing]] | tester·siege·curl 등 도구, siege 옵션과 Availability의 의미, 평가 시연 준비 |
 | [[concepts/build-and-submission]] | Makefile, C++98, README 형식, AI 규칙, 디펜스 수정 요청 |
 | [[concepts/bonus]] | 쿠키·세션, 복수 CGI |
 

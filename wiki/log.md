@@ -99,3 +99,9 @@
 - 갱신: CLAUDE.md (디렉토리 구조, "웹 문서 받기" 절과 검증 기준)
 - 정정: 이전 검증 방식(태그를 모두 공백으로 바꾼 뒤 비교)은 md에서 공백이 사라진 경우를 잡지 못했다. 블록 태그만 공백으로, 인라인 태그는 제거하도록 바꾸고 단어 목록 완전 일치로 검사한다. 일부러 공백을 지운 사본으로 FAIL을 확인했다
 - 재검증: 기존 변환본 8개(nginx 2, posix 6) 모두 새 기준 PASS
+
+## [2026-10-15] ingest | siege 매뉴얼 (siege.pod)
+- 생성: raw/siege.pod (원문 그대로, 커밋 9c240ec), sources/siege
+- 갱신: concepts/testing (siege 절: 평가 조건, 옵션표, Availability의 의미, keep-alive), concepts/resilience (99.5% 기준의 실체), concepts/connection-management (keep-alive 미확인 갱신), overview, index, source-wishlist (siegerc.in 추가)
+- 해소: -b 의미 (raw/siege.pod:199-202), Availability 정의 (raw/siege.pod:373-378)
+- 메모: Availability 계산식 문장은 원문 표현이 앞 문장과 맞지 않아 판단으로 표시. keep-alive는 siegerc.in으로 넘김

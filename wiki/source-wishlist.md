@@ -89,7 +89,8 @@ POSIX가 동작을 정하지 않아 OS별로 직접 확인해야 하는 것. 평
 
 | | 우선 | 소스 | URL | 해소할 것 | 제안 파일명 |
 |---|---|---|---|---|---|
-| [ ] | P2 | siege 매뉴얼 (`doc/siege.pod`) | <https://raw.githubusercontent.com/JoeDog/siege/master/doc/siege.pod> | `-b` 옵션 의미, availability 계산, keep-alive 동작 → [[concepts/testing]]. 기존 `joedog.org/siege-manual/`은 404 | `raw/siege-manual.md` |
+| [x] | P2 | siege 매뉴얼 (`doc/siege.pod`) — `raw/siege.pod`로 ingest (2026-10-15) | <https://raw.githubusercontent.com/JoeDog/siege/master/doc/siege.pod> | `-b` 옵션 의미, availability 계산, keep-alive 동작 → [[concepts/testing]]. 기존 `joedog.org/siege-manual/`은 404 | `raw/siege-manual.md` |
+| [ ] | P2 | siege 기본 설정 템플릿 (`doc/siegerc.in`) | <https://raw.githubusercontent.com/JoeDog/siege/master/doc/siegerc.in> | keep-alive 기본값 (`connection`), 동시 사용자 상한 → [[concepts/testing]] | `raw/siegerc.in` |
 
 ## 7. 쿠키·세션 (보너스)
 

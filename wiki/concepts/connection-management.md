@@ -21,7 +21,7 @@ HTTP/1.1은 기본이 persistent connection이다. 구현은 이를 지원하는
 - 연결을 유지하려면 모든 메시지가 자체 길이 정보(`Content-Length` 또는 chunked)를 가져야 한다 (raw/rfc9112.txt:1372-1374). 응답에 길이를 넣지 않으면 연결 종료로 끝을 알려야 하므로 유지할 수 없다 (raw/rfc9112.txt:983-986).
 
 > [!note] siege와 keep-alive
-> 평가는 `siege -b`로 availability 99.5% 초과, 무한 실행을 요구한다 (raw/evaluation-sheet-en.md:114, raw/evaluation-sheet-en.md:117). siege가 기본으로 keep-alive를 쓰는지는 **미확인**이다 (siege 매뉴얼로 확인, [[source-wishlist]] P2). 어느 쪽이든 위 판단 규칙을 지키면 된다.
+> 평가는 `siege -b`로 availability 99.5% 초과, 무한 실행을 요구한다 (raw/evaluation-sheet-en.md:114, raw/evaluation-sheet-en.md:117). siege 매뉴얼에는 keep-alive 설정이 없다. 설정 파일로 정하는 속성으로 보이며, 기본값은 `doc/siegerc.in`으로 확인한다 (**미확인**, [[source-wishlist]]). 어느 쪽이든 위 판단 규칙을 지키면 된다. Availability가 무엇을 재는지는 [[concepts/testing]] siege 절.
 
 ## 요청 본문을 다 읽지 않고 응답할 때 (413 등)
 
