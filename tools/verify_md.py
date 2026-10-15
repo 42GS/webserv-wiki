@@ -51,7 +51,10 @@ def md_words(path):
     s = re.sub(r"(?m)^#+ ", " ", s)
     s = re.sub(r"(?m)^- ", " ", s)
     # Inline markers added by the converter are not part of the text.
-    s = s.replace("**", "").replace("`", "")
+    # Bold markers come in pairs on one line (table headers); an unpaired
+    # "**" is literal source text (e.g. a footnote mark) and is kept.
+    s = re.sub(r"\*\*([^*\n]*)\*\*", r"\1", s)
+    s = s.replace("`", "")
     return s.split()
 
 

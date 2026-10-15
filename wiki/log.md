@@ -215,3 +215,8 @@
 - 생성: raw/rfc6585.txt (원문 그대로), sources/rfc6585
 - 갱신: concepts/status-codes (헤더 상한 초과 → 431 확정, 미확인 해소), concepts/request-parsing (RFC 9110 5.4 MUST), concepts/security, sources/iana-http-status-codes, overview, index, source-wishlist
 - 메모: 431 선택은 판단 (NGINX는 400)
+
+## [2026-10-15] schema | extract_div.py 태그 인자, verify_md.py 굵게 표시 처리
+- 갱신: tools/extract_div.py (선택 인자 tag, 기본 div — peps.python.org의 `section#pep-content`용), tools/verify_md.py (짝을 이룬 `**…**`만 변환기 표시로 제거, 짝 없는 `**`는 원문 글자로 유지), CLAUDE.md 도구 설명
+- 계기: PEP 594 표의 각주 표시 `(2.0**)`가 검증에서 지워져 거짓 FAIL
+- 검증: php 페이지 2개는 extract_div 결과가 수정 전과 바이트 단위로 같음. 기존 HTML 변환본 16개 모두 수정 전·후 PASS. 원문 `**`를 지운 사본이 이제 FAIL (수정 전에는 통과했을 경우)
