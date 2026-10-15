@@ -1,7 +1,7 @@
 ---
 title: POSIX wait(), waitpid()
 type: source
-sources: [raw/posix-waitpid.md]
+sources: [raw/posix-waitpid.md, raw/posix-exit.md]
 updated: 2026-10-15
 ---
 
@@ -25,6 +25,6 @@ POSIX.1-2024 (IEEE Std 1003.1-2024) 표준 문서다 (raw/posix-waitpid.md:6). `
 | APPLICATION USAGE (321-323) | `wait()`·pid -1 비권장, `SIGCHLD`를 `SIG_IGN`으로 두면 상태를 못 받음 | [[concepts/cgi]], [[concepts/resilience]] |
 | RATIONALE (329) | 직접 만든 자식만 대상 | [[concepts/cgi]] |
 
-## 이 문서로 확인하지 못한 것
+## 다른 문서에서 확인한 것
 
-- 회수하지 않은 자식이 좀비로 남는다는 정의: 이 페이지는 "2.12 Status Information"과 "Consequences of Process Termination"을 참조만 한다 (raw/posix-waitpid.md:30, raw/posix-waitpid.md:323) → [[source-wishlist]] P2 (`_Exit()` 페이지).
+- 회수하지 않은 자식이 좀비로 남는다는 정의: 이 페이지는 "2.12 Status Information"과 "Consequences of Process Termination"을 참조만 한다 (raw/posix-waitpid.md:30, raw/posix-waitpid.md:323). `_Exit()` 페이지에서 확인했다 (raw/posix-exit.md:58-64) → [[sources/posix-exit]].

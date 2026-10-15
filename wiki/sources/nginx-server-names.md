@@ -21,7 +21,7 @@ updated: 2026-10-15
 | Wildcard names (50) | `*`의 위치 규칙 | [[concepts/configuration-file]] |
 | Miscellaneous names (106) | 빈 이름, IP 주소 Host, `_`, default server | [[concepts/configuration-file]] |
 | Virtual server selection (186) | server가 정해지는 시점, 시점별로 적용되는 설정 | [[concepts/configuration-file]] |
-| Optimization (267) | 포트에 server가 하나면 이름을 검사하지 않음 | [[concepts/configuration-file]] |
+| Optimization (212) | 포트에 server가 하나면 이름을 검사하지 않음 (267) | [[concepts/configuration-file]] |
 
 다루지 않는 절: 정규식 이름(subject는 route 규칙에 정규식이 필요 없다고 하고(raw/subject.md:166), 서버 이름에도 필요 없다고 본다 — **판단**), 국제화 도메인, 해시 테이블 튜닝, SSL·SNI, 호환성.
 

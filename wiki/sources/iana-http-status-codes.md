@@ -8,7 +8,7 @@ updated: 2026-10-15
 # IANA HTTP Status Code Registry
 
 원본: `raw/iana-http-status-codes.txt`. <https://www.iana.org/assignments/http-status-codes/http-status-codes.txt>를 2026-10-15에 받아 그대로 저장했다. IANA가 제공하는 텍스트 형식이라 변환하지 않았다.
-레지스트리 마지막 갱신일은 2025-09-15다 (raw/iana-http-status-codes.txt:9-10). 등록 기준 문서는 RFC 9110 16.2.1절이다 (raw/iana-http-status-codes.txt:29-30).
+레지스트리 마지막 갱신일은 2025-09-15다 (raw/iana-http-status-codes.txt:9-10). 레지스트리의 참조 문서는 RFC 9110 16.2.1절이다 (raw/iana-http-status-codes.txt:29-30).
 
 평가표는 평가 전에 HTTP status code 목록을 찾아 두고, 코드가 틀리면 점수를 주지 말라고 한다 (raw/evaluation-sheet-en.md:67). 이 레지스트리가 그 목록이다.
 

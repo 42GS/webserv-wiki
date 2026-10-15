@@ -35,7 +35,7 @@ updated: 2026-10-15
 
 > [!warning] 모순: EAGAIN까지 반복 vs errno 금지
 > EAGAIN이 나왔는지 알려면 `errno`를 봐야 한다. 그런데 subject는 read/write 후 errno로 동작을 바꾸는 것을 금지하고 (raw/subject.md:133), 평가표도 errno는 로그만 허용한다 (raw/evaluation-sheet-en.md:57).
-> 따라서 **readiness 1회에 read/write 1번**만 하는 구현이 subject와 평가표 양쪽을 확실히 만족한다. 반복 허용 문구는 "그렇게 해도 감점하지 않는다"로만 읽는다.
+> 따라서 **readiness 1회에 read/write 1번**만 하는 구현이 subject와 평가표 양쪽을 확실히 만족한다 (**판단**). 반복 허용 문구는 "그렇게 해도 감점하지 않는다"로만 읽는다.
 > → [[analysis/subject-vs-evaluation]]
 
 ## 적용 범위
@@ -66,10 +66,10 @@ updated: 2026-10-15
 
 | 비트 | 의미 | 할 일 | 근거 |
 |---|---|---|---|
-| `POLLIN` | 읽기가 막히지 않음. 결과는 데이터, EOF, 에러 중 하나 | listen 소켓이면 `accept`, 아니면 read 1회. 0이면 상대가 닫은 것 | raw/posix-poll.md:42, raw/posix-poll.md:80, raw/posix-poll.md:98 |
+| `POLLIN` | 읽기가 막히지 않음. 결과는 데이터, EOF, 에러 중 하나 | listen 소켓이면 `accept`, 아니면 read 1회. 0이면 상대가 닫은 것 | raw/posix-poll.md:42, raw/posix-poll.md:80, raw/posix-poll.md:98, raw/posix-recv.md:72 |
 | `POLLOUT` | 1바이트 쓰기가 막히지 않음 | write 1회. 일부만 쓰일 수 있으니 보낸 위치를 기록 | raw/posix-poll.md:58, raw/posix-poll.md:171 |
 | `POLLERR` | read/write가 -1을 돌려줄 오류 상태. `EAGAIN`은 포함하지 않음 | 클라이언트 제거 | raw/posix-poll.md:70, raw/posix-poll.md:173 |
-| `POLLHUP` | 연결 끊김, 또는 pipe·FIFO의 쓰는 쪽이 모두 닫힘. `POLLIN`과 동시에 올 수 있고 `POLLOUT`과는 동시에 오지 않음 | 남은 데이터를 EOF까지 읽은 뒤 정리 (CGI pipe는 [[concepts/cgi]]) | raw/posix-poll.md:74 |
+| `POLLHUP` | 장치 연결 끊김, 또는 pipe·FIFO의 쓰는 쪽이 모두 닫힘. 장치 연결 끊김의 의미는 장치마다 다름. `POLLIN`과 동시에 올 수 있고 `POLLOUT`과는 동시에 오지 않음 | 남은 데이터를 EOF까지 읽은 뒤 정리 (CGI pipe는 [[concepts/cgi]]) | raw/posix-poll.md:74, raw/posix-poll.md:82 |
 | `POLLNVAL` | fd가 열려 있지 않음 | 서버 버그 신호. 항목 제거 | raw/posix-poll.md:78 |
 
 - `POLLHUP`·`POLLERR`·`POLLNVAL`은 `events`에 넣지 않아도 조건이 맞으면 설정된다 (raw/posix-poll.md:86). 매 루프에서 항상 확인한다.
@@ -114,13 +114,13 @@ updated: 2026-10-15
 | `send` | 0 | 이 문서에 따로 정의되지 않음 (0바이트를 보냈다는 뜻) | 길이 0으로 호출하지 않도록 하고, 생기면 클라이언트 정리 (**판단**) | raw/posix-send.md:74 |
 | `send` | -1 | 에러 (`EPIPE`, `ECONNRESET` 등) | errno를 보지 않고 클라이언트 정리 | raw/posix-send.md:74, raw/posix-send.md:90-92, raw/posix-send.md:118-120 |
 
-- `send`가 요청한 길이보다 적게 보낼 수 있다는 문장은 `send()` 문서에 명시되어 있지 않다. 다만 `poll()`의 쓰기 가능은 1바이트만 보장하므로 (raw/posix-poll.md:171) 반환값만큼만 진행했다고 가정해야 한다.
+- `send`가 요청한 길이보다 적게 보낼 수 있다는 문장은 `send()` 문서에 명시되어 있지 않다. 다만 `poll()`의 쓰기 가능은 1바이트만 보장하므로 (raw/posix-poll.md:171) 반환값만큼만 진행했다고 가정해야 한다 (**판단**).
 - flags가 0이면 `recv`는 `read`와, `send`는 `write`와 같다 (raw/posix-recv.md:142, raw/posix-send.md:156). CGI pipe에는 `read`/`write`를 쓰고 같은 표를 적용한다.
 
 ### 왜 readiness 1회에 I/O 1번이면 errno가 필요 없나
 
 - non-blocking 소켓에 읽을 데이터가 없으면 `recv`는 `EAGAIN`/`EWOULDBLOCK`으로 실패하고 (raw/posix-recv.md:66), 보낼 공간이 없으면 `send`가 실패한다 (raw/posix-send.md:66).
-- `poll()`이 준비됐다고 알려 준 뒤 한 번만 호출하면, 그 호출은 막히지 않고 데이터·EOF·에러 중 하나를 돌려준다 (raw/posix-poll.md:80). 그래서 "다시 시도해야 하는 실패"(`EAGAIN`)를 errno로 구분할 일이 정상 경로에서는 생기지 않는다. -1이면 그대로 클라이언트를 정리하면 된다.
+- `poll()`의 읽기 준비는 확인한 시점에 호출했다면 막히지 않고 데이터·EOF·에러 중 하나를 돌려줬을 것이라는 뜻이다 (raw/posix-poll.md:80, raw/posix-poll.md:171). 다만 POSIX는 확인 시점과 실제 호출 사이에 상태가 바뀔 수 있다고 한다 (raw/posix-poll.md:171). 단일 스레드 서버에서 같은 fd를 다른 곳에서 읽거나 쓰지 않으면 이런 경우는 드물다고 보고, 한 번 호출한 결과가 -1이면 원인(`EAGAIN` 포함)과 관계없이 클라이언트를 정리한다 (**판단**).
 - 반대로 EAGAIN까지 반복해서 읽는 방식(raw/evaluation-sheet-en.md:54)은 마지막 -1이 EAGAIN인지 진짜 에러인지 errno로 구분해야 하므로 규칙 6과 부딪힌다 → 위 "readiness 1회당 몇 번 I/O 해도 되나".
 
 ## 디펜스에서 설명해야 할 것

@@ -1,7 +1,7 @@
 ---
 title: siege 매뉴얼 (siege.pod)
 type: source
-sources: [raw/siege.pod, raw/evaluation-sheet-en.md]
+sources: [raw/siege.pod, raw/evaluation-sheet-en.md, raw/siegerc.in]
 updated: 2026-10-15
 ---
 
@@ -29,4 +29,4 @@ updated: 2026-10-15
 
 ## 이 문서로 확인하지 못한 것
 
-- keep-alive 여부. 매뉴얼은 설정 파일로도 속성을 정한다고만 한다 (raw/siege.pod:18-20). 기본 설정 템플릿 `doc/siegerc.in`으로 확인한다 → [[source-wishlist]].
+- keep-alive 여부. 매뉴얼은 설정 파일로도 속성을 정한다고만 한다 (raw/siege.pod:18-20). 기본 설정 템플릿에서 `connection = close`로 확인했다 (raw/siegerc.in:268) → [[sources/siegerc]].

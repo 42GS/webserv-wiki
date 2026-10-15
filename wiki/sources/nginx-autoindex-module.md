@@ -1,7 +1,7 @@
 ---
 title: NGINX ngx_http_autoindex_module
 type: source
-sources: [raw/nginx-autoindex-module.md]
+sources: [raw/nginx-autoindex-module.md, raw/nginx-observed-directory.md]
 updated: 2026-10-15
 ---
 
@@ -23,5 +23,5 @@ updated: 2026-10-15
 
 ## 이 문서로 확인하지 못한 것
 
-- autoindex가 꺼져 있고 index 파일도 없을 때의 응답 코드. 과제에서 403으로 판단 → [[concepts/configuration-file]].
-- 끝에 `/`가 없는 디렉토리 요청의 처리 (이 모듈도 `/`로 끝나는 요청만 다룬다, raw/nginx-autoindex-module.md:12).
+- autoindex가 꺼져 있고 index 파일도 없을 때의 응답 코드. 과제에서 403으로 판단 → [[concepts/configuration-file]]. NGINX 실측도 403이었다 (raw/nginx-observed-directory.md:127-128).
+- 끝에 `/`가 없는 디렉토리 요청의 처리 (이 모듈도 `/`로 끝나는 요청만 다룬다, raw/nginx-autoindex-module.md:12). NGINX 실측은 301 (raw/nginx-observed-directory.md:109-115).

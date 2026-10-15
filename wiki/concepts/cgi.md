@@ -48,7 +48,7 @@ updated: 2026-10-15
 
 ## 2. 메타변수 (환경 변수)
 
-메타변수 이름은 대소문자를 구분하지 않고, 값은 별도 언급이 없으면 구분한다 (raw/rfc3875.txt:554-555, raw/rfc3875.txt:598-599). 값이 NULL이면 생략할 수 있다 (raw/rfc3875.txt:597-598).
+메타변수 이름은 대소문자를 구분하지 않고, 값은 별도 언급이 없으면 구분한다 (raw/rfc3875.txt:554-555, raw/rfc3875.txt:598-599). 선택 메타변수는 값이 NULL이면 생략할 수 있다 (raw/rfc3875.txt:597-598).
 
 | 변수 | 필수 | 값 | 근거 |
 |---|---|---|---|
@@ -86,11 +86,11 @@ RFC 3875 목록에 없는 비표준 변수다. 이 과제에서 CGI로 `php-cgi`
 | 변수 | 필요한 이유 | 넣을 값 | 근거 |
 |---|---|---|---|
 | `REDIRECT_STATUS` | `cgi.force_redirect`(기본 켜짐)일 때 PHP는 이 변수로 웹 서버 리다이렉트를 거친 요청인지 판단한다. 없으면 실행을 거부한다 | 값의 조건은 문서에 없다 (**미확인**). 흔히 쓰는 `200`을 넣는다 (**판단**) | raw/php-cgi-force-redirect.md:8, raw/php-cgi-force-redirect.md:17, raw/php-ini-core.md:428, raw/php-ini-core.md:548 |
-| `SCRIPT_FILENAME` | `cgi.fix_pathinfo`(기본 켜짐)에서 PHP는 `PATH_TRANSLATED` 대신 `SCRIPT_FILENAME`을 쓰라고 한다 | 실행할 스크립트의 절대 경로 | raw/php-ini-core.md:426, raw/php-ini-core.md:544 |
+| `SCRIPT_FILENAME` | `cgi.fix_pathinfo`(기본 켜짐) 설명에서 PHP 문서는 스크립트가 `PATH_TRANSLATED` 대신 `SCRIPT_FILENAME`을 쓰라고 권한다. 서버가 이 변수를 넣어야 하는지는 문서에 없다 (아래 **미확인**) | 실행할 스크립트의 절대 경로 (**판단**) | raw/php-ini-core.md:426, raw/php-ini-core.md:544 |
 
 - php-cgi가 실행할 파일을 정확히 어느 변수로 찾는지는 문서에 없다 (**미확인**). `SCRIPT_FILENAME`과 `PATH_TRANSLATED`를 함께 설정한다 (**판단**).
 - `cgi.redirect_status_env`로 다른 변수 이름을 쓰게 할 수도 있지만 보안 주의가 붙어 있다 (raw/php-ini-core.md:558-564).
-- php-cgi는 기본 설정(`cgi.rfc2616_headers` = 0)에서 응답 코드를 RFC 3875 `Status:` 헤더로 보낸다 (raw/php-ini-core.md:434, raw/php-ini-core.md:568). 아래 3절의 Status 처리로 받는다. `cgi.nph` 기본값은 0이라 NPH로 동작하지 않는다 (raw/php-ini-core.md:430).
+- php-cgi는 기본 설정(`cgi.rfc2616_headers` = 0)에서 응답 코드를 RFC 3875 `Status:` 헤더로 보낸다 (raw/php-ini-core.md:434, raw/php-ini-core.md:568). 아래 3절의 Status 처리로 받는다. `cgi.nph` 기본값은 0이다 (raw/php-ini-core.md:430). 켜면 항상 `Status: 200`을 보낸다 (raw/php-ini-core.md:556).
 - 위 값은 PHP 기본 설정 기준이다. 평가 PC의 php-cgi 설정은 **미확인**이다.
 
 ## 3. CGI 응답 파싱
@@ -104,7 +104,7 @@ RFC 3875 목록에 없는 비표준 변수다. 이 과제에서 CGI로 `php-cgi`
 | CGI 필드는 `Content-Type`, `Location`, `Status`. **적어도 하나 MUST**, 각각 한 번만 | raw/rfc3875.txt:1355-1360 |
 | 필드 이름은 대소문자 구분 없음. 한 줄에 한 필드, 이어지는 줄 없음 (MUST) | raw/rfc3875.txt:1369-1372 |
 | `:` 뒤 공백은 허용, 이름과 `:` 사이 공백은 불허 | raw/rfc3875.txt:1372-1374 |
-| 줄바꿈(NL)은 LF. 서버는 CRLF도 받아들여야 함 | raw/rfc3875.txt:1579-1580 |
+| (UNIX) 줄바꿈(NL)은 LF. 서버는 CRLF도 받아들이는 것이 좋음 (should) | raw/rfc3875.txt:1575-1580 |
 | HTTP로 보낼 때 CGI 줄바꿈을 CRLF로 바꿔야 함 (MUST) | raw/rfc3875.txt:1487-1491 |
 | 본문이 있으면 `Content-Type` MUST. 없을 때 서버가 추측하지 말 것 (SHOULD NOT) | raw/rfc3875.txt:1383-1387 |
 | CGI가 출력한 `Set-Cookie` 여러 줄은 합치지 않고 모두 그대로 전달 (SHOULD NOT fold) → [[concepts/bonus]] | raw/rfc6265.txt:315-319 |
@@ -138,7 +138,7 @@ RFC 3875 목록에 없는 비표준 변수다. 이 과제에서 CGI로 `php-cgi`
 
 ## 5. 실패 처리
 
-- 서버는 스크립트 응답에 타임아웃을 둘 수 있고, 넘으면 프로세스를 종료할 수 있다 (MAY, raw/rfc3875.txt:1255-1258). 서버는 언제든 스크립트를 중단할 수 있다 (raw/rfc3875.txt:539-541).
+- 서버는 스크립트 응답에 타임아웃을 둘 수 있고, 넘으면 프로세스를 종료할 수 있다 (MAY, raw/rfc3875.txt:1255-1258). 에러 상황에서는 서버가 언제든 예고 없이 스크립트를 중단할 수 있다 (raw/rfc3875.txt:539-540).
 - 스크립트가 규격을 어겨도 서버는 클라이언트에게 올바른 응답을 보낼 책임이 있다 (MUST, raw/rfc3875.txt:433-437).
 - 평가: 무한 루프·에러 스크립트에서도 크래시 없이 에러가 보여야 한다 (raw/evaluation-sheet-en.md:91-93).
 

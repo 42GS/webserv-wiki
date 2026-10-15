@@ -1,7 +1,7 @@
 ---
 title: NGINX ngx_http_core_module
 type: source
-sources: [raw/nginx-core-module.md, raw/subject.md]
+sources: [raw/nginx-core-module.md, raw/subject.md, raw/nginx-observed-directory.md]
 updated: 2026-10-15
 ---
 
@@ -37,5 +37,5 @@ subject는 동작이 궁금하면 NGINX와 비교하라고 하고 (raw/subject.m
 
 ## 이 문서로 확인하지 못한 것
 
-- 끝에 `/`가 없는 정적 디렉토리 요청의 301: 이 문서의 301은 `proxy_pass` 등을 쓸 때만 나온다 (raw/nginx-core-module.md:1115). 정적 파일 모듈 문서는 nginx.org에 없다. 과제는 판단으로 301 확정 → [[concepts/configuration-file]].
+- 끝에 `/`가 없는 정적 디렉토리 요청의 301: 이 문서의 301은 `proxy_pass` 등을 쓸 때만 나온다 (raw/nginx-core-module.md:1115). 정적 파일 모듈 문서는 nginx.org에 없다. 과제는 판단으로 301 확정 → [[concepts/configuration-file]]. NGINX 실측에서는 정적 디렉토리에도 301이었다 (raw/nginx-observed-directory.md:77-83) → [[sources/nginx-observed-directory]].
 - `limit_except`로 막힌 메서드의 응답 코드: access 모듈 지시자에 맡긴다고만 되어 있다 (raw/nginx-core-module.md:795). access 모듈 문서에도 코드가 없다. 과제는 RFC 기준 405로 확정 → [[concepts/configuration-file]].

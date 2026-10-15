@@ -7,7 +7,7 @@ updated: 2026-10-15
 
 # OS 실측 — pipe의 poll revents
 
-원본: `raw/os-observed-pipe-poll.md`. 테스트 프로그램(`pipepoll.c`)을 macOS와 Ubuntu 24.04 Docker 컨테이너에서 실행한 소스·명령·출력을 그대로 담았다 (2026-10-15). 프로그램은 `SIGPIPE`를 무시하도록 설정한다.
+원본: `raw/os-observed-pipe-poll.md`. 테스트 프로그램(`pipepoll.c`)을 macOS와 Ubuntu 24.04 Docker 컨테이너에서 실행한 소스·명령·출력을 그대로 담았다 (2026-10-15). 프로그램은 `SIGPIPE`를 무시하도록 설정한다 (raw/os-observed-pipe-poll.md:116).
 
 > [!note] 측정 환경의 한계
 > 컨테이너의 커널은 OrbStack VM의 Linux 커널이다 (raw/os-observed-pipe-poll.md:24, raw/os-observed-pipe-poll.md:29). 평가 머신의 Ubuntu 커널에서 측정한 것이 아니다.
