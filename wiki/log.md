@@ -348,3 +348,8 @@
 - 생성: raw/ubuntu2204-observed-tools.md (ubuntu:22.04 digest, apt 기본 패키지, 버전·`siege -C`·siege v4.0.7과 master diff·php-cgi·valgrind 출력 그대로), sources/ubuntu2204-observed-tools
 - 갱신: concepts/cgi (php.ini 기본값, Python 버전 **미확인**을 22.04 기준으로 좁힘), concepts/testing (siege 설정 **미확인** → 22.04 실측 + 평가 PC 설정만 미확인), concepts/resilience, concepts/io-multiplexing·overview (평가 OS 22.04), sources/siege·siegerc·siege-sock (4.0.7과 차이), sources/php-ini-core·php-cgi-observed-env·php-src-cgi-main, index
 - 메모: 22.04 apt 패키지는 php8.1-cgi 8.1.2, valgrind 3.18.1, Python 3.10.12(`import cgi` 가능), siege 4.0.7 (raw/ubuntu2204-observed-tools.md:84-93). php-cgi·valgrind 결과는 24.04와 같았다. siege 4.0.7의 `sock.c`는 이름 해석 부분만 master와 달라 기존 timeout 분석이 그대로 맞는다. 컨테이너 커널은 OrbStack 7.0.14라서 커널 동작은 22.04 기준으로 확인하지 못한다. 평가 PC가 기본 패키지·설정을 그대로 쓰는지는 **미확인**.
+
+## [2026-10-15] ingest | siege 실측 (Ubuntu 22.04, siege 4.0.7)
+- 생성: raw/siege-observed-ubuntu2204.md (테스트 서버 코드·스크립트·출력 그대로, ubuntu2204-observed-tools와 같은 이미지), sources/siege-observed-ubuntu2204
+- 갱신: sources/siege-sock (`O_NDELAY` **미확인** 해소, 실제 동작 **미확인** → 실측), concepts/testing (`-b`·`-d` **미확인**, 부하 요청 `Connection: close` **미확인** 해소, timeout 행), concepts/resilience (timeout 행), source-wishlist 6절, overview, index
+- 메모: glibc에서 `O_NDELAY`는 `O_NONBLOCK`과 같다 (raw/siege-observed-ubuntu2204.md:104-105). 응답 없는 서버에 대해 siege는 `timeout` 30초·5초 모두 150초 동안 끝나지 않았다 (raw/siege-observed-ubuntu2204.md:197-229). 부하 요청은 HTTP/1.1 + `Connection: close` (raw/siege-observed-ubuntu2204.md:140-161). `-b`가 `-d`보다 우선 (raw/siege-observed-ubuntu2204.md:164-194). `protocol` 줄 없는 설정 파일이면 HTTP/1.0으로 요청했다 (raw/siege-observed-ubuntu2204.md:239-240).

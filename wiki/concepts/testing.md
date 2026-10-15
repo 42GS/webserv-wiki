@@ -1,7 +1,7 @@
 ---
 title: 테스트 도구와 평가 시연
 type: concept
-sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/siege.pod, raw/siegerc.in, raw/evaluation-sheet.md, raw/rfc9112.txt, raw/pep-0594.md, raw/siege-sock.c, raw/ubuntu2204-observed-tools.md]
+sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/siege.pod, raw/siegerc.in, raw/evaluation-sheet.md, raw/rfc9112.txt, raw/pep-0594.md, raw/siege-sock.c, raw/ubuntu2204-observed-tools.md, raw/siege-observed-ubuntu2204.md]
 updated: 2026-10-15
 ---
 
@@ -49,7 +49,7 @@ curl -X POST -H "Content-Type: plain/text" \
 | `-b` | 벤치마크 모드. 반복 사이에 지연이 없음 | raw/siege.pod:199-202 |
 
 - 명령줄 값이 설정 파일 값보다 우선한다 (raw/siege.pod:18-20).
-- 평가표는 `-d`를 "클라이언트가 다시 연결하기 전 최대 대기 시간"이라고 설명한다 (raw/evaluation-sheet-en.md:118). 매뉴얼의 정의는 "요청 사이 지연"이다 (raw/siege.pod:184-187). `-b`와 `-d`를 함께 줬을 때 어느 쪽이 적용되는지는 매뉴얼에 없다 (**미확인**).
+- 평가표는 `-d`를 "클라이언트가 다시 연결하기 전 최대 대기 시간"이라고 설명한다 (raw/evaluation-sheet-en.md:118). 매뉴얼의 정의는 "요청 사이 지연"이다 (raw/siege.pod:184-187). `-b`와 `-d`를 함께 줬을 때 어느 쪽이 적용되는지는 매뉴얼에 없다. siege 4.0.7 실측에서는 `-b`가 이겼다: `-r3 -d10`은 17.25초, `-b -r3 -d10`은 0.01초 (raw/siege-observed-ubuntu2204.md:164-194) → [[sources/siege-observed-ubuntu2204]].
 
 ### Availability가 재는 것
 
@@ -65,7 +65,7 @@ curl -X POST -H "Content-Type: plain/text" \
 |---|---|---|---|
 | `connection` | `close` | **요청마다 새 TCP 연결** (**판단**). keep-alive는 권장하지 않음 | raw/siegerc.in:255-268 |
 | `protocol` | `HTTP/1.1` | HTTP/1.1 파싱 규칙 적용 (Host 필수 등) → [[concepts/request-parsing]] | raw/siegerc.in:213 |
-| `timeout` | 30초 | 소켓 연결 타임아웃. 타임아웃은 연결 실패로 집계 → Availability 하락. siege 소스에서 이 값은 `read()` 직전마다 하는 준비 검사의 대기 시간으로도 쓰인다 (raw/siege-sock.c:360-362, raw/siege-sock.c:611-626). 다만 그 검사가 읽기·쓰기 집합을 함께 보므로 응답 대기에는 실제로 걸리지 않을 수 있다 (raw/siege-sock.c:370-374, **판단**) → [[sources/siege-sock]] | raw/siegerc.in:353-354, raw/siege.pod:374-376 |
+| `timeout` | 30초 | 소켓 연결 타임아웃. 타임아웃은 연결 실패로 집계 → Availability 하락. siege 소스에서 이 값은 `read()` 직전마다 하는 준비 검사의 대기 시간으로도 쓰인다 (raw/siege-sock.c:360-362, raw/siege-sock.c:611-626). 그러나 응답하지 않는 서버에 대해 siege 4.0.7은 `timeout` 30초·5초 모두 150초 동안 끝나지 않았다 (raw/siege-observed-ubuntu2204.md:197-229) → [[sources/siege-observed-ubuntu2204]] | raw/siegerc.in:353-354, raw/siege.pod:374-376 |
 | `failures` | 1024 | 연결 실패가 이만큼 쌓이면 siege 중단. 4xx·5xx는 세지 않음 | raw/siegerc.in:381-389 |
 | `concurrent` / `limit` | 25 / 255 | 기본 동시 사용자 / 상한 | raw/siegerc.in:277, raw/siegerc.in:202 |
 
@@ -76,7 +76,7 @@ curl -X POST -H "Content-Type: plain/text" \
 ### 서버 구현에 주는 결론
 
 - 기본 설정의 siege는 `connection = close`라 요청마다 연결을 새로 맺는다고 본다 (raw/siegerc.in:268, **판단**). 그래서 99.5%를 좌우하는 것은 **`accept` 처리, 응답 후 연결 종료, 연결이 몰릴 때 거부되지 않는지**다.
-- 매뉴얼의 `-g`·`-p` 예시 요청에는 `Connection: close` 헤더가 들어 있다 (raw/siege.pod:92-97, raw/siege.pod:118-123). 부하 테스트 요청에도 넣는지는 매뉴얼에 없다 (**미확인**). 넣는다면 서버는 응답 후 종료를 시작해야 한다 (MUST, raw/rfc9112.txt:1521-1526) → [[concepts/connection-management]].
+- 매뉴얼의 `-g`·`-p` 예시 요청에는 `Connection: close` 헤더가 들어 있다 (raw/siege.pod:92-97, raw/siege.pod:118-123). 부하 테스트 요청에도 넣는지는 매뉴얼에 없지만, siege 4.0.7 실측에서는 `-b`를 포함한 모든 요청에 `Connection: close`가 있었다 (raw/siege-observed-ubuntu2204.md:140-161). 그래서 서버는 응답 후 종료를 시작해야 한다 (MUST, raw/rfc9112.txt:1521-1526) → [[concepts/connection-management]].
 
 ## 권장 사항
 

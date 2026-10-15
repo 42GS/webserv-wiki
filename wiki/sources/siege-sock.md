@@ -36,13 +36,12 @@ updated: 2026-10-15
 ## 코드를 읽고 내린 판단
 
 - **(판단)** `select` 경로는 같은 fd를 읽기 집합과 쓰기 집합에 모두 넣는다 (raw/siege-sock.c:370-374). 쓰기 가능하기만 해도 돌아오므로, 응답을 기다리는 동안에는 이 검사가 대기 없이 통과할 수 있다. 그러면 응답 대기에 실제로 `timeout`이 걸린다고 보기 어렵다.
-- **(판단)** 연결이 끝나면 `__socket_block(C->sock, TRUE)`를 부르고 (raw/siege-sock.c:290), 이 함수는 `TRUE`일 때 `O_NDELAY`만 지운다 (raw/siege-sock.c:485-486). Linux에서 `O_NDELAY`가 `O_NONBLOCK`과 같은 값이면 소켓이 blocking이 되어, 응답이 오지 않을 때 `read()`(raw/siege-sock.c:626)가 그대로 막혀 있을 수 있다. 두 상수가 같은지는 **미확인**이다 (확인: Ubuntu의 `/usr/include/x86_64-linux-gnu/bits/fcntl-linux.h`).
+- **(판단)** 연결이 끝나면 `__socket_block(C->sock, TRUE)`를 부르고 (raw/siege-sock.c:290), 이 함수는 `TRUE`일 때 `O_NDELAY`만 지운다 (raw/siege-sock.c:485-486). Linux에서 `O_NDELAY`가 `O_NONBLOCK`과 같은 값이면 소켓이 blocking이 되어, 응답이 오지 않을 때 `read()`(raw/siege-sock.c:626)가 그대로 막혀 있을 수 있다. glibc 헤더에서 `O_NDELAY`는 `O_NONBLOCK`으로 정의돼 있었다 (aarch64 헤더로 확인) → [[sources/siege-observed-ubuntu2204]].
 - **(판단)** `poll` 경로는 감시 fd를 `C->sock + 1`로 넣는다 (raw/siege-sock.c:326). 다만 이 경로는 fd 번호가 `FD_SETSIZE` 이상일 때만 쓰인다 (raw/siege-sock.c:308-309).
 
 ## 이 문서로 확인하지 못한 것
 
-- 다른 소스 파일(`client.c` 등)에 별도 타이머나 `SO_RCVTIMEO` 설정이 있는지 (**미확인** — 확인: siege 저장소 `src/`에서 timeout 관련 설정 검색).
-- 위 판단이 실제 동작과 맞는지 (**미확인** — 확인: 응답을 보내지 않는 서버에 `siege -t`로 요청해 끝나는지 관찰).
+- 다른 소스 파일(`client.c` 등)에 별도 타이머나 `SO_RCVTIMEO` 설정이 있는지는 소스로 확인하지 않았다. 실측에서는 응답하지 않는 서버에 대해 siege 4.0.7이 `timeout` 30초·5초 설정 모두에서 150초 동안 끝나지 않았다 → [[sources/siege-observed-ubuntu2204]]. 위 판단과 맞는 결과다.
 
 ## 과제 적용 (판단)
 

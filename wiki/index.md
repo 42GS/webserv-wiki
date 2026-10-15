@@ -31,7 +31,8 @@ updated: 2026-10-15
 | [[sources/posix-waitpid]] | POSIX `wait()`·`waitpid()` — WNOHANG, 반환값, 종료 상태 매크로, SIGCHLD | `raw/posix-waitpid.md` |
 | [[sources/posix-bind]] | POSIX `bind()` — EADDRINUSE·EADDRNOTAVAIL, non-blocking 비동기 할당 | `raw/posix-bind.md` |
 | [[sources/siege]] | siege 매뉴얼 — 옵션(-c·-r·-t·-d·-b), Availability의 의미 | `raw/siege.pod` |
-| [[sources/siege-sock]] | siege 소켓 코드 — `timeout`은 읽기마다의 준비 검사에 쓰임, select 구현상 응답 대기 실효는 불확실(판단) | `raw/siege-sock.c` |
+| [[sources/siege-sock]] | siege 소켓 코드 — `timeout`은 읽기마다의 준비 검사에 쓰임, select 구현상 응답 대기에 실효 없음(판단, 실측으로 뒷받침) | `raw/siege-sock.c` |
+| [[sources/siege-observed-ubuntu2204]] | siege 4.0.7 실측(Ubuntu 22.04) — 응답 없는 서버에 timeout 무효(150초), `Connection: close` 요청, `-b`가 `-d`보다 우선, `O_NDELAY`=`O_NONBLOCK` | `raw/siege-observed-ubuntu2204.md` |
 | [[sources/siegerc]] | siege 기본 설정 템플릿 — connection=close, protocol, timeout, failures | `raw/siegerc.in` |
 | [[sources/os-observed-bind]] | OS 실측(macOS·Ubuntu) — 재시작 직후 bind, `SO_REUSEADDR`, `0.0.0.0`과 특정 IP 충돌 | `raw/os-observed-bind.md` |
 | [[sources/os-observed-pipe-poll]] | OS 실측(macOS·Ubuntu) — 한쪽이 닫힌 pipe의 `poll()` 비트 차이 | `raw/os-observed-pipe-poll.md` |
