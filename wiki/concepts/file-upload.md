@@ -37,8 +37,8 @@ Content-Type: text/plain
 |---|---|
 | 본문은 boundary로 나뉜 part들의 연속 | raw/rfc7578.txt:181-182 |
 | 구분자는 CRLF + `--` + boundary 값. boundary 값은 `Content-Type`의 `boundary` 파라미터로 주어지며 따옴표로 감싸일 수 있음 | raw/rfc7578.txt:186-193 |
-| boundary 구분자는 part 내용 안에 나오면 안 됨 (MUST NOT) | raw/rfc7578.txt:190-191 |
-| 각 part는 `Content-Disposition: form-data; name="..."`를 가져야 함 (MUST) | raw/rfc7578.txt:197-200 |
+| boundary 구분자는 part 내용 안에 나오면 안 됨 (MUST NOT) | raw/rfc7578.txt:189-193, raw/rfc2046.txt:983-986 |
+| 각 part는 `Content-Disposition: form-data; name="..."`를 가져야 함 (MUST) | raw/rfc7578.txt:197-201 |
 | 파일이면 `filename` 파라미터를 붙여야 함 (SHOULD). 없을 수도 있음 | raw/rfc7578.txt:207-213 |
 | `filename*` 형식(RFC 5987)은 쓰면 안 됨 (MUST NOT) | raw/rfc7578.txt:237-239 |
 | 한 필드의 여러 파일은 같은 `name`을 가진 별도 part로 보냄 (MUST) | raw/rfc7578.txt:254-256 |
@@ -59,7 +59,7 @@ Content-Type: text/plain
 | 구분자 뒤의 공백(transport-padding)은 받는 쪽이 처리할 수 있어야 함 (MUST) | raw/rfc2046.txt:1239-1244 |
 | 비교는 CRLF 바로 뒤에 boundary 전체가 나오는지로 한다. 줄 전체가 정확히 같을 필요는 없음 | raw/rfc2046.txt:1103-1106 |
 | boundary는 1~70자, 정해진 문자만, 공백으로 끝나지 않음 | raw/rfc2046.txt:1091-1093, raw/rfc2046.txt:1200-1214 |
-| part 헤더 영역은 비어 있을 수 있음. 그때 `Content-Type`은 `text/plain` | raw/rfc2046.txt:945-949, raw/rfc2046.txt:1079-1081 |
+| part 헤더 영역은 비어 있을 수 있음. 그때 `Content-Type`은 `text/plain` | raw/rfc2046.txt:945-959, raw/rfc2046.txt:1079-1081 |
 | part 내용은 0~255 아무 바이트 | raw/rfc2046.txt:1260, raw/rfc2046.txt:1269 |
 
 > [!danger] 파일 끝의 CRLF

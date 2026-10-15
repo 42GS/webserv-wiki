@@ -30,15 +30,15 @@ RFC가 특정 코드를 직접 지정하지 않는 상황은 **판단**으로 �
 | 상황 | 코드 | 근거 | 비고 |
 |---|---|---|---|
 | 영구 이동, 메서드가 바뀌어도 됨 | 301 | raw/rfc9110.txt:7367-7369 | 브라우저가 POST를 GET으로 바꿀 수 있음 (raw/rfc9110.txt:7384-7387) |
-| 영구 이동, 메서드 유지 | 308 | raw/rfc9110.txt:7507-7509, raw/rfc9110.txt:7386-7387 | |
-| 임시 이동, 메서드가 바뀌어도 됨 | 302 | raw/rfc9110.txt:7395-7398 | |
+| 영구 이동, 메서드 유지 | 308 | raw/rfc9110.txt:7507-7509, raw/rfc9110.txt:7384-7387 | 301보다 나중에 생긴 코드라 모든 곳에서 인식되지 않을 수 있음 (raw/rfc9110.txt:7528-7530) |
+| 임시 이동, 메서드가 바뀌어도 됨 | 302 | raw/rfc9110.txt:7395-7398 | 브라우저가 POST를 GET으로 바꿀 수 있음 (raw/rfc9110.txt:7406-7409) |
 | 임시 이동, 메서드 유지 | 307 | raw/rfc9110.txt:7492-7495 | 클라이언트는 메서드를 바꾸면 안 됨 (MUST NOT) |
 | CGI가 `Location: 절대URI`만 출력 (client redirect) | 302 | raw/rfc3875.txt:1318-1326 | 서버가 302를 생성 (MUST). `Location`이 `/경로`면 local redirect로, 서버가 그 경로를 다시 처리한다 (raw/rfc3875.txt:1303-1314) |
 | POST 결과로 다른 리소스를 GET하게 함 | 303 | raw/rfc9110.txt:4065-4068, raw/rfc9110.txt:7413-7416 | |
 
-- 모든 3xx 응답에 `Location`을 보낸다. 301·302·307에서는 SHOULD다 (raw/rfc9110.txt:7378-7379, raw/rfc9110.txt:7400-7401, raw/rfc9110.txt:7499-7500). 303은 정의상 `Location`의 URI를 가리킨다 (raw/rfc9110.txt:7413-7416).
+- 리다이렉트 응답(301·302·303·307·308)에는 `Location`을 보낸다. 301·302·307·308은 SHOULD다 (raw/rfc9110.txt:7378-7379, raw/rfc9110.txt:7400-7401, raw/rfc9110.txt:7499-7500, raw/rfc9110.txt:7518-7519). 303은 정의상 `Location`의 URI를 가리킨다 (raw/rfc9110.txt:7413-7416).
 - `Location`은 상대 참조도 된다. 대상 URI 기준으로 해석된다 (raw/rfc9110.txt:4743-4745).
-- 끝에 `/`가 없는 디렉토리 요청은 `/`를 붙인 경로로 301을 보낸다 (**판단**). 이유는 [[concepts/configuration-file]] "디렉토리 요청 처리 순서". NGINX가 정적 디렉토리에도 그렇게 하는지는 문서에 없다 (선택 실측, [[source-wishlist]]).
+- 끝에 `/`가 없는 디렉토리 요청은 `/`를 붙인 경로로 301을 보낸다 (**판단**). 이유는 [[concepts/configuration-file]] "디렉토리 요청 처리 순서". NGINX 실측도 index 유무와 관계없이 301이었다 (raw/nginx-observed-directory.md:77-83, raw/nginx-observed-directory.md:109-115).
 
 ## 클라이언트 오류
 
@@ -51,7 +51,7 @@ RFC가 특정 코드를 직접 지정하지 않는 상황은 **판단**으로 �
 | `Transfer-Encoding`의 마지막 coding이 chunked가 아님 | 400 | raw/rfc9112.txt:950-954 | MUST, 보낸 뒤 연결 닫음 |
 | 경로에 파일이 없음, 잘못된 URL | 404 | raw/rfc9110.txt:7589-7591 | 평가 "Try an incorrect URL" (raw/evaluation-sheet-en.md:100) |
 | 파일은 있지만 접근을 거부 (권한 없음 등) | 403 | raw/rfc9110.txt:7571-7572 | |
-| 리스팅 off이고 index 파일도 없는 디렉토리 | 403 | raw/rfc9110.txt:7571-7572 | **판단** (확정). NGINX index·autoindex 모듈 문서에도 이 경우의 코드가 없다 (raw/nginx-index-module.md:12, raw/nginx-autoindex-module.md:12). NGINX와 같은지는 선택 실측 → [[source-wishlist]] |
+| 리스팅 off이고 index 파일도 없는 디렉토리 | 403 | raw/rfc9110.txt:7571-7572 | **판단** (확정). NGINX index·autoindex 모듈 문서에도 이 경우의 코드가 없다 (raw/nginx-index-module.md:12, raw/nginx-autoindex-module.md:12). NGINX 실측도 403 (raw/nginx-observed-directory.md:127-128) |
 | URI의 `..`가 루트 위로 올라감 (`%2e%2e` 포함) | **400** + 연결 닫기 | raw/rfc9110.txt:8563-8570, raw/nginx-observed-directory.md:159-164 | 사용자 결정 (2026-10-15). RFC는 접근을 피하라고만 하고 코드는 지정하지 않는다. NGINX 실측과 같다 → [[sources/nginx-observed-directory]] |
 | 정규화는 통과했지만 최종 파일 경로가 root 밖 (심볼릭 링크 등) | 403 | raw/rfc9110.txt:7571-7572 | **판단**. URI는 올바르므로 400이 아니다. NGINX 미측정 |
 | 라우트에서 허용하지 않은 메서드 (알려진 메서드) | 405 | raw/rfc9110.txt:3801-3804, raw/rfc9110.txt:7603-7607 | `Allow` 헤더 MUST. 평가 "DELETE with and without permission" (raw/evaluation-sheet-en.md:73) |

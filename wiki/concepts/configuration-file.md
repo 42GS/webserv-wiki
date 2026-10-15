@@ -10,7 +10,7 @@ updated: 2026-10-15
 ## 실행 방식
 
 - `./webserv [configuration file]` (raw/subject.md:118).
-- 설정 파일은 인자로 받거나 기본 경로에서 읽어야 함 (raw/subject.md:127). 인자 없이 실행해도 동작해야 한다.
+- 설정 파일은 인자로 받거나 기본 경로에서 읽어야 함 (raw/subject.md:127). 인자 없이 실행하면 기본 경로의 설정 파일로 동작하게 한다 (**판단**).
 - NGINX 설정의 `server` 섹션을 참고하라고 권장 (raw/subject.md:161).
 
 ## 필수 기능 (subject IV.3)
@@ -41,7 +41,7 @@ updated: 2026-10-15
 
 | 규칙 | 근거 |
 |---|---|
-| 매칭 전에 URI를 정규화한다: `%XX` 디코딩 → `.`·`..` 해석 → 연속된 `/`를 하나로 | raw/nginx-core-module.md:1063 |
+| 매칭은 정규화된 URI로 한다: `%XX` 디코딩, `.`·`..` 해석, 연속된 `/` 합치기(설정에 따라). 문서는 세 가지를 나열할 뿐 순서는 적지 않는다 | raw/nginx-core-module.md:1063 |
 | prefix location 중 **가장 길게 매칭되는 것**을 고른다 | raw/nginx-core-module.md:1067 |
 | `=` 수식어는 정확히 일치할 때만 매칭, 일치하면 검색 종료 | raw/nginx-core-module.md:1077 |
 | 연속 `/` 합치기는 prefix 매칭이 올바르게 동작하는 데 필요하다. `//scripts/one.php`가 `/scripts/`에 매칭되지 않는 문제를 막는다 | raw/nginx-core-module.md:1195-1205 |
@@ -94,7 +94,7 @@ server가 정해지는 시점:
 
 - **끝에 `/`가 없는 디렉토리 요청을 301로 보내는 이유 (판단):**
   - NGINX는 `/`로 끝나는 prefix location에 `/` 없는 URI가 오면 `/`를 붙인 URI로 301을 보낸다. 다만 문서상 이 동작은 `proxy_pass` 등을 쓰는 location에 대한 것이라 유사 사례다 (raw/nginx-core-module.md:1115).
-  - 리스팅이나 index 페이지 안의 상대 링크는 기준 URI 경로의 **마지막 세그먼트를 뺀 부분**에 붙는다 (raw/rfc3986.txt:1799-1803). 그래서 `/dir`에서 `a.txt`는 `/a.txt`로, `/dir/`에서는 `/dir/a.txt`로 해석된다 (예시: raw/rfc3986.txt:1970). 기준 URI는 응답을 받은 URI이고, 리다이렉트를 거쳤다면 마지막 URI다 (raw/rfc3986.txt:1640-1645). 따라서 `/dir` → 301 → `/dir/` 뒤에는 링크가 맞게 해석된다.
+  - 리스팅이나 index 페이지 안의 상대 링크는 기준 URI 경로의 **마지막 세그먼트를 뺀 부분**에 붙는다 (raw/rfc3986.txt:1799-1803). 그래서 `/dir`에서 `a.txt`는 `/a.txt`로, `/dir/`에서는 `/dir/a.txt`로 해석된다 (기준 URI `http://a/b/c/d;p?q`에서 `g` → `http://a/b/c/g`, raw/rfc3986.txt:1950-1954, raw/rfc3986.txt:1970). 기준 URI는 응답을 받은 URI이고, 리다이렉트를 거쳤다면 마지막 URI다 (raw/rfc3986.txt:1640-1645). 따라서 `/dir` → 301 → `/dir/` 뒤에는 링크가 맞게 해석된다.
   - 301에는 `Location`을 보낸다 (SHOULD, raw/rfc9110.txt:7378-7379). NGINX는 `http://web/noindex/`처럼 절대 URL을 보냈다 (raw/nginx-observed-directory.md:115). 이 과제는 `return`과 같이 경로만 보낸다 (상대 참조 허용, raw/rfc9110.txt:4743-4745) (**판단**) → [[sources/nginx-observed-directory]].
 - 리스팅 형식은 평가가 브라우저로 시도하므로 (raw/evaluation-sheet-en.md:101) HTML이면 된다. NGINX 기본도 html이다 (raw/nginx-autoindex-module.md:63).
 - 리스팅에 무엇을 보일지는 subject가 정하지 않는다 (raw/subject.md:170). NGINX는 크기와 시간도 보인다 (raw/nginx-autoindex-module.md:54, raw/nginx-autoindex-module.md:88). 시간 표시에는 시간 함수가 필요해 [[analysis/subject-vs-evaluation]] 1.4절의 질문에 걸린다. 이름만 보여도 요구사항은 충족한다 (**판단**).
@@ -131,7 +131,7 @@ subject 기능을 NGINX에서는 어떤 지시자로 하는지 정리했다. 설
 ## 평가 시 준비물
 
 - 모든 기능을 시연할 설정 파일과 기본 파일을 제출해야 함 (raw/subject.md:184).
-- 평가자는 설정 파일 외 파일을 수정하지 않는다 (raw/evaluation-sheet-en.md:24). 시연용 설정을 기능별로 미리 준비해 두는 게 유리하다.
+- 평가자가 설정 파일 외 파일을 고칠 필요가 없어야 한다. 고치려면 평가받는 사람과 합의해야 한다 (raw/evaluation-sheet-en.md:24). 시연용 설정을 기능별로 미리 준비해 두는 게 유리하다.
 
 ## 포트 관련 엣지 케이스 (Port issues)
 
@@ -161,7 +161,7 @@ subject 기능을 NGINX에서는 어떤 지시자로 하는지 정리했다. 설
 > - virtual host 미구현: 같은 `interface:port` 중복 설정을 **설정 파싱 단계에서 에러**로 거부한다.
 > - virtual host 구현: `Host` 헤더로 서버를 고른다. 디펜스에서 선택 이유를 설명한다.
 >   NGINX에서 각 `address:port`에는 기본 server가 있다. `default_server`가 없으면 그 `address:port`를 쓰는 첫 번째 server가 기본이다 (raw/nginx-core-module.md:963). NGINX는 IP 기반과 이름 기반 virtual server를 따로 나누지 않는다 (raw/nginx-core-module.md:1628).
->   `Host`가 어느 `server_name`과도 맞지 않거나 `Host`가 없으면 그 포트의 default server가 처리한다 (raw/nginx-request-processing.md:34). 선택 순서는 아래 "server 선택" 절.
+>   `Host`가 어느 `server_name`과도 맞지 않거나 `Host`가 없으면 그 포트의 default server가 처리한다 (raw/nginx-request-processing.md:34). 선택 순서는 위 "server 선택" 절.
 >   `Host`는 대상 URI의 host·port 정보로, 여러 호스트 이름을 서비스할 때 리소스를 구분하는 데 쓰인다 (raw/rfc9110.txt:2414-2417). 형식은 `uri-host [ ":" port ]` (raw/rfc9110.txt:2423).
 
 ## 관련
