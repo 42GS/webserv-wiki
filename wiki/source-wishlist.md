@@ -81,7 +81,7 @@ nginx.org에 정적 파일 모듈 문서가 없고(`ngx_http_static_module.html`
 | [x] | — | `limit_except`로 막힌 메서드의 응답 코드 — **닫음**: RFC 9110이 405 + `Allow` MUST (raw/rfc9110.txt:7603-7607) | — | — |
 | [x] | 선택 | `raw/nginx-observed-directory.md`로 측정 (2026-10-15, 403) — 리스팅 off + index 없는 디렉토리의 응답 코드 (index·autoindex 모듈 문서에 없음, 2026-10-15 확인) — 과제는 **판단**으로 403 확정 | 같은 방법 | 같은 형식 |
 | [x] | — | Host 헤더 없는 HTTP/1.1 요청의 응답 코드 — **닫음**: RFC 9112가 400 MUST (raw/rfc9112.txt:445-448) | — | — |
-| [ ] | 선택 | 경로의 `%2F`를 디코딩해 구분자로 쓰는지 (core 모듈 문서는 정규화 항목만 나열하고 순서·`%2F` 처리는 적지 않음) → [[concepts/security]] | 같은 Docker 방법으로 `/a%2Fb` 등 요청 | 같은 형식 |
+| [x] | 선택 | `raw/nginx-observed-encoded-slash.md`로 측정 (2026-10-15, 구분자로 씀·디코딩 먼저) — 경로의 `%2F`를 디코딩해 구분자로 쓰는지 (core 모듈 문서는 정규화 항목만 나열하고 순서·`%2F` 처리는 적지 않음) → [[concepts/security]] | 같은 Docker 방법으로 `/a%2Fb` 등 요청 | 같은 형식 |
 
 ## 5-1. OS 실측 (POSIX 문서로 확인 불가)
 

@@ -316,3 +316,8 @@
 - 생성: raw/siege-sock.c (원문 그대로, 커밋 e2a6bc9, 2023-12-06), sources/siege-sock
 - 갱신: concepts/resilience·testing (응답 대기 timeout **미확인** → 원문 확인 + 판단), sources/siegerc, source-wishlist 6절(체크, 나머지 소스 항목 추가), index, overview
 - 메모: `timeout`은 연결 직후와 `read()` 직전마다 하는 준비 검사의 대기 시간이다 (raw/siege-sock.c:360-362, raw/siege-sock.c:611-626). 그 검사가 읽기·쓰기 집합을 함께 보므로 응답 대기에는 실효가 없을 수 있다고 판단했다 (raw/siege-sock.c:370-374). 다른 소스 파일의 타이머, `O_NDELAY`와 `O_NONBLOCK`이 같은 값인지, 평가 PC의 siege 버전은 **미확인**.
+
+## [2026-10-15] ingest | NGINX 실측: 경로의 `%2F`
+- 생성: raw/nginx-observed-encoded-slash.md (설정·명령·curl 출력·NGINX 로그 그대로, nginx/1.30.6, 디렉토리 실측과 같은 이미지 digest), sources/nginx-observed-encoded-slash
+- 갱신: concepts/security (콜아웃의 **미확인** 해소, 5단계를 사용자 결정으로), concepts/status-codes (`%2F` 400 행), source-wishlist 4-1 (마지막 항목 체크), overview, index
+- 메모: NGINX는 `%2F`를 디코딩해 경로 구분자로 쓰고(`/a%2Fb.txt` → `location /a/`의 `a/b.txt`), 디코딩으로 생긴 `..`·연속 `/`도 정규화한다 (raw/nginx-observed-encoded-slash.md:100-111, raw/nginx-observed-encoded-slash.md:148, raw/nginx-observed-encoded-slash.md:170). RFC 3986의 "나눈 뒤 디코딩"과 반대 순서다. 사용자 결정(2026-10-15): 이 과제는 `%2F`를 400으로 거부하는 현행 판단을 유지한다. curl은 소문자 `%2f`를 `%2F`로 바꿔 보냈다 (로그 198).

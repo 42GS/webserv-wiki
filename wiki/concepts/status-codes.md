@@ -1,7 +1,7 @@
 ---
 title: status code — 상황별 선택
 type: concept
-sources: [raw/rfc9110.txt, raw/rfc9112.txt, raw/rfc3875.txt, raw/nginx-core-module.md, raw/subject.md, raw/evaluation-sheet-en.md, raw/nginx-autoindex-module.md, raw/nginx-index-module.md, raw/iana-http-status-codes.txt, raw/rfc1945.txt, raw/rfc6585.txt, raw/nginx-observed-directory.md]
+sources: [raw/rfc9110.txt, raw/rfc9112.txt, raw/rfc3875.txt, raw/nginx-core-module.md, raw/subject.md, raw/evaluation-sheet-en.md, raw/nginx-autoindex-module.md, raw/nginx-index-module.md, raw/iana-http-status-codes.txt, raw/rfc1945.txt, raw/rfc6585.txt, raw/nginx-observed-directory.md, raw/nginx-observed-encoded-slash.md]
 updated: 2026-10-15
 ---
 
@@ -53,6 +53,7 @@ RFC가 특정 코드를 직접 지정하지 않는 상황은 **판단**으로 �
 | 파일은 있지만 접근을 거부 (권한 없음 등) | 403 | raw/rfc9110.txt:7571-7572 | |
 | 리스팅 off이고 index 파일도 없는 디렉토리 | 403 | raw/rfc9110.txt:7571-7572 | **판단** (확정). NGINX index·autoindex 모듈 문서에도 이 경우의 코드가 없다 (raw/nginx-index-module.md:12, raw/nginx-autoindex-module.md:12). NGINX 실측도 403 (raw/nginx-observed-directory.md:127-128) |
 | URI의 `..`가 루트 위로 올라감 (`%2e%2e` 포함) | **400** + 연결 닫기 | raw/rfc9110.txt:8563-8570, raw/nginx-observed-directory.md:159-164 | 사용자 결정 (2026-10-15). RFC는 접근을 피하라고만 하고 코드는 지정하지 않는다. NGINX 실측과 같다 → [[sources/nginx-observed-directory]] |
+| 경로에 `%2F`(디코딩하면 `/`)가 있음 | **400** | raw/rfc3875.txt:736-741 | 사용자 결정 (2026-10-15). NGINX는 거부하지 않고 구분자로 쓴다 (raw/nginx-observed-encoded-slash.md:100-111) → [[concepts/security]] 5단계 |
 | 정규화는 통과했지만 최종 파일 경로가 root 밖 (심볼릭 링크 등) | 403 | raw/rfc9110.txt:7571-7572 | **판단**. URI는 올바르므로 400이 아니다. NGINX 미측정 |
 | 라우트에서 허용하지 않은 메서드 (알려진 메서드) | 405 | raw/rfc9110.txt:3801-3804, raw/rfc9110.txt:7603-7607 | `Allow` 헤더 MUST. 평가 "DELETE with and without permission" (raw/evaluation-sheet-en.md:73) |
 | 클라이언트가 제한 시간 안에 요청을 다 보내지 않음 | 408 | raw/rfc9110.txt:7641-7643 | 닫기 전에 에러 응답을 보낼 수 있음 (MAY, raw/rfc9112.txt:1253-1255) → [[concepts/connection-management]]  NGINX는 헤더 전체 수신 시간, 본문 read 간격 기준으로 408을 보낸다 (raw/nginx-core-module.md:317, raw/nginx-core-module.md:347) |

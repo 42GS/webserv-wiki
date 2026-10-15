@@ -1,7 +1,7 @@
 ---
 title: 보안 — 경로·주입·길이·splitting·smuggling
 type: concept
-sources: [raw/rfc9110.txt, raw/rfc9112.txt, raw/rfc3875.txt, raw/nginx-core-module.md, raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc7578.txt, raw/rfc3986.txt, raw/rfc6265.txt, raw/rfc1945.txt, raw/rfc6585.txt, raw/nginx-observed-directory.md]
+sources: [raw/rfc9110.txt, raw/rfc9112.txt, raw/rfc3875.txt, raw/nginx-core-module.md, raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc7578.txt, raw/rfc3986.txt, raw/rfc6265.txt, raw/rfc1945.txt, raw/rfc6585.txt, raw/nginx-observed-directory.md, raw/nginx-observed-encoded-slash.md]
 updated: 2026-10-15
 ---
 
@@ -26,7 +26,7 @@ subject와 평가표에는 보안 항목이 따로 없다. 하지만 아래 문�
 | 2 | path를 `/`로 세그먼트로 나눈다. component·subcomponent를 나눈 뒤에 디코딩해야 디코딩된 문자가 구분자로 오해되지 않는다 | raw/rfc3986.txt:754-758, raw/rfc3986.txt:2439-2441 |
 | 3 | 세그먼트마다 `%XX`를 **한 번만** 디코딩한다. 16진수는 대소문자 구분 없음. `%`뒤에 16진수 두 자리가 아니면 400 (**판단**) | raw/rfc3986.txt:647-652, raw/rfc3986.txt:767-771 |
 | 4 | 디코딩 결과에 NUL(`%00`)이 있으면 거부한다. 원시 데이터를 받지 않는 경우 거부하라고 한다 (should) | raw/rfc3986.txt:2443-2445 |
-| 5 | 디코딩 결과에 `/`가 있는 세그먼트(원래 `%2F`)는 거부한다 (**판단**). `/`는 예약 문자라 디코딩하면 의미가 바뀐다. RFC 3875도 인코딩된 `/`가 `PATH_INFO`로 디코딩되는 요청을 거부할 수 있다고 한다 | raw/rfc3986.txt:689-692, raw/rfc3875.txt:736-741 |
+| 5 | 디코딩 결과에 `/`가 있는 세그먼트(원래 `%2F`)는 **400으로 거부한다** (사용자 결정, 2026-10-15. NGINX는 구분자로 쓴다, 아래 콜아웃). `/`는 예약 문자라 디코딩하면 의미가 바뀐다. RFC 3875도 인코딩된 `/`가 `PATH_INFO`로 디코딩되는 요청을 거부할 수 있다고 한다 | raw/rfc3986.txt:689-692, raw/rfc3875.txt:736-741 |
 | 6 | 빈 세그먼트(연속 `/`)를 합치고, `.`·`..` 세그먼트를 remove_dot_segments 방식으로 제거한다. **`..`가 루트 위로 올라가면 400으로 거부하고 연결을 닫는다** (NGINX 실측, raw/nginx-observed-directory.md:159-164). RFC 3986처럼 루트에서 잘라내지 않는다 (사용자 결정) | raw/rfc3986.txt:1816-1844, raw/rfc3986.txt:2004-2005, raw/rfc3986.txt:2028, raw/nginx-core-module.md:1195-1205 |
 | 7 | 정규화된 경로로 location을 매칭하고 root·alias에 붙여 파일 경로를 만든다 → [[concepts/configuration-file]] | raw/nginx-core-module.md:1063-1067 |
 | 8 | 보안 검사는 디코딩 이후에 한다. 최종 파일 경로가 해당 root 안에 있는지 확인한다 | raw/rfc3986.txt:2442-2443 |
@@ -37,7 +37,7 @@ subject와 평가표에는 보안 항목이 따로 없다. 하지만 아래 문�
 - 파일 시스템이 특별한 의미를 주는 문자와 이름은 URI에서 온 데이터로 쓰지 못하게 제한하라고 한다 (raw/rfc3986.txt:2447-2460).
 
 > [!note] NGINX와 순서 차이
-> NGINX 문서는 location 매칭에 쓰는 정규화된 URI가 `%XX` 디코딩, `.`·`..` 해석, 연속 `/` 합치기를 거친다고만 하고, 순서와 `%2F` 처리는 적지 않는다 (raw/nginx-core-module.md:1063). NGINX가 `%2F`를 디코딩해 구분자로 쓰는지는 **미확인**이다 (확인: NGINX에 `/a%2Fb` 요청 실측 → [[source-wishlist]] 4-1절). RFC 3986은 세그먼트를 나눈 뒤 디코딩하라고 한다 (raw/rfc3986.txt:754-758). 위 절차는 RFC 순서를 따르고, 해석이 갈릴 수 있는 `%2F`는 5단계에서 거부해 어느 해석으로도 우회되지 않게 했다 (**판단**). 인코딩된 `..`는 NGINX도 400으로 거부했다 (raw/nginx-observed-directory.md:176-181).
+> NGINX 문서는 location 매칭에 쓰는 정규화된 URI가 `%XX` 디코딩, `.`·`..` 해석, 연속 `/` 합치기를 거친다고만 하고, 순서와 `%2F` 처리는 적지 않는다 (raw/nginx-core-module.md:1063). 실측해 보니 NGINX는 `%2F`를 디코딩해 경로 구분자로 쓰고(`/a%2Fb.txt`가 `location /a/`의 `a/b.txt`로 처리됨), 디코딩으로 생긴 `..`·연속 `/`도 정규화한다 (raw/nginx-observed-encoded-slash.md:100-111, raw/nginx-observed-encoded-slash.md:148, raw/nginx-observed-encoded-slash.md:170) → [[sources/nginx-observed-encoded-slash]]. 즉 디코딩을 먼저 한다 (**판단**). RFC 3986은 세그먼트를 나눈 뒤 디코딩하라고 한다 (raw/rfc3986.txt:754-758). 위 절차는 RFC 순서를 따르고, 해석이 갈리는 `%2F`는 5단계에서 400으로 거부해 어느 해석으로도 우회되지 않게 했다 (사용자 결정, 2026-10-15). NGINX와 다르므로 디펜스에서 이유를 설명한다. 인코딩된 `..`는 NGINX도 400으로 거부했고, `%2F`와 섞인 `..`로 root 위로 올라가도 400이었다 (raw/nginx-observed-directory.md:176-181, raw/nginx-observed-encoded-slash.md:174-179).
 
 과제 적용:
 - URI의 `..`가 루트 위로 올라가면 6단계에서 400 + 연결 닫기 (사용자 결정, NGINX와 같음) → [[sources/nginx-observed-directory]].

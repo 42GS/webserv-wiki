@@ -23,6 +23,7 @@ updated: 2026-10-15
 | [[sources/nginx-request-processing]] | NGINX 요청 처리 — server 선택(포트 → Host), default server, location과 query | `raw/nginx-request-processing.md` |
 | [[sources/nginx-server-names]] | NGINX Server names — 이름 매칭 우선순위, 빈 이름, server가 정해지는 시점 | `raw/nginx-server-names.md` |
 | [[sources/nginx-observed-directory]] | NGINX 실측 — 디렉토리 301·403, root 위 `..`는 400 | `raw/nginx-observed-directory.md` |
+| [[sources/nginx-observed-encoded-slash]] | NGINX 실측 — `%2F`를 디코딩해 경로 구분자로 씀, 디코딩 후 정규화, root 위 `..`는 400 | `raw/nginx-observed-encoded-slash.md` |
 | [[sources/posix-poll]] | POSIX `poll()` — 이벤트 비트, 준비 상태의 의미, busy waiting | `raw/posix-poll.md` |
 | [[sources/posix-signal-h]] | POSIX `<signal.h>` — 시그널 기본 동작 (SIGPIPE·SIGCHLD·SIGINT 등) | `raw/posix-signal-h.md` |
 | [[sources/posix-send]] | POSIX `send()` — EPIPE와 SIGPIPE, MSG_NOSIGNAL, 반환값 | `raw/posix-send.md` |
