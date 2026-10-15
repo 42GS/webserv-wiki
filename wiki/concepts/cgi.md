@@ -1,7 +1,7 @@
 ---
 title: CGI
 type: concept
-sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc3875.txt, raw/rfc9112.txt, raw/rfc9110.txt, raw/posix-poll.md, raw/posix-signal-h.md, raw/posix-waitpid.md, raw/posix-bind.md, raw/posix-exit.md, raw/php-cgi-force-redirect.md, raw/php-ini-core.md, raw/rfc6265.txt, raw/posix-fcntl.md, raw/pep-0594.md, raw/os-observed-pipe-poll.md, raw/php-src-cgi_main.c]
+sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc3875.txt, raw/rfc9112.txt, raw/rfc9110.txt, raw/posix-poll.md, raw/posix-signal-h.md, raw/posix-waitpid.md, raw/posix-bind.md, raw/posix-exit.md, raw/php-cgi-force-redirect.md, raw/php-ini-core.md, raw/rfc6265.txt, raw/posix-fcntl.md, raw/pep-0594.md, raw/os-observed-pipe-poll.md, raw/php-src-cgi_main.c, raw/php-cgi-observed-env.md]
 updated: 2026-10-15
 ---
 
@@ -93,6 +93,7 @@ RFC 3875 목록에 없는 비표준 변수다. 이 과제에서 CGI로 `php-cgi`
   - `cgi.fix_pathinfo`가 꺼져 있고 `cgi.discard_path`(기본 0, raw/php-ini-core.md:424)도 꺼져 있을 때 (raw/php-src-cgi_main.c:1424-1434)
 - 그래서 `SCRIPT_FILENAME`에 스크립트 절대 경로를 넣고, `REDIRECT_URL`은 넣지 않으며, `PATH_TRANSLATED`는 위 표대로 `PATH_INFO`가 있을 때만 넣는다 (**판단**).
 - `REDIRECT_STATUS` 검사는 CGI 모드일 때만 한다. php-cgi는 `SERVER_SOFTWARE`, `SERVER_NAME`, `GATEWAY_INTERFACE`, `REQUEST_METHOD` 중 하나가 있으면 CGI 모드로 본다 (raw/php-src-cgi_main.c:1787-1795, raw/php-src-cgi_main.c:1886-1887). 서버는 위 표에서 MUST인 `GATEWAY_INTERFACE`·`REQUEST_METHOD`를 넘기므로 이 검사를 받는다 (**판단**).
+- Ubuntu 24.04 php-cgi로 위 동작을 실측했다 → [[sources/php-cgi-observed-env]]. `REDIRECT_STATUS`가 없으면 php-cgi는 헤더 없이 안내 HTML만 출력하고 exit 255로 끝난다 (raw/php-cgi-observed-env.md:142-152). 아래 5절 표대로 502가 된다.
 - `cgi.redirect_status_env`로 다른 변수 이름을 쓰게 할 수도 있지만 보안 주의가 붙어 있다 (raw/php-ini-core.md:558-564).
 - php-cgi는 기본 설정(`cgi.rfc2616_headers` = 0)에서 응답 코드를 RFC 3875 `Status:` 헤더로 보낸다 (raw/php-ini-core.md:434, raw/php-ini-core.md:568). 아래 3절의 Status 처리로 받는다. `cgi.nph` 기본값은 0이다 (raw/php-ini-core.md:430). 켜면 항상 `Status: 200`을 보낸다 (raw/php-ini-core.md:556).
 - 위 값은 PHP 기본 설정 기준이다. 평가 PC의 php-cgi 설정은 **미확인**이다.
@@ -154,6 +155,7 @@ RFC 3875 목록에 없는 비표준 변수다. 이 과제에서 CGI로 `php-cgi`
 
 - 타임아웃 시 `kill`로 종료하고 `waitpid`로 회수한다 (raw/subject.md:113). 스크립트가 잡거나 무시할 수 없는 시그널은 `SIGKILL`이다 (raw/posix-signal-h.md:186-190). `SIGTERM`은 스크립트가 잡을 수 있다 (raw/posix-signal-h.md:216-220).
 - 스크립트가 0이 아닌 종료 코드로 끝났지만 출력이 올바른 경우의 처리는 RFC가 정하지 않는다. 출력 기준으로 판단한다 (**판단**).
+  - 예: php-cgi는 스크립트 파일이 없으면 `Status: 404 Not Found`, 읽을 수 없으면 `Status: 403 Forbidden`을 올바른 헤더로 출력하고 exit 255로 끝난다 (raw/php-cgi-observed-env.md:225-230, raw/php-cgi-observed-env.md:249-253). 종료 코드로 500·502를 만들면 이 404·403이 사라진다 (**판단**).
 
 ### 자식 회수 (`waitpid`)
 

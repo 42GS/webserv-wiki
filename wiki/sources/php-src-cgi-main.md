@@ -11,7 +11,7 @@ updated: 2026-10-15
 
 - 커밋 `6d99ccc268b5ec88cc281eb3e90e29b59677fda3` (2024-09-26)는 받을 때 `PHP-8.3` 브랜치에서 이 파일을 마지막으로 바꾼 커밋이었다. (받을 때 GitHub API에서 본 값이고 raw 파일에는 없다.)
 - Ubuntu 24.04의 `php8.3-cgi`는 `8.3.6-0ubuntu0.24.04.11`이고, changelog에 `REDIRECT_STATUS` 검사를 고친 CVE-2024-8927 패치가 들어 있다 (2026-10-15 컨테이너에서 확인, raw에 없음). 태그 `php-8.3.6` 원본은 이 패치 전이라 `HTTP_REDIRECT_STATUS`도 받는다 (같은 날 태그 파일을 받아 읽음, raw에 없음). 그래서 패치 뒤 브랜치 파일을 받았다. 평가 PC의 php-cgi가 같은 코드인지는 **미확인**이다 (평가 때 `php-cgi -v`).
-- 받은 목적: php-cgi가 실행할 파일을 어느 변수로 찾는지, `REDIRECT_STATUS` 값에 조건이 있는지 → [[concepts/cgi]] "php-cgi가 추가로 요구하는 변수". 아래 내용은 코드를 읽은 결과이고, 실제 실행 결과는 따로 측정했다.
+- 받은 목적: php-cgi가 실행할 파일을 어느 변수로 찾는지, `REDIRECT_STATUS` 값에 조건이 있는지 → [[concepts/cgi]] "php-cgi가 추가로 요구하는 변수". 아래 내용은 코드를 읽은 결과이고, 실제 실행 결과는 [[sources/php-cgi-observed-env]]에 있다.
 
 ## 과제와 관련된 부분
 

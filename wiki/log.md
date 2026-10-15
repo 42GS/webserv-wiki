@@ -332,3 +332,8 @@
 - 생성: raw/php-src-cgi_main.c (원문 그대로, PHP-8.3 브랜치 커밋 6d99ccc, 2024-09-26), sources/php-src-cgi-main
 - 갱신: concepts/cgi ("php-cgi가 추가로 요구하는 변수" 표와 설명의 **미확인** 2건 해소), sources/php-cgi-force-redirect, source-wishlist 3절, index, overview
 - 메모: php-cgi는 실행할 파일을 `SCRIPT_FILENAME`에서 찾고 없을 때만 `PATH_TRANSLATED`를 쓴다 (raw/php-src-cgi_main.c:1161-1170). `REDIRECT_URL`이 함께 있거나 `cgi.fix_pathinfo`가 꺼져 있으면 `PATH_TRANSLATED`가 실행 파일이 된다 (raw/php-src-cgi_main.c:1229-1240, raw/php-src-cgi_main.c:1424-1434). `REDIRECT_STATUS`는 변수가 있는지만 본다 (raw/php-src-cgi_main.c:1898). 태그 php-8.3.6 원본은 `HTTP_REDIRECT_STATUS`도 받지만, Ubuntu 24.04 패키지는 CVE-2024-8927 패치로 받지 않아 패치 뒤 브랜치 파일을 받았다. 평가 PC의 php-cgi 버전과 php.ini는 **미확인**.
+
+## [2026-10-15] ingest | php-cgi 실측: 실행할 파일을 찾는 변수와 REDIRECT_STATUS
+- 생성: raw/php-cgi-observed-env.md (Dockerfile·스크립트·php-cgi 출력 그대로, ubuntu:24.04 digest, php8.3-cgi 8.3.6-0ubuntu0.24.04.11), sources/php-cgi-observed-env
+- 갱신: concepts/cgi (php-cgi 절에 실측 결과, 5절 종료 코드 판단에 404·403 예), sources/php-src-cgi-main (링크), index, overview
+- 메모: 소스를 읽은 결과와 같았다. `REDIRECT_STATUS`는 `0`·빈 값도 통과, `HTTP_REDIRECT_STATUS`는 거부 (raw/php-cgi-observed-env.md:154-182). `SCRIPT_FILENAME`이 우선이고 `REDIRECT_URL`이나 `cgi.fix_pathinfo=0`이면 `PATH_TRANSLATED` 쪽이 실행됐다 (raw/php-cgi-observed-env.md:194-213). `REDIRECT_STATUS`가 없을 때 출력에 헤더가 없다는 점은 소스만 읽어서는 몰랐다 (raw/php-cgi-observed-env.md:142-152). 첫 시도에서 CGI 메타변수 없이 실행해 검사가 생략된 것을 보고, 서버가 넘기는 변수를 넣어 다시 측정했다.
