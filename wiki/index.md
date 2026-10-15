@@ -35,6 +35,7 @@ updated: 2026-10-15
 | [[sources/siegerc]] | siege 기본 설정 템플릿 — connection=close, protocol, timeout, failures | `raw/siegerc.in` |
 | [[sources/os-observed-bind]] | OS 실측(macOS·Ubuntu) — 재시작 직후 bind, `SO_REUSEADDR`, `0.0.0.0`과 특정 IP 충돌 | `raw/os-observed-bind.md` |
 | [[sources/os-observed-pipe-poll]] | OS 실측(macOS·Ubuntu) — 한쪽이 닫힌 pipe의 `poll()` 비트 차이 | `raw/os-observed-pipe-poll.md` |
+| [[sources/valgrind-observed-sigint]] | valgrind 실측(Ubuntu 24.04) — SIGINT 기본 종료는 still reachable, 해제 없이 return은 definitely lost, 정리 후 종료만 깨끗함 | `raw/valgrind-observed-sigint.md` |
 | [[sources/posix-exit]] | POSIX `_Exit()` — 프로세스 종료의 결과(좀비, fd 닫힘, 자식 입양) | `raw/posix-exit.md` |
 | [[sources/nginx-index-module]] | NGINX index 모듈 — `/`로 끝나는 요청, 파일 목록 순서, 내부 리다이렉트 | `raw/nginx-index-module.md` |
 | [[sources/nginx-autoindex-module]] | NGINX autoindex 모듈 — index가 없을 때 리스팅, 기본 off, 형식 | `raw/nginx-autoindex-module.md` |

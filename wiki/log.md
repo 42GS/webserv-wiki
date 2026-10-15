@@ -337,3 +337,8 @@
 - 생성: raw/php-cgi-observed-env.md (Dockerfile·스크립트·php-cgi 출력 그대로, ubuntu:24.04 digest, php8.3-cgi 8.3.6-0ubuntu0.24.04.11), sources/php-cgi-observed-env
 - 갱신: concepts/cgi (php-cgi 절에 실측 결과, 5절 종료 코드 판단에 404·403 예), sources/php-src-cgi-main (링크), index, overview
 - 메모: 소스를 읽은 결과와 같았다. `REDIRECT_STATUS`는 `0`·빈 값도 통과, `HTTP_REDIRECT_STATUS`는 거부 (raw/php-cgi-observed-env.md:154-182). `SCRIPT_FILENAME`이 우선이고 `REDIRECT_URL`이나 `cgi.fix_pathinfo=0`이면 `PATH_TRANSLATED` 쪽이 실행됐다 (raw/php-cgi-observed-env.md:194-213). `REDIRECT_STATUS`가 없을 때 출력에 헤더가 없다는 점은 소스만 읽어서는 몰랐다 (raw/php-cgi-observed-env.md:142-152). 첫 시도에서 CGI 메타변수 없이 실행해 검사가 생략된 것을 보고, 서버가 넘기는 변수를 넣어 다시 측정했다.
+
+## [2026-10-15] ingest | valgrind 실측: SIGINT로 끝난 프로세스의 누수 보고
+- 생성: raw/valgrind-observed-sigint.md (Dockerfile·프로그램·스크립트·valgrind 출력 그대로, ubuntu:24.04 digest, valgrind-3.22.0), sources/valgrind-observed-sigint
+- 갱신: concepts/resilience ("SIGINT·SIGTERM과 누수 검사"의 valgrind **미확인** 해소), concepts/testing (링크), index, overview
+- 메모: SIGINT 기본 동작으로 끝나면 definitely lost 0, 할당 전부가 still reachable (raw/valgrind-observed-sigint.md:111-138). 핸들러를 두고 해제 없이 `main`에서 반환하면 definitely lost (raw/valgrind-observed-sigint.md:157-163). 모두 해제한 경우만 "All heap blocks were freed" (raw/valgrind-observed-sigint.md:212-215). 기존 판단(플래그 + 정리 후 종료) 유지. `leaks`·`e_fence`는 **미확인**. 첫 시도에서 비대화형 쉘의 백그라운드 작업으로 띄운 `default` 모드가 SIGINT에 끝나지 않아, valgrind를 포그라운드로 돌리고 보조 프로세스가 시그널을 보내게 바꿨다.
