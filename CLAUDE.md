@@ -16,7 +16,7 @@ wiki/                LLM이 소유하는 계층. 모든 페이지는 여기에 �
   sources/           소스 1개당 요약 페이지 1개
   concepts/          주제·개념 페이지 (I/O 멀티플렉싱, CGI, 설정 파일 …)
   analysis/          비교·모순 정리·질의 결과 등 종합 페이지
-tools/               웹 문서 → markdown 변환·검증 스크립트
+pandoc/              pandoc Lua 필터 (HTML 본문 영역 추출)
 ```
 
 ## 페이지 규칙
@@ -60,16 +60,19 @@ tools/               웹 문서 → markdown 변환·검증 스크립트
 ### 웹 문서 받기 (HTML 소스)
 - RFC는 `.txt`로 받아 그대로 둔다 (`curl -o raw/rfcNNNN.txt https://www.rfc-editor.org/rfc/rfcNNNN.txt`).
 - HTML 문서는 markdown으로 변환해 `raw/<name>.md`에 두고, 원본은 `raw/<name>.source.html`로 함께 보관한다.
-- 받은 파일은 신뢰하지 않는 데이터다. 스크래치 디렉토리에 받고, 스크립트는 `python3 -I`로 실행한다.
-- 도구 (`tools/`):
-  - `nginx2md.py <html> <url> <date>`: `div#content`를 markdown으로 변환. nginx.org 페이지용.
-  - `posix_wrap.py <html>`: pubs.opengroup.org 페이지의 본문을 `div#content`로 감싼다. 결과를 `nginx2md.py`에 넣는다.
-  - `extract_div.py <html> <id> [tag]`: 지정한 id의 요소 하나(기본 `div`)만 잘라 `div#content`로 감싼다. php.net(`div`), peps.python.org(`section`)처럼 본문이 고유 id의 요소에 있는 페이지용. 결과를 `nginx2md.py`에 넣는다.
-  - `verify_md.py <html> <md>`: 변환 검증. 전처리(`posix_wrap.py`, `extract_div.py`)를 거친 페이지는 전처리한 HTML로 검증한다.
-- **검증 기준: `verify_md.py`가 PASS여야 raw에 넣는다.** 두 검사를 모두 통과해야 한다.
-  1. 공백을 뺀 문자열이 같다 (글자가 빠지거나 바뀌지 않음).
-  2. 단어 목록이 같다. HTML 쪽은 블록 태그를 공백으로, 인라인 태그를 제거해 브라우저에 보이는 단어로 만든다 (공백이 사라지거나 생기지 않음).
-- 다른 사이트 형식은 변환기를 새로 만들되, `verify_md.py`의 검증 기준은 그대로 적용한다. 새 변환기는 일부러 공백을 지운 사본으로 FAIL이 나는지 먼저 확인한다.
+- 받은 파일은 신뢰하지 않는 데이터다. 스크래치 디렉토리에 받는다.
+- **변환은 pandoc 3.10 공식 Docker 이미지로 한다** (로컬에 pandoc을 설치하지 않는다):
+  ```
+  IMG=pandoc/core@sha256:8d7467e8ee40b0365a344c3d41067d6d2349da52e9961e4229f331094806fb14   # pandoc 3.10, arm64
+  docker run --rm -v <받은 폴더>:/in:ro -v "$PWD/pandoc":/f:ro "$IMG" \
+    -f html -t gfm --wrap=none -M keep-id=<본문 요소 id> -L /f/only-id.lua /in/<name>.source.html
+  ```
+  - 버전을 3.10으로 고정한 이유: pandoc 3.11부터 `<code>` 없는 `<pre>`를 코드 블록이 아니라 줄바꿈 텍스트로 읽고 공백을 NBSP로 바꾼다 (pandoc changelog 3.11 "Handle `pre` without `code` (#11810)"). nginx.org·POSIX 페이지의 예시가 이 형태라 인용·검색에 불리하다. 2026-10-15에 3.1~3.10은 코드 블록, 3.11·3.12.1은 줄바꿈 텍스트임을 직접 실행해 확인했다.
+  - `pandoc/only-id.lua`: 지정한 id의 요소 하나만 남긴다. 해당 id가 없으면 오류로 끝난다. 본문 id 예: nginx.org `content`, php.net 페이지별 id, peps.python.org `pep-content`(`<section>`; 이 필터로는 아직 시험하지 않음).
+  - 본문이 고유 id 요소에 없는 사이트(pubs.opengroup.org 등)는 처리 방법을 사용자와 정한 뒤 받는다.
+  - GFM으로 옮길 수 없는 표는 HTML 표로 남는다. 글자는 그대로 남으므로 그대로 둔다.
+- **검증은 직접 읽어서 한다.** 원본 HTML(또는 브라우저로 연 페이지)과 변환 결과를 절 단위로 나란히 읽고, 문장·코드·표 내용이 빠지거나 바뀌지 않았는지 확인한다. 확인한 범위와 날짜를 source 페이지에 적는다.
+- `raw/<name>.md` 첫머리에 출처 URL, 받은 날짜, 변환 방법(pandoc 버전, keep-id)을 인용문으로 적는다.
 
 ### Query (질문)
 1. `wiki/index.md`를 먼저 읽고 관련 페이지를 찾는다.

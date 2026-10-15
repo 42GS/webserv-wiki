@@ -279,3 +279,11 @@
 - 새 **미확인**: NGINX의 `%2F` 처리, RFC 9111이 RFC 7234를 대체했는지(머리말 미확인)
 - 구조: 깨진 위키링크 없음, inbound 없는 페이지는 index·log뿐, frontmatter `sources` 누락 없음
 - 메모: 점검 중 보조 출력 하나(zsh 단어 분리 오류로 전부 "누락"으로 나옴)가 틀려 버리고, 목록을 나란히 출력해 직접 비교했다
+
+## [2026-10-15] schema | tools 삭제, HTML 변환을 pandoc 3.10으로
+- 계기: 사용자 지시 — `tools/` 삭제, HTML→markdown은 라이브러리로
+- 삭제: tools/ (cite_show.py, extract_div.py, lint_wiki.py, nginx2md.py, posix_wrap.py, verify_md.py)
+- 생성: pandoc/only-id.lua (지정한 id의 요소만 남기는 pandoc Lua 필터, id가 없으면 오류 — 시험함)
+- 갱신: CLAUDE.md (디렉토리 구조, "웹 문서 받기": pandoc 3.10 공식 Docker 이미지 digest 고정, 변환 검증은 직접 읽기), source-wishlist "받는 방법"
+- 메모: 무료 변환기 4개(pandoc GPL-2.0, turndown MIT, markdownify MIT, html2text GPL-3.0, GitHub 저장소 정보로 확인) 중 사용자가 pandoc 선택. pandoc 3.11부터 `<code>` 없는 `<pre>`를 줄바꿈 텍스트+NBSP로 읽는 변경(#11810)을 3.1~3.12 이미지로 직접 실행해 확인하고 3.10으로 고정 (사용자 결정)
+- 메모: 기존 raw HTML 변환본(nginx 6개, POSIX 8개, php 2개, PEP 594, 평가표 영어 원문)은 삭제한 스크립트로만 검증했다. 원본과 직접 읽어 대조하지 않았다 (**미확인**)

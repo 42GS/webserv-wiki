@@ -115,4 +115,4 @@ POSIX가 동작을 정하지 않아 OS별로 직접 확인해야 하는 것. 평
 ## 받는 방법
 
 - RFC: `curl -o raw/rfc9110.txt https://www.rfc-editor.org/rfc/rfc9110.txt` — `.txt`가 줄 번호 인용에 가장 좋다.
-- HTML 문서: CLAUDE.md "웹 문서 받기" 절대로 `tools/`의 변환기로 직접 변환하고, `verify_md.py` PASS일 때만 `raw/`에 넣는다.
+- HTML 문서: CLAUDE.md "웹 문서 받기" 절대로 pandoc 3.10(Docker)으로 변환하고, 원본과 직접 읽어 대조한 뒤 `raw/`에 넣는다.
