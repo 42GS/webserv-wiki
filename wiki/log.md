@@ -210,3 +210,8 @@
 ## [2026-10-15] query | 멀티플렉서 결정: poll()
 - 결정: 개발 macOS, 평가 Ubuntu → 두 OS 공통인 POSIX `poll()` 사용 (사용자 결정)
 - 갱신: concepts/io-multiplexing (결정 콜아웃, Ubuntu에서 fcntl "For macOS only" 쟁점), overview (판단·열린 질문), source-wishlist (epoll·kqueue 받지 않음 `[-]`)
+
+## [2026-10-15] ingest | RFC 6585 Additional HTTP Status Codes
+- 생성: raw/rfc6585.txt (원문 그대로), sources/rfc6585
+- 갱신: concepts/status-codes (헤더 상한 초과 → 431 확정, 미확인 해소), concepts/request-parsing (RFC 9110 5.4 MUST), concepts/security, sources/iana-http-status-codes, overview, index, source-wishlist
+- 메모: 431 선택은 판단 (NGINX는 400)

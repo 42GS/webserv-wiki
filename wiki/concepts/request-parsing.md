@@ -1,7 +1,7 @@
 ---
 title: 요청 파싱 — 요청줄부터 chunked까지
 type: concept
-sources: [raw/rfc9112.txt, raw/rfc9110.txt, raw/subject.md, raw/nginx-request-processing.md, raw/posix-recv.md, raw/rfc3986.txt, raw/rfc1945.txt]
+sources: [raw/rfc9112.txt, raw/rfc9110.txt, raw/subject.md, raw/nginx-request-processing.md, raw/posix-recv.md, raw/rfc3986.txt, raw/rfc1945.txt, raw/rfc6585.txt]
 updated: 2026-10-15
 ---
 
@@ -67,6 +67,7 @@ RFC 9112 기준으로 서버가 요청을 읽는 순서대로 정리했다. 단�
 > - server 선택 순서는 [[concepts/configuration-file]] "server 선택" 절.
 
 - 헤더 전체 크기 상한은 RFC가 정하지 않는다. 길이 공격 대비로 서버가 정한다 → [[concepts/security]].
+- 상한을 넘는 헤더 줄·값·필드 집합은 무시하지 말고 4xx로 응답해야 한다 (MUST). 무시하면 request smuggling에 취약해진다 (raw/rfc9110.txt:1567-1572). 이 과제는 **431**로 응답하고 연결을 닫는다 (**판단**, raw/rfc6585.txt:177-184) → [[concepts/status-codes]].
 
 ## 4. 본문 길이 결정 (요청)
 

@@ -42,6 +42,7 @@ updated: 2026-10-15
 | [[sources/rfc6265]] | RFC 6265 쿠키 — Set-Cookie·Cookie 문법, 속성, 세션 식별자 | `raw/rfc6265.txt` |
 | [[sources/posix-fcntl]] | POSIX `fcntl()` — F_SETFL·O_NONBLOCK, F_SETFD·FD_CLOEXEC | `raw/posix-fcntl.md` |
 | [[sources/iana-http-status-codes]] | IANA status code 레지스트리 — 코드 이름(reason phrase)과 정의 문서 | `raw/iana-http-status-codes.txt` |
+| [[sources/rfc6585]] | RFC 6585 추가 status code — 431 정의, 선택 사항, 공격 시 연결 종료 | `raw/rfc6585.txt` |
 | [[sources/evaluation-sheet]] | 평가표 한국어 정리본 — **구버전, 영어 원문으로 대체됨** | `raw/evaluation-sheet.md` |
 
 ## Concepts

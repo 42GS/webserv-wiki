@@ -1,7 +1,7 @@
 ---
 title: 보안 — 경로·주입·길이·splitting·smuggling
 type: concept
-sources: [raw/rfc9110.txt, raw/rfc9112.txt, raw/rfc3875.txt, raw/nginx-core-module.md, raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc7578.txt, raw/rfc3986.txt, raw/rfc6265.txt, raw/rfc1945.txt]
+sources: [raw/rfc9110.txt, raw/rfc9112.txt, raw/rfc3875.txt, raw/nginx-core-module.md, raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc7578.txt, raw/rfc3986.txt, raw/rfc6265.txt, raw/rfc1945.txt, raw/rfc6585.txt]
 updated: 2026-10-15
 ---
 
@@ -66,7 +66,7 @@ subject와 평가표에는 보안 항목이 따로 없다. 하지만 아래 문�
 - `Content-Length`는 매우 큰 수일 수 있으니 정수 변환 오버플로를 막아야 한다 (MUST, raw/rfc9110.txt:3251-3254).
 
 과제 적용:
-- body 크기 제한(raw/subject.md:165)과 함께 요청줄·헤더 전체 크기에도 상한을 둔다.
+- body 크기 제한(raw/subject.md:165)과 함께 요청줄·헤더 전체 크기에도 상한을 둔다. 헤더 상한 초과는 431 (**판단**). 공격 상황이면 431 대신 연결을 끊어도 된다 (raw/rfc6585.txt:306-308).
 - CGI 응답 헤더·본문 길이에도 제한이 없으므로 고정 크기 버퍼를 가정하지 않는다 (raw/rfc3875.txt:1760-1764). 서버가 파싱할 경로 길이·헤더 양의 상한을 정해 두라고 권한다 (raw/rfc3875.txt:1636-1638).
 - 느린 클라이언트는 타임아웃으로 끊는다. "요청이 무한히 hang하면 안 됨"(raw/subject.md:139), "hanging connection 없음"(raw/evaluation-sheet-en.md:116)과 같은 요구다.
 

@@ -16,4 +16,4 @@ updated: 2026-10-15
 
 - 클래스: 1xx 정보, 2xx 성공, 3xx 리다이렉트, 4xx 클라이언트 오류, 5xx 서버 오류 (raw/iana-http-status-codes.txt:36-40).
 - 코드별 이름과 정의 문서 (raw/iana-http-status-codes.txt:48-123). 과제에서 쓰는 코드의 이름은 [[concepts/status-codes]] "reason phrase" 절.
-- 431 "Request Header Fields Too Large"는 RFC 6585 정의다 (raw/iana-http-status-codes.txt:108). 정의 내용은 이 목록에 없다 → [[source-wishlist]].
+- 431 "Request Header Fields Too Large"는 RFC 6585 정의다 (raw/iana-http-status-codes.txt:108). 정의 내용은 [[sources/rfc6585]].
