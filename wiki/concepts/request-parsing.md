@@ -1,7 +1,7 @@
 ---
 title: 요청 파싱 — 요청줄부터 chunked까지
 type: concept
-sources: [raw/rfc9112.txt, raw/rfc9110.txt, raw/subject.md, raw/nginx-request-processing.md, raw/posix-recv.md, raw/rfc3986.txt]
+sources: [raw/rfc9112.txt, raw/rfc9110.txt, raw/subject.md, raw/nginx-request-processing.md, raw/posix-recv.md, raw/rfc3986.txt, raw/rfc1945.txt]
 updated: 2026-10-15
 ---
 
@@ -40,6 +40,7 @@ RFC 9112 기준으로 서버가 요청을 읽는 순서대로 정리했다. 단�
 | 요청줄 길이는 최소 8000 octet까지 지원 권장 | — | raw/rfc9112.txt:397-399 |
 | request-target 안에 공백은 허용되지 않음 | 400 또는 올바르게 인코딩한 target으로 301 (SHOULD). 고쳐서 그냥 처리하지 말 것 | raw/rfc9112.txt:425-435 |
 | HTTP-version은 `HTTP/` + 숫자.숫자, 대소문자 구분 | 지원하지 않는 메이저 버전은 505 (raw/rfc9110.txt:7908-7911) | raw/rfc9112.txt:333-337 |
+| 버전이 없는 요청줄(HTTP/0.9 `GET URI` 형식) | **400**. HTTP/0.9는 지원하지 않음 (**판단**). 요청줄 문법에 버전이 필수이고 잘못된 요청줄은 400 (SHOULD). 0.9처럼 보이는 요청은 대부분 잘못 만든 1.x 요청이다 | raw/rfc9112.txt:377, raw/rfc9112.txt:430-431, raw/rfc9112.txt:2215-2221, raw/rfc1945.txt:1190 |
 
 ### request-target 형식
 
@@ -84,6 +85,7 @@ RFC 9112 6.3의 순서 중 요청에 해당하는 것 (raw/rfc9112.txt:914-1000)
 - `Content-Length` 숫자 변환 시 오버플로를 막아야 한다 (raw/rfc9110.txt:3251-3254).
 - 모르는 transfer coding은 501 (SHOULD, raw/rfc9112.txt:851-852).
 - HTTP/1.0 요청에 `Transfer-Encoding`이 있으면 framing 오류로 보고 처리 후 연결을 닫음 (MUST, raw/rfc9112.txt:886-889).
+- HTTP/1.0에서는 본문이 있는 요청에 `Content-Length`가 필수이고, POST의 길이를 알 수 없으면 400이다 (SHOULD, raw/rfc1945.txt:1657-1663, raw/rfc1945.txt:1763-1765). 그래서 **HTTP/1.0 POST에 `Content-Length`가 없으면 400**, HTTP/1.1이면 위 6번대로 본문 길이 0으로 처리한다 (**판단**) → [[sources/rfc1945]].
 - 본문이 body 크기 제한(raw/subject.md:165)을 넘으면 413 → 남은 본문 처리는 [[concepts/connection-management]].
 
 > [!note] 411은 언제 쓰나

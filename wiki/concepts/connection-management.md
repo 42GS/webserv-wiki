@@ -1,7 +1,7 @@
 ---
 title: 연결 관리 — keep-alive, 종료, 타임아웃
 type: concept
-sources: [raw/rfc9112.txt, raw/subject.md, raw/evaluation-sheet-en.md, raw/nginx-core-module.md, raw/siegerc.in, raw/rfc9110.txt]
+sources: [raw/rfc9112.txt, raw/subject.md, raw/evaluation-sheet-en.md, raw/nginx-core-module.md, raw/siegerc.in, raw/rfc9110.txt, raw/rfc1945.txt]
 updated: 2026-10-15
 ---
 
@@ -16,6 +16,8 @@ HTTP/1.1은 기본이 persistent connection이다. 구현은 이를 지원하는
 2. 프로토콜이 HTTP/1.1 이상 → 유지
 3. HTTP/1.0이고 `keep-alive` 옵션이 있으며, 수신자가 이를 받아들이기로 함 → 유지
 4. 그 외 → 현재 응답 후 닫음
+
+- HTTP/1.0의 기본 동작도 응답 후 서버가 연결을 닫는 것이다 (raw/rfc1945.txt:420-422) → [[sources/rfc1945]].
 
 - persistent를 지원하지 않는 서버는 1xx가 아닌 모든 응답에 `Connection: close`를 보내야 한다 (MUST, raw/rfc9112.txt:1364-1366).
 - 연결을 유지하려면 모든 메시지가 자체 길이 정보(`Content-Length` 또는 chunked)를 가져야 한다 (raw/rfc9112.txt:1372-1374). 응답에 길이를 넣지 않으면 연결 종료로 끝을 알려야 하므로 유지할 수 없다 (raw/rfc9112.txt:983-986).

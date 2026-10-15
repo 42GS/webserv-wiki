@@ -201,3 +201,8 @@
 - 생성: raw/nginx-server-names.md (HTML → markdown 변환, verify_md PASS), raw/nginx-server-names.source.html (원본), sources/nginx-server-names
 - 갱신: concepts/configuration-file ("이름 매칭 규칙", server가 정해지는 시점), overview, index, source-wishlist
 - 메모: 대소문자 무시는 RFC 9110 근거, 포트 제거·정확한 이름만·헤더 상한 포트 단위는 판단
+
+## [2026-10-15] ingest | RFC 1945 HTTP/1.0
+- 생성: raw/rfc1945.txt (원문 그대로), sources/rfc1945
+- 갱신: analysis/subject-vs-evaluation (1.6 응답 버전·DELETE 부록·0.9), concepts/request-parsing (0.9 → 400, 1.0 POST Content-Length 없으면 400), concepts/security (12.5), concepts/connection-management, concepts/status-codes, overview, index, source-wishlist
+- 메모: 응답 버전 HTTP/1.1, 0.9 미지원은 판단. 제안 단계에서 적은 줄 번호 일부가 틀려 반영 전 grep으로 다시 찾음

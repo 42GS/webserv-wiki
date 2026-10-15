@@ -1,14 +1,14 @@
 ---
 title: webserv 개요
 type: overview
-sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc9110.txt]
+sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc9110.txt, raw/rfc1945.txt]
 updated: 2026-10-15
 ---
 
 # webserv 개요
 
 C++98로 HTTP 서버를 만드는 42 과제. 실행은 `./webserv [configuration file]` (raw/subject.md:118).
-근거 소스: [[sources/subject]], [[sources/evaluation-sheet-en]] (평가표 영어 원문), [[sources/rfc9110]] (HTTP 의미론), [[sources/rfc9112]] (HTTP/1.1 메시지·연결), [[sources/rfc3875]] (CGI/1.1), [[sources/rfc7578]], [[sources/rfc2046]] (multipart/form-data), [[sources/rfc3986]] (URI), [[sources/php-cgi-force-redirect]], [[sources/php-ini-core]] (php-cgi), [[sources/rfc6265]] (쿠키), [[sources/iana-http-status-codes]] (status code 목록), [[sources/nginx-core-module]], [[sources/nginx-request-processing]], [[sources/nginx-server-names]], [[sources/nginx-index-module]], [[sources/nginx-autoindex-module]], [[sources/nginx-rewrite-module]] (NGINX 비교 기준), [[sources/posix-poll]], [[sources/posix-signal-h]], [[sources/posix-send]], [[sources/posix-recv]], [[sources/posix-waitpid]], [[sources/posix-bind]], [[sources/posix-exit]], [[sources/posix-fcntl]] (POSIX), [[sources/siege]], [[sources/siegerc]] (부하 테스트 도구). 구버전 한국어 정리본 [[sources/evaluation-sheet]]은 이력용이다.
+근거 소스: [[sources/subject]], [[sources/evaluation-sheet-en]] (평가표 영어 원문), [[sources/rfc9110]] (HTTP 의미론), [[sources/rfc9112]] (HTTP/1.1 메시지·연결), [[sources/rfc1945]] (HTTP/1.0), [[sources/rfc3875]] (CGI/1.1), [[sources/rfc7578]], [[sources/rfc2046]] (multipart/form-data), [[sources/rfc3986]] (URI), [[sources/php-cgi-force-redirect]], [[sources/php-ini-core]] (php-cgi), [[sources/rfc6265]] (쿠키), [[sources/iana-http-status-codes]] (status code 목록), [[sources/nginx-core-module]], [[sources/nginx-request-processing]], [[sources/nginx-server-names]], [[sources/nginx-index-module]], [[sources/nginx-autoindex-module]], [[sources/nginx-rewrite-module]] (NGINX 비교 기준), [[sources/posix-poll]], [[sources/posix-signal-h]], [[sources/posix-send]], [[sources/posix-recv]], [[sources/posix-waitpid]], [[sources/posix-bind]], [[sources/posix-exit]], [[sources/posix-fcntl]] (POSIX), [[sources/siege]], [[sources/siegerc]] (부하 테스트 도구). 구버전 한국어 정리본 [[sources/evaluation-sheet]]은 이력용이다.
 
 ## 무엇이 점수를 결정하나
 
@@ -32,6 +32,7 @@ C++98로 HTTP 서버를 만드는 42 과제. 실행은 `./webserv [configuration
 - virtual host는 선택 사항이다. 구현하지 않으면 같은 `interface:port` 중복 설정을 에러로 거부한다 (raw/evaluation-sheet-en.md:108). → [[concepts/configuration-file]]
 - status code는 상황별 표 [[concepts/status-codes]]를 기준으로 정한다. 평가에서 코드가 틀리면 점수가 없다 (raw/evaluation-sheet-en.md:67). UNKNOWN 메서드는 501, 막힌 메서드는 405 + `Allow` (raw/rfc9110.txt:3800-3804, raw/rfc9110.txt:4724-4725).
 - 요청 파서는 RFC 9112 순서(요청줄 → 헤더 → 본문 길이 → chunked)를 따른다. Host 누락, 헤더 이름 뒤 공백, 잘못된 `Content-Length`는 400 MUST다 → [[concepts/request-parsing]].
+- 응답은 `HTTP/1.1`로 보낸다(RFC 9110 SHOULD). HTTP/1.0만으로는 과제가 설명되지 않는다(DELETE는 RFC 1945 부록, 405·413 없음). HTTP/0.9는 지원하지 않고 400, HTTP/1.0 POST에 `Content-Length`가 없으면 400 (판단) → [[sources/rfc1945]], [[concepts/request-parsing]].
 - 연결은 HTTP/1.1 기준 persistent가 기본이다. 본문을 다 읽지 않고 응답(413 등)하면 연결을 닫는다 → [[concepts/connection-management]].
 - CGI에서 서버는 application gateway다. 본문 un-chunk, 메타변수 구성, EOF까지 출력 수집, CGI 응답을 HTTP 응답으로 변환하는 일이 서버 책임이다. 타임아웃은 504, 형식 오류는 502 → [[concepts/cgi]].
 - subject의 root 예시는 NGINX `alias` 방식이다. location은 정규화된 URI(query 제외)에 대해 가장 긴 prefix로 매칭한다 → [[concepts/configuration-file]].

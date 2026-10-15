@@ -1,7 +1,7 @@
 ---
 title: 보안 — 경로·주입·길이·splitting·smuggling
 type: concept
-sources: [raw/rfc9110.txt, raw/rfc9112.txt, raw/rfc3875.txt, raw/nginx-core-module.md, raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc7578.txt, raw/rfc3986.txt, raw/rfc6265.txt]
+sources: [raw/rfc9110.txt, raw/rfc9112.txt, raw/rfc3875.txt, raw/nginx-core-module.md, raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc7578.txt, raw/rfc3986.txt, raw/rfc6265.txt, raw/rfc1945.txt]
 updated: 2026-10-15
 ---
 
@@ -13,6 +13,7 @@ subject와 평가표에는 보안 항목이 따로 없다. 하지만 아래 문�
 
 - URI를 파일 시스템에 매핑하는 서버는 시스템에 특별한 의미가 있는 이름에 접근하지 않아야 한다 (raw/rfc9110.txt:8560-8565).
 - 대표적인 예가 상위 디렉토리를 뜻하는 `..`다. 장치로 데이터를 보내는 특수 경로도 있다 (raw/rfc9110.txt:8567-8570).
+- HTTP/1.0 명세도 같은 요구를 한다. `..`로 의도한 범위 밖에 접근하는 것을 막아야 하고(must), 설정 파일·스크립트 코드 같은 내부 파일도 내보내면 안 된다 (raw/rfc1945.txt:2809-2822). 과제에서는 CGI 스크립트 원본과 설정 파일이 root 안에 있으면 그대로 노출될 수 있으므로 root 배치에 주의한다 (**판단**).
 - 이런 공격의 목적은 DoS 아니면 설정·소스 파일 노출이다 (raw/rfc9110.txt:8577-8580).
 
 ### 경로 정규화 절차 (RFC 3986 기준)

@@ -1,7 +1,7 @@
 ---
 title: status code — 상황별 선택
 type: concept
-sources: [raw/rfc9110.txt, raw/rfc9112.txt, raw/rfc3875.txt, raw/nginx-core-module.md, raw/subject.md, raw/evaluation-sheet-en.md, raw/nginx-autoindex-module.md, raw/nginx-index-module.md, raw/iana-http-status-codes.txt]
+sources: [raw/rfc9110.txt, raw/rfc9112.txt, raw/rfc3875.txt, raw/nginx-core-module.md, raw/subject.md, raw/evaluation-sheet-en.md, raw/nginx-autoindex-module.md, raw/nginx-index-module.md, raw/iana-http-status-codes.txt, raw/rfc1945.txt]
 updated: 2026-10-15
 ---
 
@@ -107,6 +107,8 @@ RFC가 특정 코드를 직접 지정하지 않는 상황은 **판단**으로 �
 - 업로드 중 디스크가 가득 찬 경우 507 "Insufficient Storage"(raw/iana-http-status-codes.txt:119)가 있지만 WebDAV(RFC 4918)용 코드라 이 과제는 500을 쓴다 (**판단**).
 
 ## 공통 규칙
+
+- HTTP/1.0(RFC 1945)의 status code 목록에는 405·411·413·414·505가 없다 (raw/rfc1945.txt:1487-1501). 이 위키의 코드 선택은 RFC 9110 기준이다 → [[sources/rfc1945]].
 
 - reason phrase는 권장일 뿐이다. 바꾸거나 빼도 된다 (raw/rfc9110.txt:6841-6844). 빼더라도 status code 뒤 공백은 보내야 한다 (MUST, raw/rfc9112.txt:690-693).
 - 에러 응답 본문은 설정된 에러 페이지를, 없으면 기본 에러 페이지를 쓴다 (raw/subject.md:143, raw/subject.md:164).

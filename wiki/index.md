@@ -17,6 +17,7 @@ updated: 2026-10-15
 | [[sources/evaluation-sheet-en]] | 평가표 영어 원문 (42 EvalHub). 평가 기준의 1차 근거 | `raw/evaluation-sheet-en.md` |
 | [[sources/rfc9110]] | RFC 9110 HTTP Semantics — 과제 관련 절 목록과 핵심 규칙 | `raw/rfc9110.txt` |
 | [[sources/rfc9112]] | RFC 9112 HTTP/1.1 — 과제 관련 절 목록과 핵심 규칙 | `raw/rfc9112.txt` |
+| [[sources/rfc1945]] | RFC 1945 HTTP/1.0 — 연결 기본 동작, 0.9 요청, Content-Length 필수, DELETE는 부록 | `raw/rfc1945.txt` |
 | [[sources/rfc3875]] | RFC 3875 CGI/1.1 (Informational) — 과제 관련 절과 핵심 규칙 | `raw/rfc3875.txt` |
 | [[sources/nginx-core-module]] | NGINX core 모듈 — 과제 관련 디렉티브 목록, 변환 검증 방법 | `raw/nginx-core-module.md` |
 | [[sources/nginx-request-processing]] | NGINX 요청 처리 — server 선택(포트 → Host), default server, location과 query | `raw/nginx-request-processing.md` |
