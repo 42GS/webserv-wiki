@@ -62,7 +62,7 @@ updated: 2026-10-15
 | [[concepts/status-codes]] | 과제 상황별 status code 선택표 (정상·리다이렉트·4xx·5xx), RFC 근거, reason phrase(IANA 이름) |
 | [[concepts/request-parsing]] | 요청줄 → 헤더 → 본문 길이 결정 → chunked 디코딩, 단계별 에러 코드 |
 | [[concepts/connection-management]] | keep-alive 판단, 413 이후 처리, pipelining 순서, 타임아웃 4종, lingering close와 `shutdown` 쟁점 |
-| [[concepts/file-upload]] | 업로드 요구사항, multipart 구조·파싱 규칙(RFC 2046)과 처리 순서, filename 처리, 업로드 위치와 CGI 위험, 열린 설계 질문 |
+| [[concepts/file-upload]] | 업로드 요구사항, multipart 구조·파싱 규칙(RFC 2046)과 처리 순서, filename 처리, 업로드 위치와 CGI 위험, 업로드 결정(multipart만, 그 밖은 415) |
 | [[concepts/security]] | 경로 정규화 절차(8단계), 경로 공격(`..`), 명령 주입, 길이 공격, response splitting, request smuggling |
 | [[concepts/resilience]] | 크래시·hang·누수 금지 요구, 내부 리다이렉트 반복 상한, 시그널 처리표 (SIGPIPE 무시, SIGINT 정리 후 종료) |
 | [[concepts/testing]] | tester·siege·curl 등 도구, siege 옵션·기본 설정과 Availability의 의미, 평가 시연 준비 |
@@ -74,3 +74,4 @@ updated: 2026-10-15
 | 페이지 | 요약 |
 |---|---|
 | [[analysis/subject-vs-evaluation]] | 모순·제약(EAGAIN vs errno, HEAD, 허용 함수 범위(Date·exit), half-close, HTTP 버전, REMOTE_ADDR, read/write 외 errno, waitpid 매크로, /dev/urandom, fcntl 허용 목록, POSIX poll vs macOS 실측), 정리본 vs 원문 차이표, 해소된 미확인 |
+| [[analysis/design-decisions]] | 사용자가 정한 설계 결정 8건 (poll, `..`·`%2F` 400, virtual host 미구현, HEAD 지원, index→CGI, 업로드는 multipart만, 세션은 CGI 예제)과 근거·구현 영향 |

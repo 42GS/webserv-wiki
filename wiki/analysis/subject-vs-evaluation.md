@@ -29,7 +29,7 @@ updated: 2026-10-15
 
 - RFC 9110: 범용 서버는 GET과 HEAD를 MUST로 지원 (raw/rfc9110.txt:3794-3795).
 - subject: GET·POST·DELETE만 요구 (raw/subject.md:147). 평가표의 메서드 항목에도 HEAD가 없다 (raw/evaluation-sheet-en.md:79). 다만 브라우저 점검에는 "Try anything you like"가 있다 (raw/evaluation-sheet-en.md:103).
-- 판단: 평가표 항목에는 없지만 "Try anything you like"로 시도될 수는 있다. 구현 비용이 작아서 지원을 고려한다. 지원하지 않는다면 HEAD에 501로 응답한다 (raw/rfc9110.txt:3799-3801). → [[concepts/http-features]]
+- 판단: 평가표 항목에는 없지만 "Try anything you like"로 시도될 수는 있다. 구현 비용이 작아서 **지원한다** (사용자 결정, 2026-10-15 → [[analysis/design-decisions]] 5). → [[concepts/http-features]]
 
 ### 1.4 허용 함수 목록의 범위 — `<ctime>`, `exit` (질문)
 
@@ -81,6 +81,7 @@ subject는 "허용된 syscall/라이브러리 호출" 목록을 준다 (raw/subj
 - 세션 식별자는 추측하기 어려워야 한다 (**판단**: 추측할 수 있으면 남의 세션을 쓸 수 있다. RFC 6265는 서버가 흔히 식별자만 쿠키에 넣는다고 설명할 뿐 이 요구를 직접 적지 않는다, raw/rfc6265.txt:1716-1720). 허용 함수에는 난수 함수가 없다 (raw/subject.md:113).
 - `open`·`read`로 `/dev/urandom`을 읽을 수는 있다. 그러나 `poll()` 없이 읽어도 되는 예외는 "일반 디스크 파일"이다 (raw/subject.md:134). `/dev/urandom`은 장치 파일이라 이 예외에 들어가는지 불분명하다 (**미확인**).
 - 판단 보류. 확인 방법: 동료·평가자 합의. 보너스 항목이라 필수 평가에는 영향이 없다.
+- 보너스 쿠키·세션은 CGI 예제로 보여 주기로 했으므로 (사용자 결정, 2026-10-15 → [[analysis/design-decisions]] 8) 서버 구현에서는 이 질문이 생기지 않는다.
 
 ### 1.11 fcntl 허용 목록 vs POSIX
 
@@ -152,6 +153,6 @@ subject·평가표 해석에 관한 질문만 모았다. 동작 확인이 필요
 - `shutdown` 없이 TCP reset 문제를 줄이는 방법. NGINX `lingering_close` 방식(읽고 버리다가 닫기)을 따를 수 있으나 NGINX가 `shutdown`을 함께 쓰는지는 모름 (1.5절)
 - read/write 외 함수(`poll`, `bind`)의 실패 원인을 errno로 봐도 되는지 (1.8절)
 - `waitpid` 상태 매크로를 써도 되는지 (1.9절)
-- 세션 식별자용 `/dev/urandom` 읽기가 `poll()` 예외에 들어가는지 (1.10절)
+- 세션 식별자용 `/dev/urandom` 읽기가 `poll()` 예외에 들어가는지 (1.10절). 보너스를 CGI 예제로 하기로 해 서버 구현에는 필요 없다
 - `FD_CLOEXEC`를 위해 `F_SETFD`를 써도 되는지 (1.11절)
 - `fcntl()` 허용이 "For macOS only" 절(raw/subject.md:153-157)에 있는데, Ubuntu 평가에서도 인정되는지. 허용 함수 목록(raw/subject.md:113)에는 있다 → [[concepts/io-multiplexing]]

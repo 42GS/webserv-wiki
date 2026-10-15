@@ -91,10 +91,10 @@ Content-Type: text/plain
 - multipart로 받은 파일에는 실행 가능한 내용이 들어 있을 수 있어 대비가 필요하다 (raw/rfc7578.txt:529-530).
 - 업로드 위치가 CGI 확장자 규칙이 적용되는 경로와 겹치면, `.php` 같은 파일을 올린 뒤 GET으로 요청해 서버에서 실행시킬 수 있다. 업로드 위치에서는 CGI를 실행하지 않도록 설정한다 (**판단**) → [[concepts/cgi]], [[concepts/security]].
 
-## 열린 설계 질문
+## 결정과 남은 설정 문제
 
-- multipart를 서버가 직접 파싱해 저장할지, CGI 스크립트에 넘길지는 과제 문서가 정하지 않는다. "업로드를 허용하고 저장 위치를 지정"하는 설정 요구(raw/subject.md:172)로 보면 서버가 직접 저장하는 쪽에 가깝다 (**판단**).
-- multipart가 아닌 본문(예: `curl --data-binary`로 보낸 원본 바이트)을 받을지. 그때 파일 이름을 어디서 정할지 (예: 요청 경로).
+- **서버가 `multipart/form-data`만 직접 파싱해 저장한다** (사용자 결정, 2026-10-15 → [[analysis/design-decisions]] 7). 과제 문서는 이를 정하지 않지만, "업로드를 허용하고 저장 위치를 지정"하는 설정 요구(raw/subject.md:172)와 맞는다.
+- 업로드 라우트에 multipart가 아닌 본문(예: `curl --data-binary`)이 오면 415로 거부한다 (**판단**, raw/rfc9110.txt:7738-7740) → [[concepts/status-codes]].
 - 업로드한 파일을 다시 받는 경로. 평가는 업로드 후 다시 받아 본다 (raw/evaluation-sheet-en.md:82). 저장 위치가 GET으로 접근 가능한 root 아래인지 설정을 맞춰 둔다.
 
 ## 관련

@@ -321,3 +321,9 @@
 - 생성: raw/nginx-observed-encoded-slash.md (설정·명령·curl 출력·NGINX 로그 그대로, nginx/1.30.6, 디렉토리 실측과 같은 이미지 digest), sources/nginx-observed-encoded-slash
 - 갱신: concepts/security (콜아웃의 **미확인** 해소, 5단계를 사용자 결정으로), concepts/status-codes (`%2F` 400 행), source-wishlist 4-1 (마지막 항목 체크), overview, index
 - 메모: NGINX는 `%2F`를 디코딩해 경로 구분자로 쓰고(`/a%2Fb.txt` → `location /a/`의 `a/b.txt`), 디코딩으로 생긴 `..`·연속 `/`도 정규화한다 (raw/nginx-observed-encoded-slash.md:100-111, raw/nginx-observed-encoded-slash.md:148, raw/nginx-observed-encoded-slash.md:170). RFC 3986의 "나눈 뒤 디코딩"과 반대 순서다. 사용자 결정(2026-10-15): 이 과제는 `%2F`를 400으로 거부하는 현행 판단을 유지한다. curl은 소문자 `%2f`를 `%2F`로 바꿔 보냈다 (로그 198).
+
+## [2026-10-15] query | 설계 결정 정리
+- 생성: analysis/design-decisions (사용자 결정 8건: 기존 3건 + 이번 5건)
+- 사용자 결정 (2026-10-15): virtual host 미구현, HEAD 지원, index 파일이 CGI 확장자면 CGI로 실행, 업로드는 서버가 `multipart/form-data`만 저장, 쿠키·세션 보너스는 CGI 예제
+- 갱신: concepts/configuration-file·http-features·file-upload·bonus·status-codes(415 행, IANA 이름), analysis/subject-vs-evaluation(1.3, 1.10, 6절), overview(현재 종합 판단, 열린 질문 5건 정리), index
+- 메모: 업로드 라우트에 multipart가 아닌 본문이 오면 415로 거부한다 (판단, raw/rfc9110.txt:7738-7740). 세션을 CGI 예제로 하는 것이 평가표의 "웹 서버의 세션 시스템"(raw/evaluation-sheet-en.md:126)으로 인정되는지는 열린 질문으로 남겼다.

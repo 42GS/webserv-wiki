@@ -40,7 +40,7 @@ updated: 2026-10-15
 
 > [!warning] 모순: HEAD
 > RFC는 범용 서버라면 GET과 HEAD를 MUST로 지원하라고 한다 (raw/rfc9110.txt:3794-3795). subject는 GET·POST·DELETE만 요구한다 (raw/subject.md:147).
-> HEAD를 구현하지 않으면 RFC 기준으로 501을 보내야 한다 (SHOULD, raw/rfc9110.txt:3799-3801). 평가 항목은 아니지만, 구현 비용이 작으므로(GET에서 본문만 뺌) 지원을 고려한다. → [[analysis/subject-vs-evaluation]]
+> HEAD를 구현하지 않으면 RFC 기준으로 501을 보내야 한다 (SHOULD, raw/rfc9110.txt:3799-3801). 평가 항목은 아니지만 구현 비용이 작으므로(GET에서 본문만 뺌) **지원한다** (사용자 결정, 2026-10-15 → [[analysis/design-decisions]] 5).
 
 ## 응답 헤더 규칙
 

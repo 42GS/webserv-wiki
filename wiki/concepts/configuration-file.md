@@ -48,7 +48,7 @@ updated: 2026-10-15
 
 - subject는 정규식이 필요 없다고 하므로 (raw/subject.md:166) prefix 매칭(가장 긴 것)만 구현하면 된다.
 - 매칭에는 **query string을 뺀** URI 부분만 쓴다. 같은 인자를 여러 순서로 쓸 수 있기 때문이다 (raw/nginx-request-processing.md:147-152). `?` 뒤는 CGI에 `QUERY_STRING`으로 넘긴다 → [[concepts/cgi]].
-- **index와 CGI:** NGINX의 index는 찾은 index 파일로 **내부 리다이렉트**해서 location을 다시 찾는다. 그래서 `index.php`가 선택되면 CGI location에서 처리된다 (raw/nginx-request-processing.md:168). index 모듈 문서도 index 파일을 쓰면 내부 리다이렉트가 일어나 다른 location에서 처리될 수 있다고 한다 (raw/nginx-index-module.md:46-58). 과제에서도 디렉토리 요청에서 고른 index 파일의 확장자가 CGI라면 CGI로 실행할지 정해 두어야 한다 (**판단**).
+- **index와 CGI:** NGINX의 index는 찾은 index 파일로 **내부 리다이렉트**해서 location을 다시 찾는다. 그래서 `index.php`가 선택되면 CGI location에서 처리된다 (raw/nginx-request-processing.md:168). index 모듈 문서도 index 파일을 쓰면 내부 리다이렉트가 일어나 다른 location에서 처리될 수 있다고 한다 (raw/nginx-index-module.md:46-58). 과제에서도 디렉토리 요청에서 고른 index 파일의 확장자가 CGI라면 **CGI로 실행한다** (사용자 결정, 2026-10-15 → [[analysis/design-decisions]] 6).
 - 정규화 순서는 경로 공격 방어와 직결된다 → [[concepts/security]] 1절.
 
 ## server 선택 (NGINX 기준)
@@ -63,8 +63,8 @@ updated: 2026-10-15
 - default를 지정하지 않으면 첫 server가 default다 (raw/nginx-request-processing.md:34, raw/nginx-core-module.md:963).
 
 과제 적용:
-- virtual host를 구현하지 않으면 `address:port`마다 server가 하나뿐이므로 1단계에서 끝난다. 같은 `address:port`가 두 번 나오면 설정 에러로 거부한다 (raw/evaluation-sheet-en.md:108).
-- virtual host를 구현하면 위 2단계를 그대로 따르면 된다. Host가 없는 요청은 [[concepts/request-parsing]] 3절 참고.
+- **virtual host는 구현하지 않는다** (사용자 결정, 2026-10-15 → [[analysis/design-decisions]] 4). `address:port`마다 server가 하나뿐이므로 1단계에서 끝난다. 같은 `address:port`가 두 번 나오면 설정 에러로 거부한다 (raw/evaluation-sheet-en.md:108).
+- 아래 2단계 규칙과 "이름 매칭 규칙"은 virtual host를 구현할 경우의 참고로 남긴다. Host가 없는 요청의 처리는 [[concepts/request-parsing]] 3절.
 
 ### 이름 매칭 규칙 (virtual host 구현 시)
 
@@ -157,9 +157,8 @@ subject 기능을 NGINX에서는 어떤 지시자로 하는지 정리했다. sub
 > [!note] virtual host 모순 해소 (2026-10-15)
 > 구버전 정리본은 "다른 호스트네임으로 여러 서버"를 `curl --resolve`로 테스트했다 (raw/evaluation-sheet.md:65-68). 영어 원문에는 이 항목이 없다 (raw/evaluation-sheet-en.md:63-73).
 > 원문은 virtual host를 **선택 사항**으로 둔다 (raw/evaluation-sheet-en.md:108). subject도 범위 밖·구현 자유라고 한다 (raw/subject.md:151). 두 문서가 일치한다.
-> 구현 선택지:
-> - virtual host 미구현: 같은 `interface:port` 중복 설정을 **설정 파싱 단계에서 에러**로 거부한다.
-> - virtual host 구현: `Host` 헤더로 서버를 고른다. 디펜스에서 선택 이유를 설명한다.
+> 결정 (2026-10-15): virtual host를 구현하지 않고, 같은 `interface:port` 중복 설정을 **설정 파싱 단계에서 에러**로 거부한다 → [[analysis/design-decisions]] 4.
+> 구현했다면 참고할 내용: `Host` 헤더로 서버를 고른다.
 >   NGINX에서 각 `address:port`에는 기본 server가 있다. `default_server`가 없으면 그 `address:port`를 쓰는 첫 번째 server가 기본이다 (raw/nginx-core-module.md:963). NGINX는 IP 기반과 이름 기반 virtual server를 따로 나누지 않는다 (raw/nginx-core-module.md:1628).
 >   `Host`가 어느 `server_name`과도 맞지 않거나 `Host`가 없으면 그 포트의 default server가 처리한다 (raw/nginx-request-processing.md:34). 선택 순서는 위 "server 선택" 절.
 >   `Host`는 대상 URI의 host·port 정보로, 여러 호스트 이름을 서비스할 때 리소스를 구분하는 데 쓰인다 (raw/rfc9110.txt:2414-2417). 형식은 `uri-host [ ":" port ]` (raw/rfc9110.txt:2423).

@@ -30,7 +30,7 @@ C++98로 HTTP 서버를 만드는 42 과제. 실행은 `./webserv [configuration
 - 구조의 중심은 **이벤트 루프 하나**다. socket·listen socket·CGI pipe가 모두 같은 `poll()`에 들어가야 한다 (raw/subject.md:130, raw/subject.md:136).
 - 평가표가 subject보다 엄격하다 (`-1`/`0` 모두 처리, 에러 시 클라이언트 제거, README 0점, siege 99.5% 초과). 양쪽을 모두 만족하게 구현한다. → [[analysis/subject-vs-evaluation]]
 - 평가표는 EAGAIN까지 반복 I/O를 허용하지만 errno 금지와 충돌한다. **readiness 1회에 I/O 1번**이 안전하다(판단). → [[concepts/io-multiplexing]]
-- virtual host는 선택 사항이다. 구현하지 않으면 같은 `interface:port` 중복 설정을 에러로 거부한다 (raw/evaluation-sheet-en.md:108). → [[concepts/configuration-file]]
+- 설계 결정은 [[analysis/design-decisions]]에 모았다 (2026-10-15 사용자 결정): virtual host 미구현(같은 `interface:port` 중복은 설정 에러, raw/evaluation-sheet-en.md:108), HEAD 지원, index 파일이 CGI 확장자면 CGI로 실행, 업로드는 서버가 multipart만 저장(그 밖의 본문은 415, 판단), 쿠키·세션 보너스는 CGI 예제. → [[concepts/configuration-file]]
 - status code는 상황별 표 [[concepts/status-codes]]를 기준으로 정한다. 평가에서 코드가 틀리면 점수가 없다 (raw/evaluation-sheet-en.md:67). UNKNOWN 메서드는 501, 막힌 메서드는 405 + `Allow` (raw/rfc9110.txt:3799-3804, raw/rfc9110.txt:4724-4726).
 - 요청 파서는 RFC 9112 순서(요청줄 → 헤더 → 본문 길이 → chunked)를 따른다. Host 누락, 헤더 이름 뒤 공백, 잘못된 `Content-Length`는 400 MUST다. 헤더 크기 상한 초과는 4xx MUST이고 431로 응답한다(판단) → [[concepts/request-parsing]].
 - 응답은 `HTTP/1.1`로 보낸다(RFC 9110 SHOULD). HTTP/1.0만으로는 과제가 설명되지 않는다(DELETE는 RFC 1945 부록, 405·413 없음). HTTP/0.9는 지원하지 않고 400, HTTP/1.0 POST에 `Content-Length`가 없으면 400 (판단) → [[sources/rfc1945]], [[concepts/request-parsing]].
@@ -57,13 +57,9 @@ C++98로 HTTP 서버를 만드는 42 과제. 실행은 `./webserv [configuration
 
 ## 열린 질문
 
-- virtual host를 구현할지 (선택 사항, 디펜스에서 이유 설명) → [[concepts/configuration-file]]
 - 42 EvalHub 원문이 intra 현재 평가표와 같은지 → [[sources/evaluation-sheet-en]]
-- HEAD를 지원할지 (RFC는 MUST, subject는 요구 안 함) → [[analysis/subject-vs-evaluation]]
 - 허용 함수 목록이 `<ctime>`, `exit` 같은 표준 라이브러리에도 적용되는지 (Date 헤더, CGI 자식 종료, 리스팅 시간 표시) → [[analysis/subject-vs-evaluation]]
 - `shutdown` 없이 연결을 안전하게 닫는 방법 → [[concepts/connection-management]]
 - Ubuntu 평가에서 `fcntl()`(subject상 "For macOS only" 절) 사용이 인정되는지 → [[concepts/io-multiplexing]]
 - read/write 외 함수(`poll`, `bind`)의 errno를 봐도 되는지, `waitpid` 매크로를 써도 되는지, `/dev/urandom` 읽기가 `poll()` 예외인지, `FD_CLOEXEC`를 위해 `F_SETFD`를 써도 되는지 → [[analysis/subject-vs-evaluation]]
-- index 파일이 CGI 확장자일 때 CGI로 실행할지 → [[concepts/configuration-file]]
-- 업로드를 서버가 직접 저장할지 CGI에 넘길지, multipart가 아닌 본문을 받을지 → [[concepts/file-upload]]
-- 쿠키·세션을 서버가 관리할지 CGI 예제로 보여줄지 → [[concepts/bonus]]
+- 쿠키·세션 보너스를 CGI 예제로 보여 주는 것을 평가자가 "웹 서버의 세션 시스템"으로 인정할지 → [[analysis/design-decisions]] 8
