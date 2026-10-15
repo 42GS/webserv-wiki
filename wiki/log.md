@@ -358,3 +358,8 @@
 - 생성: raw/macos-observed-sigpipe-leaks.md (SDK 헤더, 테스트 프로그램 3개, 명령, 출력 그대로), sources/macos-observed-sigpipe-leaks
 - 갱신: concepts/resilience (macOS `MSG_NOSIGNAL` **미확인** 해소, `leaks` **미확인** 해소, `e_fence`만 남김), concepts/testing (도구 표), sources/valgrind-observed-sigint (측정 범위 노트), overview, index
 - 메모: macOS SDK에 `MSG_NOSIGNAL`이 있고, 끊긴 TCP 연결에 `MSG_NOSIGNAL`·`SO_NOSIGPIPE`로 보내면 프로세스가 살고 `EPIPE`가 돌아왔다 (raw/macos-observed-sigpipe-leaks.md:51-53, raw/macos-observed-sigpipe-leaks.md:118-131). `leaks -atExit`는 SIGINT 기본 종료에서 아무것도 출력하지 않고 exit 0 (raw/macos-observed-sigpipe-leaks.md:224-226), 해제 없이 `main` 반환도 0 leaks (raw/macos-observed-sigpipe-leaks.md:254-256). 대조 실험에서는 누수를 보고했다 (raw/macos-observed-sigpipe-leaks.md:386-388). 기존 판단(플래그 + 정리 후 종료, SIGPIPE 무시) 유지.
+
+## [2026-10-16] ingest | NGINX 1.30.6 소스: lingering close
+- 생성: raw/nginx-src-ngx_http_request.c, raw/nginx-src-ngx_socket.h (`release-1.30.6` 태그 원본 그대로), sources/nginx-src-lingering-close
+- 갱신: concepts/connection-management (NGINX `shutdown` **미확인** 해소), analysis/subject-vs-evaluation (1.5절, 남은 미확인 문구), overview (근거 소스, 열린 질문 문구), index
+- 메모: NGINX는 lingering close에 들어갈 때 `shutdown(fd, SHUT_WR)`을 호출하고 (raw/nginx-src-ngx_http_request.c:3693-3698, raw/nginx-src-ngx_socket.h:15, raw/nginx-src-ngx_socket.h:66), 상대가 닫거나 시간이 다 될 때까지 읽어 버린다 (raw/nginx-src-ngx_http_request.c:3727-3752). 요청 종료 후 keep-alive가 가능하면 keep-alive가 먼저다 (raw/nginx-src-ngx_http_request.c:2960-2987). 과제는 `shutdown`을 쓸 수 없어 "읽고 버리다가 `close()`"만 따른다. 이것으로 충분한지는 **미확인**으로 남겼다.

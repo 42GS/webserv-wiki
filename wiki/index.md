@@ -20,6 +20,7 @@ updated: 2026-10-16
 | [[sources/rfc1945]] | RFC 1945 HTTP/1.0 — 연결 기본 동작, 0.9 요청, Content-Length 필수, DELETE는 부록 | `raw/rfc1945.txt` |
 | [[sources/rfc3875]] | RFC 3875 CGI/1.1 (Informational) — 과제 관련 절과 핵심 규칙 | `raw/rfc3875.txt` |
 | [[sources/nginx-core-module]] | NGINX core 모듈 — 과제 관련 디렉티브 목록, 변환 검증 방법 | `raw/nginx-core-module.md` |
+| [[sources/nginx-src-lingering-close]] | NGINX 1.30.6 소스 — lingering close는 `shutdown(fd, SHUT_WR)` 뒤 읽고 버리다가 닫음, 진입 조건 | `raw/nginx-src-ngx_http_request.c`, `raw/nginx-src-ngx_socket.h` |
 | [[sources/nginx-request-processing]] | NGINX 요청 처리 — server 선택(포트 → Host), default server, location과 query | `raw/nginx-request-processing.md` |
 | [[sources/nginx-server-names]] | NGINX Server names — 이름 매칭 우선순위, 빈 이름, server가 정해지는 시점 | `raw/nginx-server-names.md` |
 | [[sources/nginx-observed-directory]] | NGINX 실측 — 디렉토리 301·403, root 위 `..`는 400 | `raw/nginx-observed-directory.md` |
