@@ -266,3 +266,16 @@
 - 계기: 사용자 지시 — tools의 검사 스크립트는 신뢰도가 낮다. 스크립트 없이 직접 읽고 규칙과 대조한다
 - 갱신: CLAUDE.md (ingest 3단계에 "인용마다 즉시 원문 대조", 7단계를 직접 읽기로, "인용 대조 기준" 절 신설, Lint 절에서 lint_wiki.py·cite_show.py 사용 제거)
 - 메모: tools/lint_wiki.py, tools/cite_show.py 파일은 남아 있지만 작업 흐름에서 쓰지 않는다. HTML 변환 도구(nginx2md·posix_wrap·extract_div·verify_md)는 ingest용이라 그대로 둔다
+
+## [2026-10-15] lint | 직접 읽기 점검 (스크립트 없이)
+- 방법: 페이지마다 위키 문장과 인용한 raw 구간을 직접 열어 "인용 대조 기준"(CLAUDE.md)으로 비교. 검색은 위치 찾기에만 썼다
+- 내용 오류: Host 400 규칙의 적용 범위 — Host가 없을 때만 HTTP/1.1 한정이고, 중복·잘못된 값은 모든 버전에 400 (request-parsing, status-codes, sources/rfc9112)
+- 근거 없는 결론: NGINX 정규화 순서와 "`%2F`가 구분자가 된다" — 문서는 항목만 나열 → **미확인**, wishlist 4-1에 실측 후보 추가 (security, configuration-file)
+- 원문보다 강한 주장: poll 뒤 I/O가 막히지 않는다(POSIX는 상태가 바뀔 수 있다고 함), POLLHUP "연결 끊김", 평가자 수정 "금지"(합의 조건), tester 의무 없음(조건부), 세션 식별자 방식(설명일 뿐), 4096바이트(SHOULD), lingering_close on(휴리스틱), 3xx 모두 Location(304 제외·308 누락), "평가는 앞 단계에서 걸리면 끝"(원문은 코드 질의 단계만), HEAD를 "테스트하지 않는다", cgi `언제든 중단`(에러 상황), `SCRIPT_FILENAME` 권고 대상(스크립트), PEP 594 "typically"
+- 오래된 주장: virtual host "평가표와 충돌", NGINX 301·403 "선택 실측"(이미 측정), wishlist를 가리키던 ingest 완료 문서(rfc9112, posix-exit, siegerc), wishlist 4-1 머리말, "Obsidian Web Clipper"
+- 판단 표시 누락: 추론 문장 10여 곳에 **판단** 표시
+- 인용 범위: 문장 시작·끝이 빠진 범위를 문장 단위로 (rfc9110 3799-3804 등, rfc9112 430-432·807-809, rfc3875 736-741·1197-1199·1615-1619, rfc3986 647-652·1950-1954, rfc7578 189-193·197-201, rfc2046 945-959, rfc1945 1187-1190, rfc6265 1467-1472)
+- 표기 오류: rfc3986 7.2절 오기재, rfc6585 7.3절 이름, server_names Optimization 시작 줄, "아래 server 선택 절"(위에 있음)
+- 새 **미확인**: NGINX의 `%2F` 처리, RFC 9111이 RFC 7234를 대체했는지(머리말 미확인)
+- 구조: 깨진 위키링크 없음, inbound 없는 페이지는 index·log뿐, frontmatter `sources` 누락 없음
+- 메모: 점검 중 보조 출력 하나(zsh 단어 분리 오류로 전부 "누락"으로 나옴)가 틀려 버리고, 목록을 나란히 출력해 직접 비교했다

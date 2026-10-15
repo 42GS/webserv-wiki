@@ -12,10 +12,10 @@ C++98로 HTTP 서버를 만드는 42 과제. 실행은 `./webserv [configuration
 
 ## 무엇이 점수를 결정하나
 
-평가는 단계 순서대로 진행되고, 앞 단계에서 걸리면 뒤는 보지 않는다.
+평가는 아래 순서로 진행된다. README 필수 요소가 빠지면 0점이고 (raw/evaluation-sheet-en.md:44), 코드 질의 단계에서 하나라도 불명확하거나 틀리면 평가가 멈춘다 (raw/evaluation-sheet-en.md:61).
 
 1. **README 검사** — 필수 요소 하나라도 없으면 0점 (raw/evaluation-sheet-en.md:35-44) → [[concepts/build-and-submission]]
-2. **코드 질의 — I/O 멀티플렉싱** (raw/evaluation-sheet-en.md:46-61). 단일 `poll()`류, read/write 동시 감시, readiness 없는 I/O 금지, `errno` 금지. 하나라도 틀리면 0점·종료. → [[concepts/io-multiplexing]]
+2. **코드 질의 — I/O 멀티플렉싱** (raw/evaluation-sheet-en.md:46-61). 단일 `poll()`류, read/write 동시 감시, readiness 없는 I/O 금지, `errno` 금지. 메인 루프·동시 감시 위반과 errno 검사는 0점·종료다 (raw/evaluation-sheet-en.md:53, raw/evaluation-sheet-en.md:57). → [[concepts/io-multiplexing]]
 3. **설정 파일** 기능 시연 (raw/evaluation-sheet-en.md:63-73) → [[concepts/configuration-file]]
 4. **기본 HTTP 동작**과 정확한 status code (raw/evaluation-sheet-en.md:75-82) → [[concepts/http-features]]
 5. **CGI** (raw/evaluation-sheet-en.md:84-93) → [[concepts/cgi]]
@@ -41,7 +41,7 @@ C++98로 HTTP 서버를 만드는 42 과제. 실행은 `./webserv [configuration
 - POSIX상 `poll()`은 `POLLHUP`·`POLLERR`를 요청하지 않아도 알려 준다(macOS는 `events=0`인 pipe에 `POLLHUP`을 보고하지 않았다, 실측). `POLLOUT`은 보낼 데이터가 있을 때만 켜야 busy waiting을 피한다. CGI 출력은 `POLLHUP` 뒤에도 EOF까지 읽는다 → [[concepts/io-multiplexing]].
 - `SIGPIPE`의 기본 동작은 프로세스 종료이고, 끊긴 소켓에 `send`해도 발생한다. `signal(SIGPIPE, SIG_IGN)`으로 막아야 크래시 0점을 피한다 → [[concepts/resilience]].
 - macOS와 Ubuntu는 pipe의 `poll()` 비트가 다르다. `POLLERR`·`POLLHUP`을 먼저 보고, `POLLHUP`만 와도 EOF까지 읽고, 다 쓴 fd는 목록에서 뺀다. listen 소켓에는 `bind` 전에 `SO_REUSEADDR`를 켜고, `0.0.0.0`과 특정 IP의 같은 포트는 설정에서 거부한다 → [[concepts/io-multiplexing]], [[concepts/configuration-file]].
-- `recv`가 0이면 상대가 정상 종료한 것, -1이면 에러다. 둘 다 errno 없이 클라이언트를 정리한다. readiness 1회에 I/O 1번이면 EAGAIN을 구분할 일이 생기지 않는다 → [[concepts/io-multiplexing]].
+- `recv`가 0이면 상대가 정상 종료한 것, -1이면 에러다. 둘 다 errno 없이 클라이언트를 정리한다. readiness 1회에 I/O 1번이면 EAGAIN을 구분할 일이 거의 없고, -1이면 원인과 관계없이 정리한다(판단) → [[concepts/io-multiplexing]].
 - CGI 자식은 `waitpid(pid, &status, WNOHANG)`으로 회수한다. `WNOHANG`이 없으면 루프가 멈추고, 회수하지 않으면 좀비가 남는다. `SIGCHLD`는 `SIG_IGN`으로 바꾸지 않는다. 서버를 끌 때는 실행 중인 CGI도 끝낸다 → [[concepts/cgi]].
 - 같은 포트를 쓰는 webserv를 하나 더 띄우면 `bind`가 `EADDRINUSE`로 실패한다. 이때 에러 메시지와 함께 정상 종료해야 한다. 한 설정 안의 중복은 파싱 단계에서 거부한다 → [[concepts/configuration-file]].
 - siege의 Availability는 소켓 연결 성공률이다. 4xx·5xx는 깎이지 않고 연결 거부·끊김·타임아웃이 깎인다. 기본 설정의 siege는 요청마다 새 연결을 맺으므로 `accept`와 응답 후 종료 처리가 핵심이다 → [[concepts/testing]].
@@ -50,7 +50,7 @@ C++98로 HTTP 서버를 만드는 42 과제. 실행은 `./webserv [configuration
 - 요청 경로는 query 분리 → 세그먼트 분할 → 한 번만 디코딩 → `%00`·`%2F` 거부 → `..` 제거 → 매핑 → root 안인지 확인 순서로 처리한다 → [[concepts/security]].
 - 리다이렉트 설정은 `return 코드 URL` 형식으로 받는다. index·`error_page`·CGI local redirect 같은 내부 리다이렉트는 반복 횟수에 상한을 두고 넘으면 500 → [[concepts/configuration-file]], [[concepts/resilience]].
 - Python CGI 스크립트에서는 `cgi` 모듈을 쓰지 않는다(3.13에서 제거). `QUERY_STRING`·표준 입력으로 직접 처리한다 → [[concepts/cgi]].
-- php-cgi는 기본 설정에서 `REDIRECT_STATUS`가 없으면 실행을 거부한다. `REDIRECT_STATUS`와 `SCRIPT_FILENAME`을 RFC 3875 변수에 더해 넣는다 → [[concepts/cgi]].
+- php-cgi는 기본 설정에서 `REDIRECT_STATUS`가 없으면 실행을 거부한다. RFC 3875 변수에 더해 `REDIRECT_STATUS`를 넣고, `SCRIPT_FILENAME`도 넣는다(판단) → [[concepts/cgi]].
 - 보너스 쿠키·세션: 응답 헤더 구조가 같은 이름의 `Set-Cookie` 여러 개를 담을 수 있어야 한다. 세션은 식별자만 쿠키에, 상태는 서버에 둔다 → [[concepts/bonus]].
 - non-blocking은 `fcntl(fd, F_SETFL, O_NONBLOCK)`로 설정한다. `FD_CLOEXEC`는 허용 목록상 설정할 방법이 없어, CGI 자식에서 `execve` 전에 필요 없는 fd를 닫는다 → [[concepts/cgi]].
 - 시연 준비물(기능별 설정 파일, 정적 사이트, CGI 정상/에러/무한 루프 스크립트)도 제출물이다 (raw/subject.md:184).

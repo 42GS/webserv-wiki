@@ -28,7 +28,7 @@ updated: 2026-10-15
 ### 1.3 HEAD — subject vs RFC 9110
 
 - RFC 9110: 범용 서버는 GET과 HEAD를 MUST로 지원 (raw/rfc9110.txt:3794-3795).
-- subject: GET·POST·DELETE만 요구 (raw/subject.md:147). 평가표도 HEAD를 테스트하지 않는다 (raw/evaluation-sheet-en.md:79).
+- subject: GET·POST·DELETE만 요구 (raw/subject.md:147). 평가표의 메서드 항목에도 HEAD가 없다 (raw/evaluation-sheet-en.md:79). 다만 브라우저 점검에는 "Try anything you like"가 있다 (raw/evaluation-sheet-en.md:103).
 - 판단: 평가에는 영향이 없다. 구현 비용이 작아서 지원을 고려한다. 지원하지 않는다면 HEAD에 501로 응답한다 (raw/rfc9110.txt:3799-3801). → [[concepts/http-features]]
 
 ### 1.4 허용 함수 목록의 범위 — `<ctime>`, `exit` (질문)
@@ -37,7 +37,7 @@ subject는 "허용된 syscall/라이브러리 호출" 목록을 준다 (raw/subj
 
 - **Date 헤더:** RFC 9110상 clock이 있는 origin server는 2xx·3xx·4xx 응답에 `Date` MUST, clock이 없으면 보내면 안 됨 (raw/rfc9110.txt:2313-2320). 목록에 시간 함수가 없다 (raw/subject.md:113). → [[concepts/http-features]]
 - **디렉토리 리스팅의 시간 표시:** NGINX 리스팅은 파일 시간을 보인다 (raw/nginx-autoindex-module.md:88). 시간 형식으로 바꾸려면 시간 함수가 필요하다. subject는 리스팅 내용을 정하지 않으므로 (raw/subject.md:170) 생략할 수 있다. → [[concepts/configuration-file]]
-- **CGI 자식 종료:** `execve`가 실패한 자식은 끝나야 한다. `exit`·`_exit`가 목록에 없다 (raw/subject.md:113). POSIX는 보통 `exit()`을 권하지만 (raw/posix-exit.md:122), `_exit`은 stream을 flush하지 않아 fork된 자식에서 부모의 버퍼를 다시 내보내지 않는다 (raw/posix-exit.md:36). → [[concepts/cgi]]
+- **CGI 자식 종료:** `execve`가 실패한 자식은 끝나야 한다. `exit`·`_exit`가 목록에 없다 (raw/subject.md:113). POSIX는 보통 `exit()`을 권하지만 (raw/posix-exit.md:122), `_exit`은 stream을 flush하지 않는다 (raw/posix-exit.md:36). 그래서 fork된 자식이 부모에게서 물려받은 버퍼를 다시 내보내지 않는다 (**판단**). → [[concepts/cgi]]
 - 판단 보류. 확인 방법: 동료·평가자 합의 또는 42 공식 답변.
 
 ### 1.5 half-close — 허용 함수 목록 vs RFC 9112
@@ -53,7 +53,7 @@ subject는 "허용된 syscall/라이브러리 호출" 목록을 준다 (raw/subj
 - 브라우저는 HTTP/1.1 이상으로 요청한다 (**미확인**, 평가 시 브라우저 네트워크 탭에서 확인 가능, raw/evaluation-sheet-en.md:97-98).
 - RFC 1945 (HTTP/1.0): 요청마다 연결을 닫는 것이 기본이다 (raw/rfc1945.txt:420-422). 1.0 서버는 0.9 요청도 이해하고 클라이언트와 같은 버전으로 응답해야 한다 (raw/rfc1945.txt:694-703). status code 목록에 405·411·413·414·505가 없다 (raw/rfc1945.txt:1487-1501). 과제 필수 메서드인 DELETE는 본문이 아니라 "일관되게 구현되지 않은 기능"인 부록 D에 있다 (raw/rfc1945.txt:3185-3199, raw/rfc1945.txt:3223-3226). 즉 과제 요구사항은 HTTP/1.0만으로 다 설명되지 않는다.
 - RFC 9110: 서버는 요청의 메이저 버전 이하에서 자신이 따르는 가장 높은 버전으로 응답한다 (SHOULD, raw/rfc9110.txt:2054-2056). HTTP/1.0 요청에 `HTTP/1.1`로 응답해도 된다.
-- 판단: 응답은 `HTTP/1.1`로 보내고, HTTP/1.0 요청은 `keep-alive`가 없으면 응답 후 닫는다. HTTP/0.9는 지원하지 않고 400 (raw/rfc9112.txt:2215-2221) → [[sources/rfc1945]].
+- 판단: 응답은 `HTTP/1.1`로 보내고, HTTP/1.0 요청은 `keep-alive`가 없으면 응답 후 닫는다. HTTP/0.9는 지원하지 않고 400 (raw/rfc9112.txt:430-432, raw/rfc9112.txt:2215-2221) → [[sources/rfc1945]].
 - 판단: 응답 버전을 HTTP/1.1로 하면 위 규칙을 따라야 한다. 다만 subject가 chunked 처리(raw/subject.md:179)를 요구하므로 어느 쪽이든 HTTP/1.1 파싱 규칙 대부분은 필요하다. → [[concepts/connection-management]], [[concepts/request-parsing]]
 
 ### 1.7 REMOTE_ADDR — 허용 함수 목록 vs RFC 3875
@@ -86,7 +86,7 @@ subject는 "허용된 syscall/라이브러리 호출" 목록을 준다 (raw/subj
 
 - subject: `fcntl()`은 `F_SETFL`, `O_NONBLOCK`, `FD_CLOEXEC`로만 사용 가능 (raw/subject.md:155-157).
 - **`F_GETFL` 없음:** POSIX는 플래그를 `F_GETFL`로 읽고 수정한 뒤 쓰라고 권한다. 잊는 것이 흔한 실수이고, 구현이 기본으로 다른 플래그를 켜 두는 경우도 있다고 한다 (raw/posix-fcntl.md:391). 허용 목록으로는 `F_SETFL`에 `O_NONBLOCK`만 주는 방법뿐이다.
-- **`FD_CLOEXEC`에는 `F_SETFD`가 필요:** `FD_CLOEXEC`는 파일 상태 플래그가 아니라 fd 플래그라서 `F_SETFD`로 설정한다 (raw/posix-fcntl.md:50-52). `F_SETFD`는 허용 목록에 없다. 목록의 `F_SETFL`과 `FD_CLOEXEC`는 함께 쓸 수 없는 조합이다.
+- **`FD_CLOEXEC`에는 `F_SETFD`가 필요:** `FD_CLOEXEC`는 파일 상태 플래그가 아니라 fd 플래그라서 `F_SETFD`로 설정한다 (raw/posix-fcntl.md:50-52). `F_SETFD`는 허용 목록에 없다. 그래서 목록의 `F_SETFL`과 `FD_CLOEXEC`는 함께 쓸 수 없는 조합이다 (**판단**, raw/posix-fcntl.md:58-60).
 - 판단: non-blocking은 `fcntl(fd, F_SETFL, O_NONBLOCK)`로 한다. `FD_CLOEXEC` 대신 CGI 자식에서 `execve` 전에 필요 없는 fd를 `close`한다 → [[concepts/cgi]]. `F_SETFD`를 써도 되는지는 **미확인**(평가자 합의).
 
 ### 1.12 POSIX `poll()` vs macOS 실측
@@ -145,7 +145,7 @@ subject는 "허용된 syscall/라이브러리 호출" 목록을 준다 (raw/subj
 
 ## 6. 남은 미확인
 
-subject·평가표 해석에 관한 질문만 모았다. 동작 확인이 필요한 항목(NGINX·OS 실측)은 [[source-wishlist]] 4-1·5-1절.
+subject·평가표 해석에 관한 질문만 모았다. 동작 확인이 필요한 항목(NGINX·OS 실측, siege 소스)은 [[source-wishlist]] 4-1·5-1·6절.
 
 - 42 EvalHub 원문이 intra의 현재 평가표와 같은지 → [[sources/evaluation-sheet-en]]
 - 허용 함수 목록이 `<ctime>`, `exit` 등 표준 라이브러리에도 적용되는지 (Date 헤더, CGI 자식 종료, 리스팅 시간 표시, 1.4절)

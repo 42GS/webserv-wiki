@@ -1,6 +1,7 @@
 ---
 title: 추가할 소스 목록
 type: overview
+sources: [raw/subject.md, raw/evaluation-sheet.md, raw/evaluation-sheet-en.md, raw/rfc9110.txt, raw/rfc9112.txt]
 updated: 2026-10-15
 ---
 
@@ -70,7 +71,7 @@ URL은 2026-10-15에 접속해 HTTP 200을 확인했다. 받아서 넣은 소스
 ## 4-1. NGINX 실측 (문서로 확인 불가)
 
 > [!note] 정리 (2026-10-15)
-> 4건 모두 실측 없이 정했다. 앞의 두 건은 RFC가 답을 정하므로 닫았다. 뒤의 두 건은 RFC가 코드를 정하지 않아 **판단**으로 확정했고, NGINX와 같은지는 디펜스 근거를 보강하는 **선택** 항목으로만 남긴다. subject는 NGINX를 비교 대상으로 쓸 수 있다고 할 뿐 따르라고 하지 않는다 (raw/subject.md:186).
+> 처음 4건 중 두 건은 RFC가 답을 정하므로 닫았다. 나머지 두 건(디렉토리 301, 리스팅 off 403)은 RFC가 코드를 정하지 않아 **판단**으로 확정한 뒤, NGINX 실측으로 같음을 확인했다 ([[sources/nginx-observed-directory]]). subject는 NGINX를 비교 대상으로 쓸 수 있다고 할 뿐 따르라고 하지 않는다 (raw/subject.md:186).
 
 nginx.org에 정적 파일 모듈 문서가 없고(`ngx_http_static_module.html` 404, 2026-10-15 확인), access 모듈 문서에도 응답 코드가 없다. subject가 권하는 대로 NGINX를 직접 실행해 비교한다 (raw/subject.md:186). 로컬에는 NGINX가 설치되어 있지 않다 (2026-10-15 확인). NGINX 공식 Docker 이미지로 측정했다.
 
@@ -80,6 +81,7 @@ nginx.org에 정적 파일 모듈 문서가 없고(`ngx_http_static_module.html`
 | [x] | — | `limit_except`로 막힌 메서드의 응답 코드 — **닫음**: RFC 9110이 405 + `Allow` MUST (raw/rfc9110.txt:7603-7607) | — | — |
 | [x] | 선택 | `raw/nginx-observed-directory.md`로 측정 (2026-10-15, 403) — 리스팅 off + index 없는 디렉토리의 응답 코드 (index·autoindex 모듈 문서에 없음, 2026-10-15 확인) — 과제는 **판단**으로 403 확정 | 같은 방법 | 같은 형식 |
 | [x] | — | Host 헤더 없는 HTTP/1.1 요청의 응답 코드 — **닫음**: RFC 9112가 400 MUST (raw/rfc9112.txt:445-448) | — | — |
+| [ ] | 선택 | 경로의 `%2F`를 디코딩해 구분자로 쓰는지 (core 모듈 문서는 정규화 항목만 나열하고 순서·`%2F` 처리는 적지 않음) → [[concepts/security]] | 같은 Docker 방법으로 `/a%2Fb` 등 요청 | 같은 형식 |
 
 ## 5-1. OS 실측 (POSIX 문서로 확인 불가)
 
@@ -108,9 +110,9 @@ POSIX가 동작을 정하지 않아 OS별로 직접 확인해야 하는 것. 평
 ## 넣지 않는 것
 
 - C++98 표준(ISO/IEC 14882:1998)은 유료 문서다. cppreference는 커뮤니티 위키라 근거로 쓰지 않는다. 필요해지면 따로 정한다.
-- RFC 7230~7235는 대체된 문서라 넣지 않는다. 7230·7231·7232·7233·7235는 RFC 9110이, 7230은 RFC 9112도, 7234(캐싱)는 RFC 9111이 대체했다 (각 RFC 머리말 "Obsoletes:"). 캐싱은 과제 범위 밖이라 RFC 9111도 넣지 않는다.
+- RFC 7230~7235는 대체된 문서라 넣지 않는다. 7230·7231·7232·7233·7235는 RFC 9110이 대체했고 (raw/rfc9110.txt:8-9), 7230은 RFC 9112도 대체했다 (raw/rfc9112.txt:8). 7234(캐싱)를 RFC 9111이 대체했다는 것은 RFC 9111을 받지 않아 머리말로 확인하지 않았다 (**미확인** — 확인: <https://www.rfc-editor.org/rfc/rfc9111.txt> 머리말). 캐싱은 과제 범위 밖이라 RFC 9111도 넣지 않는다.
 
 ## 받는 방법
 
 - RFC: `curl -o raw/rfc9110.txt https://www.rfc-editor.org/rfc/rfc9110.txt` — `.txt`가 줄 번호 인용에 가장 좋다.
-- HTML 문서: Obsidian Web Clipper로 markdown 변환 후 `raw/`에 저장.
+- HTML 문서: CLAUDE.md "웹 문서 받기" 절대로 `tools/`의 변환기로 직접 변환하고, `verify_md.py` PASS일 때만 `raw/`에 넣는다.
