@@ -51,7 +51,10 @@ tools/               웹 문서 → markdown 변환·검증 스크립트
 4. 관련 concept/analysis 페이지를 갱신하거나 새로 만든다. 기존 주장과 충돌하면 모순으로 기록한다.
 5. `wiki/index.md`, `wiki/overview.md`를 갱신한다.
 6. `wiki/log.md`에 항목을 추가한다.
-7. `python3 -I tools/lint_wiki.py`로 기계 검사를 하고, 새 인용을 원문 줄과 대조한다.
+7. **커밋 전 검사** (모두 마친 뒤에 커밋한다):
+   1. `python3 -I tools/lint_wiki.py` — 기계 검사.
+   2. `python3 -I tools/cite_show.py` — 새로 추가한 인용마다 원문 줄이 나온다. 주장과 원문 문구가 맞는지 하나씩 대조한다. 줄 번호는 기억이나 이전 grep 결과로 쓰지 말고 이 출력으로 확인한다.
+   3. 영향 범위 확인 — 판단이 바뀌거나 미확인이 생기거나 해소되면, 그 주제어로 `wiki/` 전체를 grep해서 같은 내용을 다룬 문장을 함께 고친다. 특히 `overview`의 "현재 종합 판단"·"열린 질문"과 `analysis/subject-vs-evaluation` "남은 미확인"을 확인한다.
 8. **소스 하나를 ingest할 때마다 커밋한다.** 소스 파일, 위키 변경, log를 한 커밋에 담는다.
 
 ### 웹 문서 받기 (HTML 소스)
@@ -62,6 +65,7 @@ tools/               웹 문서 → markdown 변환·검증 스크립트
   - `nginx2md.py <html> <url> <date>`: `div#content`를 markdown으로 변환. nginx.org 페이지용.
   - `posix_wrap.py <html>`: pubs.opengroup.org 페이지의 본문을 `div#content`로 감싼다. 결과를 `nginx2md.py`에 넣는다.
   - `extract_div.py <html> <id> [tag]`: 지정한 id의 요소 하나(기본 `div`)만 잘라 `div#content`로 감싼다. php.net(`div`), peps.python.org(`section`)처럼 본문이 고유 id의 요소에 있는 페이지용. 결과를 `nginx2md.py`에 넣는다.
+  - `cite_show.py`: 커밋하지 않은 위키 변경에서 새 인용을 찾아 원문 줄을 보여 준다 (작업 흐름 7단계).
   - `verify_md.py <html> <md>`: 변환 검증. 전처리(`posix_wrap.py`, `extract_div.py`)를 거친 페이지는 전처리한 HTML로 검증한다.
 - **검증 기준: `verify_md.py`가 PASS여야 raw에 넣는다.** 두 검사를 모두 통과해야 한다.
   1. 공백을 뺀 문자열이 같다 (글자가 빠지거나 바뀌지 않음).
@@ -76,7 +80,8 @@ tools/               웹 문서 → markdown 변환·검증 스크립트
 ### Lint (점검)
 - 페이지 간 모순, 오래된 주장, inbound 링크 없는 고아 페이지, 언급되지만 페이지가 없는 개념,
   인용 줄 번호가 원본과 맞는지, 깨진 위키링크를 점검한다.
-- 기계 검사는 `python3 -I tools/lint_wiki.py`로 한다: 깨진 링크, 인용 범위, 표 칸 수, frontmatter `sources` 누락, 고아 페이지.
+- 기계 검사는 `python3 -I tools/lint_wiki.py`로 한다: 깨진 링크, 인용 범위, 빈 줄을 가리키는 인용(범위의 첫 줄·끝 줄), 표 칸 수, frontmatter `sources` 누락, 고아 페이지.
+- 기계 검사는 인용이 **다른 문장**을 가리키는 경우를 잡지 못한다. 그래서 ingest마다 `cite_show.py`로 새 인용을 대조한다.
 - 미확인 표시가 이미 해소된 항목에 남아 있지 않은지, `analysis/subject-vs-evaluation` "남은 미확인"과 `overview` "열린 질문"이 최신인지 대조한다.
 - 과제 필수 기능별로 위키가 다루는 정도를 세어 공백을 찾는다.
 - 결과와 수정 내역을 log에 남긴다.

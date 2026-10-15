@@ -5,6 +5,7 @@ Usage: python3 -I tools/lint_wiki.py
 Checks:
   - broken [[wikilinks]]
   - citations raw/<file>:<a>[-<b>] that fall outside the file or are reversed
+  - citations whose first or last line is blank (in range but pointing at nothing)
   - markdown tables whose rows have a different cell count than the header
   - frontmatter `sources` missing a raw file that the page cites
   - orphan pages (no inbound [[link]]), except log and index
@@ -38,7 +39,7 @@ def table_issues(lines):
 def main():
     pages = sorted(glob.glob("wiki/**/*.md", recursive=True))
     names = {p[len("wiki/"):-len(".md")] for p in pages}
-    line_counts = {}
+    raw_lines = {}
     issues = []
     for p in pages:
         s = open(p, encoding="utf-8").read()
@@ -49,11 +50,14 @@ def main():
             if not os.path.exists(f):
                 issues.append((p, "missing raw file", f))
                 continue
-            if f not in line_counts:
-                line_counts[f] = sum(1 for _ in open(f, encoding="utf-8"))
+            if f not in raw_lines:
+                raw_lines[f] = [l.rstrip("\n") for l in open(f, encoding="utf-8")]
+            lines = raw_lines[f]
             start, end = int(a), int(b or a)
-            if start < 1 or end < start or end > line_counts[f]:
+            if start < 1 or end < start or end > len(lines):
                 issues.append((p, "citation out of range", "%s:%s-%s" % (f, a, b)))
+            elif not lines[start - 1].strip() or not lines[end - 1].strip():
+                issues.append((p, "citation on blank line", "%s:%s-%s" % (f, a, b)))
         for i, cells, head in table_issues(s.split("\n")):
             issues.append((p, "table columns", "line %d: %d vs header %d" % (i, cells, head)))
         m = re.search(r"^sources: \[(.*)\]", s, re.M)

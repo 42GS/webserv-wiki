@@ -59,7 +59,7 @@ RFC가 특정 코드를 직접 지정하지 않는 상황은 **판단**으로 �
 | chunked 요청을 받지 않기로 한 경우 | 411 | raw/rfc9110.txt:7692-7694, raw/rfc9112.txt:999-1000 | MAY. subject가 un-chunk를 요구하므로(raw/subject.md:179) 이 과제에서는 쓰지 않는다. `Content-Length`도 TE도 없는 요청은 본문 길이 0이다 (raw/rfc9112.txt:980-981) |
 | body가 `client_max_body_size` 초과 | 413 | raw/rfc9110.txt:7710-7714 | 평가 body 제한 테스트 (raw/evaluation-sheet-en.md:70). 남은 본문을 읽지 않으면 응답 후 연결을 닫아야 함 (raw/rfc9112.txt:1374-1377) |
 | URI가 너무 김 | 414 | raw/rfc9110.txt:7722-7724, raw/rfc9112.txt:393-395 | MUST  NGINX는 요청줄이 헤더 버퍼 하나보다 크면 414 (raw/nginx-core-module.md:781) |
-| 헤더 한 줄 또는 헤더 전체가 서버 상한보다 큼 | **431** (**판단**) | raw/rfc9110.txt:1567-1570, raw/rfc6585.txt:177-184 | 상한을 넘는 헤더는 적절한 4xx로 응답해야 한다 (MUST, raw/rfc9110.txt:1567-1570). 431은 헤더 전체가 클 때와 한 필드가 클 때 모두 쓰며, 한 필드가 원인이면 본문에 어느 필드인지 적는다 (SHOULD, raw/rfc6585.txt:181-184). NGINX는 400을 보낸다 (raw/nginx-core-module.md:781). 더 구체적인 431을 고르고 응답 후 연결을 닫는다. 상한은 포트 단위 → [[concepts/configuration-file]], [[sources/rfc6585]] |
+| 헤더 한 줄 또는 헤더 전체가 서버 상한보다 큼 | **431** (**판단**) | raw/rfc9110.txt:1568-1570, raw/rfc6585.txt:177-184 | 상한을 넘는 헤더는 적절한 4xx로 응답해야 한다 (MUST, raw/rfc9110.txt:1568-1570). 431은 헤더 전체가 클 때와 한 필드가 클 때 모두 쓰며, 한 필드가 원인이면 본문에 어느 필드인지 적는다 (SHOULD, raw/rfc6585.txt:181-184). NGINX는 400을 보낸다 (raw/nginx-core-module.md:781). 더 구체적인 431을 고르고 응답 후 연결을 닫는다. 상한은 포트 단위 → [[concepts/configuration-file]], [[sources/rfc6585]] |
 
 ## 서버 오류
 
