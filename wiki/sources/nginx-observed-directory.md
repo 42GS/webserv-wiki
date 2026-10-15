@@ -15,7 +15,7 @@ updated: 2026-10-15
 | 요청 | 응답 | 근거 |
 |---|---|---|
 | `/withindex` (끝 `/` 없음, index 있음) | 301, `Location: http://web/withindex/` | raw/nginx-observed-directory.md:78-83 |
-| `/withindex/` | 200, index 파일 내용 | raw/nginx-observed-directory.md:96, raw/nginx-observed-directory.md:105 |
+| `/withindex/` | 200, index 파일 내용 | raw/nginx-observed-directory.md:96, raw/nginx-observed-directory.md:106 |
 | `/noindex` (끝 `/` 없음, index 없음) | 301, `Location: http://web/noindex/` | raw/nginx-observed-directory.md:110-115 |
 | `/noindex/` (`autoindex off`, index 없음) | 403. 로그: "directory index ... is forbidden" | raw/nginx-observed-directory.md:128, raw/nginx-observed-directory.md:234 |
 | `/missing` | 404 | raw/nginx-observed-directory.md:210 |

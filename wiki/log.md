@@ -240,3 +240,4 @@
 - 갱신: concepts/configuration-file (301·403 실측 근거, Location 형식 차이), concepts/security (6단계: 루트 위 `..` → 400), concepts/status-codes (400 행, 심볼릭 링크 403 행), overview, index, source-wishlist 4-1
 - 결정: root 위로 올라가는 `..` → 400 + 연결 닫기 (사용자 결정, NGINX와 같음). 미결이던 403/404 판단 해소
 - 메모: 정규화 뒤 최종 경로가 root 밖(심볼릭 링크)인 경우는 403으로 판단 (NGINX 미측정)
+- 수정: sources/nginx-observed-directory 인용 줄 105 → 106 (빈 줄을 가리킴, 커밋 후 대조에서 발견)
