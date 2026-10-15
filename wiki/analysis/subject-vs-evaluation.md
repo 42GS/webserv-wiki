@@ -148,3 +148,4 @@ subject·평가표 해석에 관한 질문만 모았다. 동작 확인이 필요
 - `waitpid` 상태 매크로를 써도 되는지 (1.9절)
 - 세션 식별자용 `/dev/urandom` 읽기가 `poll()` 예외에 들어가는지 (1.10절)
 - `FD_CLOEXEC`를 위해 `F_SETFD`를 써도 되는지 (1.11절)
+- `fcntl()` 허용이 "For macOS only" 절(raw/subject.md:153-157)에 있는데, Ubuntu 평가에서도 인정되는지. 허용 함수 목록(raw/subject.md:113)에는 있다 → [[concepts/io-multiplexing]]

@@ -1,7 +1,7 @@
 ---
 title: CGI
 type: concept
-sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc3875.txt, raw/rfc9112.txt, raw/rfc9110.txt, raw/posix-poll.md, raw/posix-signal-h.md, raw/posix-waitpid.md, raw/posix-bind.md, raw/posix-exit.md, raw/php-cgi-force-redirect.md, raw/php-ini-core.md, raw/rfc6265.txt, raw/posix-fcntl.md]
+sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc3875.txt, raw/rfc9112.txt, raw/rfc9110.txt, raw/posix-poll.md, raw/posix-signal-h.md, raw/posix-waitpid.md, raw/posix-bind.md, raw/posix-exit.md, raw/php-cgi-force-redirect.md, raw/php-ini-core.md, raw/rfc6265.txt, raw/posix-fcntl.md, raw/pep-0594.md]
 updated: 2026-10-15
 ---
 
@@ -176,6 +176,13 @@ RFC 3875 목록에 없는 비표준 변수다. 이 과제에서 CGI로 `php-cgi`
 - **회수하지 않으면 좀비가 남는다.** 끝난 프로세스는 좀비가 되고, 부모가 `wait`/`waitpid`로 상태를 가져갈 때 수명이 끝난다 (raw/posix-exit.md:58-64). `SIGCHLD`를 `SIG_IGN`으로 두면 좀비 없이 사라지지만 종료 상태를 받을 수 없다 [XSI] (raw/posix-exit.md:50-54). 이 과제는 `SIGCHLD`를 기본 동작으로 두고 `waitpid`로 회수한다.
 - 스크립트가 끝나면 그 프로세스의 fd가 모두 닫힌다 (raw/posix-exit.md:48). 그래서 출력 pipe의 쓰는 쪽이 닫혀 서버에 `POLLHUP`과 EOF가 온다 → 1절 설계 제약.
 - 자식에서 `execve`가 실패하면 자식 프로세스를 끝내야 한다. `exit`·`_exit`가 허용 함수 목록에 없다는 문제는 [[analysis/subject-vs-evaluation]] 1.4절.
+
+## 6. 테스트 스크립트 작성 (Python)
+
+subject는 시연용 기본 파일을 제출하라고 한다 (raw/subject.md:184). CGI 스크립트를 Python으로 쓴다면:
+- **`import cgi`를 쓰지 않는다.** `cgi` 모듈은 Python 3.13에서 제거됐고 3.11·3.12에서는 `DeprecationWarning`을 낸다 (raw/pep-0594.md:182-190, raw/pep-0594.md:218). 평가 Ubuntu의 Python이 3.13 이상이면 import에서 실패해 스크립트가 에러로 끝나고 502가 된다 (**판단**). 평가 머신의 Python 버전은 **미확인** — 확인: 평가 머신에서 `python3 --version`. `cgi`를 쓰지 않으면 버전과 무관하다.
+- query는 `QUERY_STRING` 환경변수를 `urllib.parse.parse_qs`로 파싱한다 (raw/pep-0594.md:324). 본문은 표준 입력에서 `CONTENT_LENGTH` 바이트를 읽는다 (raw/rfc3875.txt:1073-1075). 2절 메타변수를 그대로 쓰는 방식이라 서버 구현을 확인하는 데도 낫다 (**판단**).
+- multipart 본문은 `email.message.Message`로 바꾸라고 한다 (raw/pep-0594.md:328-330). 업로드는 서버가 직접 처리할지부터 정한다 → [[concepts/file-upload]]. → [[sources/pep-0594]]
 
 ## 보너스
 

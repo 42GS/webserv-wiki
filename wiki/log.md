@@ -220,3 +220,9 @@
 - 갱신: tools/extract_div.py (선택 인자 tag, 기본 div — peps.python.org의 `section#pep-content`용), tools/verify_md.py (짝을 이룬 `**…**`만 변환기 표시로 제거, 짝 없는 `**`는 원문 글자로 유지), CLAUDE.md 도구 설명
 - 계기: PEP 594 표의 각주 표시 `(2.0**)`가 검증에서 지워져 거짓 FAIL
 - 검증: php 페이지 2개는 extract_div 결과가 수정 전과 바이트 단위로 같음. 기존 HTML 변환본 16개 모두 수정 전·후 PASS. 원문 `**`를 지운 사본이 이제 FAIL (수정 전에는 통과했을 경우)
+
+## [2026-10-15] ingest | PEP 594 (Python cgi 모듈 제거)
+- 생성: raw/pep-0594.md (HTML → markdown, extract_div section → verify_md PASS), raw/pep-0594.source.html (원본), sources/pep-0594
+- 갱신: concepts/cgi (6절 Python 테스트 스크립트 작성), concepts/testing, overview, index, source-wishlist
+- 새 미확인: 평가 Ubuntu의 Python 버전 (`cgi`를 쓰지 않으면 결론에 영향 없음)
+- 수정: analysis/subject-vs-evaluation 6절에 Ubuntu에서의 `fcntl()` 허용 질문 추가 (멀티플렉서 결정 때 overview에만 넣고 빠뜨림)

@@ -1,7 +1,7 @@
 ---
 title: 테스트 도구와 평가 시연
 type: concept
-sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/siege.pod, raw/siegerc.in, raw/evaluation-sheet.md, raw/rfc9112.txt]
+sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/siege.pod, raw/siegerc.in, raw/evaluation-sheet.md, raw/rfc9112.txt, raw/pep-0594.md]
 updated: 2026-10-15
 ---
 
@@ -80,7 +80,7 @@ curl -X POST -H "Content-Type: plain/text" \
 ## 권장 사항
 
 - 한 프로그램으로만 테스트하지 말고 Python/Go 등으로 테스트를 작성 (raw/subject.md:190).
-- 평가자는 설정 파일 외 파일을 수정할 수 없으므로 (raw/evaluation-sheet-en.md:24), 시연용 설정·파일·CGI 스크립트(정상/에러/무한 루프)를 미리 준비한다 (raw/subject.md:184, raw/evaluation-sheet-en.md:91).
+- 평가자는 설정 파일 외 파일을 수정할 수 없으므로 (raw/evaluation-sheet-en.md:24), 시연용 설정·파일·CGI 스크립트(정상/에러/무한 루프)를 미리 준비한다 (raw/subject.md:184, raw/evaluation-sheet-en.md:91). Python으로 쓸 때는 `cgi` 모듈을 쓰지 않는다 (Python 3.13에서 제거, raw/pep-0594.md:218) → [[concepts/cgi]] 6절.
 
 ## 관련
 

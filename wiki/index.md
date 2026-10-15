@@ -39,6 +39,7 @@ updated: 2026-10-15
 | [[sources/nginx-rewrite-module]] | NGINX rewrite 모듈 — `return` 리다이렉트, 내부 리다이렉트 10회 상한 | `raw/nginx-rewrite-module.md` |
 | [[sources/php-cgi-force-redirect]] | PHP 매뉴얼 — cgi.force_redirect와 REDIRECT_STATUS | `raw/php-cgi-force-redirect.md` |
 | [[sources/php-ini-core]] | PHP 매뉴얼 — core php.ini 중 CGI 관련 설정과 기본값 | `raw/php-ini-core.md` |
+| [[sources/pep-0594]] | PEP 594 — Python `cgi`·`cgitb` 모듈 3.13 제거, 대체 수단 | `raw/pep-0594.md` |
 | [[sources/rfc6265]] | RFC 6265 쿠키 — Set-Cookie·Cookie 문법, 속성, 세션 식별자 | `raw/rfc6265.txt` |
 | [[sources/posix-fcntl]] | POSIX `fcntl()` — F_SETFL·O_NONBLOCK, F_SETFD·FD_CLOEXEC | `raw/posix-fcntl.md` |
 | [[sources/iana-http-status-codes]] | IANA status code 레지스트리 — 코드 이름(reason phrase)과 정의 문서 | `raw/iana-http-status-codes.txt` |
