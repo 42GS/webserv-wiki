@@ -196,3 +196,8 @@
 - 생성: raw/iana-http-status-codes.txt (IANA txt 형식 그대로, 2025-09-15 갱신본), sources/iana-http-status-codes
 - 갱신: concepts/status-codes ("reason phrase" 표, 431 행), overview, index, source-wishlist (RFC 6585 추가)
 - 메모: reason phrase 표의 각 행은 스크립트로 IANA 원문 줄과 대조
+
+## [2026-10-15] ingest | NGINX Server names
+- 생성: raw/nginx-server-names.md (HTML → markdown 변환, verify_md PASS), raw/nginx-server-names.source.html (원본), sources/nginx-server-names
+- 갱신: concepts/configuration-file ("이름 매칭 규칙", server가 정해지는 시점), overview, index, source-wishlist
+- 메모: 대소문자 무시는 RFC 9110 근거, 포트 제거·정확한 이름만·헤더 상한 포트 단위는 판단

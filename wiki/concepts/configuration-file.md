@@ -1,7 +1,7 @@
 ---
 title: 설정 파일
 type: concept
-sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc9110.txt, raw/nginx-core-module.md, raw/nginx-request-processing.md, raw/posix-bind.md, raw/nginx-index-module.md, raw/nginx-autoindex-module.md, raw/evaluation-sheet.md, raw/rfc3986.txt, raw/nginx-rewrite-module.md]
+sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc9110.txt, raw/nginx-core-module.md, raw/nginx-request-processing.md, raw/posix-bind.md, raw/nginx-index-module.md, raw/nginx-autoindex-module.md, raw/evaluation-sheet.md, raw/rfc3986.txt, raw/nginx-rewrite-module.md, raw/nginx-server-names.md]
 updated: 2026-10-15
 ---
 
@@ -65,6 +65,23 @@ updated: 2026-10-15
 과제 적용:
 - virtual host를 구현하지 않으면 `address:port`마다 server가 하나뿐이므로 1단계에서 끝난다. 같은 `address:port`가 두 번 나오면 설정 에러로 거부한다 (raw/evaluation-sheet-en.md:108).
 - virtual host를 구현하면 위 2단계를 그대로 따르면 된다. Host가 없는 요청은 [[concepts/request-parsing]] 3절 참고.
+
+### 이름 매칭 규칙 (virtual host 구현 시)
+
+NGINX는 정확한 이름 → `*`로 시작하는 가장 긴 와일드카드 → `*`로 끝나는 가장 긴 와일드카드 → 처음 맞는 정규식 순으로 찾고, 처음 맞는 것에서 멈춘다 (raw/nginx-server-names.md:38-46). → [[sources/nginx-server-names]]
+
+과제 적용 (**판단**):
+- **정확한 이름만** 지원해도 충분하다. 와일드카드는 선택이다. subject는 route 규칙에도 정규식을 요구하지 않는다 (raw/subject.md:166).
+- 비교 전에 Host 값 `uri-host [ ":" port ]`(raw/rfc9110.txt:2423)에서 **포트를 뗀다**.
+- **대소문자를 구분하지 않고** 비교한다. host는 대소문자를 구분하지 않는다 (raw/rfc9110.txt:1179-1181).
+- IP 주소로 요청하면 Host에 IP가 들어온다. 이름 목록에 IP를 넣으면 매칭된다 (raw/nginx-server-names.md:126).
+- Host가 없으면 빈 이름 `""`으로 찾는다. `server_name`이 없는 server는 빈 이름을 갖는다 (raw/nginx-server-names.md:110-120). 맞는 server가 없으면 default server가 처리한다.
+- 포트에 server가 하나뿐이면 이름을 검사하지 않는다 (raw/nginx-server-names.md:267). 미구현 시 1단계에서 끝난다는 위 판단과 같다.
+
+server가 정해지는 시점:
+- 요청줄을 처리한 뒤, 그다음 Host를 처리한 뒤에 정해진다 (raw/nginx-server-names.md:188-196).
+- 요청줄을 읽기 **전에** 쓰이는 설정(`client_header_buffer_size` 등)은 default server 설정을 따른다 (raw/nginx-server-names.md:204). 과제에서도 헤더 크기 상한처럼 요청줄 이전에 필요한 값은 server별이 아니라 포트(또는 전역) 단위로 둔다 (**판단**).
+- 에러 응답은 그 시점에 요청을 맡은 server의 `error_page`로 만든다 (raw/nginx-server-names.md:208). 요청줄 파싱 에러는 default server의 에러 페이지를 쓴다 (**판단**).
 
 ## 디렉토리 요청 처리 순서 (NGINX 기준)
 

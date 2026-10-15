@@ -8,7 +8,7 @@ updated: 2026-10-15
 # webserv 개요
 
 C++98로 HTTP 서버를 만드는 42 과제. 실행은 `./webserv [configuration file]` (raw/subject.md:118).
-근거 소스: [[sources/subject]], [[sources/evaluation-sheet-en]] (평가표 영어 원문), [[sources/rfc9110]] (HTTP 의미론), [[sources/rfc9112]] (HTTP/1.1 메시지·연결), [[sources/rfc3875]] (CGI/1.1), [[sources/rfc7578]], [[sources/rfc2046]] (multipart/form-data), [[sources/rfc3986]] (URI), [[sources/php-cgi-force-redirect]], [[sources/php-ini-core]] (php-cgi), [[sources/rfc6265]] (쿠키), [[sources/iana-http-status-codes]] (status code 목록), [[sources/nginx-core-module]], [[sources/nginx-request-processing]], [[sources/nginx-index-module]], [[sources/nginx-autoindex-module]], [[sources/nginx-rewrite-module]] (NGINX 비교 기준), [[sources/posix-poll]], [[sources/posix-signal-h]], [[sources/posix-send]], [[sources/posix-recv]], [[sources/posix-waitpid]], [[sources/posix-bind]], [[sources/posix-exit]], [[sources/posix-fcntl]] (POSIX), [[sources/siege]], [[sources/siegerc]] (부하 테스트 도구). 구버전 한국어 정리본 [[sources/evaluation-sheet]]은 이력용이다.
+근거 소스: [[sources/subject]], [[sources/evaluation-sheet-en]] (평가표 영어 원문), [[sources/rfc9110]] (HTTP 의미론), [[sources/rfc9112]] (HTTP/1.1 메시지·연결), [[sources/rfc3875]] (CGI/1.1), [[sources/rfc7578]], [[sources/rfc2046]] (multipart/form-data), [[sources/rfc3986]] (URI), [[sources/php-cgi-force-redirect]], [[sources/php-ini-core]] (php-cgi), [[sources/rfc6265]] (쿠키), [[sources/iana-http-status-codes]] (status code 목록), [[sources/nginx-core-module]], [[sources/nginx-request-processing]], [[sources/nginx-server-names]], [[sources/nginx-index-module]], [[sources/nginx-autoindex-module]], [[sources/nginx-rewrite-module]] (NGINX 비교 기준), [[sources/posix-poll]], [[sources/posix-signal-h]], [[sources/posix-send]], [[sources/posix-recv]], [[sources/posix-waitpid]], [[sources/posix-bind]], [[sources/posix-exit]], [[sources/posix-fcntl]] (POSIX), [[sources/siege]], [[sources/siegerc]] (부하 테스트 도구). 구버전 한국어 정리본 [[sources/evaluation-sheet]]은 이력용이다.
 
 ## 무엇이 점수를 결정하나
 
@@ -35,7 +35,7 @@ C++98로 HTTP 서버를 만드는 42 과제. 실행은 `./webserv [configuration
 - 연결은 HTTP/1.1 기준 persistent가 기본이다. 본문을 다 읽지 않고 응답(413 등)하면 연결을 닫는다 → [[concepts/connection-management]].
 - CGI에서 서버는 application gateway다. 본문 un-chunk, 메타변수 구성, EOF까지 출력 수집, CGI 응답을 HTTP 응답으로 변환하는 일이 서버 책임이다. 타임아웃은 504, 형식 오류는 502 → [[concepts/cgi]].
 - subject의 root 예시는 NGINX `alias` 방식이다. location은 정규화된 URI(query 제외)에 대해 가장 긴 prefix로 매칭한다 → [[concepts/configuration-file]].
-- server 선택은 `address:port` → Host 순서다. 맞는 이름이 없으면 그 포트의 default server(기본은 첫 server)가 처리한다 → [[concepts/configuration-file]].
+- server 선택은 `address:port` → Host 순서다. 맞는 이름이 없으면 그 포트의 default server(기본은 첫 server)가 처리한다. virtual host를 구현하면 정확한 이름만, 포트를 떼고 대소문자 무시로 비교한다(판단). 요청줄 이전에 쓰는 헤더 크기 상한은 포트 단위로 둔다 → [[concepts/configuration-file]].
 - `poll()`은 `POLLHUP`·`POLLERR`를 요청하지 않아도 알려 준다. `POLLOUT`은 보낼 데이터가 있을 때만 켜야 busy waiting을 피한다. CGI 출력은 `POLLHUP` 뒤에도 EOF까지 읽는다 → [[concepts/io-multiplexing]].
 - `SIGPIPE`의 기본 동작은 프로세스 종료이고, 끊긴 소켓에 `send`해도 발생한다. `signal(SIGPIPE, SIG_IGN)`으로 막아야 크래시 0점을 피한다 → [[concepts/resilience]].
 - `recv`가 0이면 상대가 정상 종료한 것, -1이면 에러다. 둘 다 errno 없이 클라이언트를 정리한다. readiness 1회에 I/O 1번이면 EAGAIN을 구분할 일이 생기지 않는다 → [[concepts/io-multiplexing]].

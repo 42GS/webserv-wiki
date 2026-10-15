@@ -47,7 +47,7 @@ URL은 2026-10-15에 접속해 HTTP 200을 확인했다. 받아서 넣은 소스
 |---|---|---|---|---|---|
 | [x] | P1 | ngx_http_core_module — `raw/nginx-core-module.md`로 ingest (2026-10-15) | <https://nginx.org/en/docs/http/ngx_http_core_module.html> | `root` vs `alias` (→ [[concepts/configuration-file]] 미확인), `listen`, `server_name`, `location`, `error_page`, `client_max_body_size` | `raw/nginx-core-module.md` |
 | [x] | P1 | How nginx processes a request — `raw/nginx-request-processing.md`로 ingest (2026-10-15) | <https://nginx.org/en/docs/http/request_processing.html> | 같은 포트 + 다른 `server_name` 처리, default server → virtual host 모순 | `raw/nginx-request-processing.md` |
-| [ ] | P2 | Server names | <https://nginx.org/en/docs/http/server_names.html> | `server_name` 매칭 규칙 | `raw/nginx-server-names.md` |
+| [x] | P2 | Server names — `raw/nginx-server-names.md`로 ingest (2026-10-15) | <https://nginx.org/en/docs/http/server_names.html> | `server_name` 매칭 규칙 | `raw/nginx-server-names.md` |
 | [x] | P2 | ngx_http_index_module — `raw/nginx-index-module.md`로 ingest (2026-10-15) | <https://nginx.org/en/docs/http/ngx_http_index_module.html> | 디렉토리 기본 파일 | `raw/nginx-index-module.md` |
 | [x] | P2 | ngx_http_autoindex_module — `raw/nginx-autoindex-module.md`로 ingest (2026-10-15) | <https://nginx.org/en/docs/http/ngx_http_autoindex_module.html> | 디렉토리 리스팅 | `raw/nginx-autoindex-module.md` |
 | [x] | P2 | ngx_http_rewrite_module — `raw/nginx-rewrite-module.md`로 ingest (2026-10-15) | <https://nginx.org/en/docs/http/ngx_http_rewrite_module.html> | `return`으로 리다이렉트 | `raw/nginx-rewrite-module.md` |
