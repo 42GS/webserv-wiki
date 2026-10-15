@@ -32,5 +32,5 @@ POSIX.1-2024 (IEEE Std 1003.1-2024) 표준 문서다 (raw/posix-bind.md:6).
 
 ## 이 문서로 확인하지 못한 것
 
-- TCP에서 "주소가 쓰이는 중"의 정확한 범위. 서버 재시작 직후 실패 여부와 `SO_REUSEADDR`의 효과, 와일드카드 주소(`0.0.0.0`)와 특정 주소의 충돌 여부 → [[source-wishlist]] (OS 실측).
+- TCP에서 "주소가 쓰이는 중"의 정확한 범위. 서버 재시작 직후 실패 여부와 `SO_REUSEADDR`의 효과, 와일드카드 주소(`0.0.0.0`)와 특정 주소의 충돌 여부 → macOS·Ubuntu 실측으로 확인 [[sources/os-observed-bind]].
 - 어떤 주소가 권한이 필요한 "보호된" 주소인지 (raw/posix-bind.md:150-152).

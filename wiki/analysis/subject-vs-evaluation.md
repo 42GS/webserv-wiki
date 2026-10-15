@@ -1,7 +1,7 @@
 ---
 title: subject vs 평가표 — 차이와 모순
 type: analysis
-sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/evaluation-sheet.md, raw/rfc9110.txt, raw/rfc9112.txt, raw/rfc3875.txt, raw/nginx-core-module.md, raw/posix-poll.md, raw/posix-waitpid.md, raw/posix-bind.md, raw/posix-exit.md, raw/nginx-autoindex-module.md, raw/rfc6265.txt, raw/posix-fcntl.md, raw/rfc1945.txt]
+sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/evaluation-sheet.md, raw/rfc9110.txt, raw/rfc9112.txt, raw/rfc3875.txt, raw/nginx-core-module.md, raw/posix-poll.md, raw/posix-waitpid.md, raw/posix-bind.md, raw/posix-exit.md, raw/nginx-autoindex-module.md, raw/rfc6265.txt, raw/posix-fcntl.md, raw/rfc1945.txt, raw/os-observed-pipe-poll.md]
 updated: 2026-10-15
 ---
 
@@ -88,6 +88,12 @@ subject는 "허용된 syscall/라이브러리 호출" 목록을 준다 (raw/subj
 - **`F_GETFL` 없음:** POSIX는 플래그를 `F_GETFL`로 읽고 수정한 뒤 쓰라고 권한다. 잊는 것이 흔한 실수이고, 구현이 기본으로 다른 플래그를 켜 두는 경우도 있다고 한다 (raw/posix-fcntl.md:391). 허용 목록으로는 `F_SETFL`에 `O_NONBLOCK`만 주는 방법뿐이다.
 - **`FD_CLOEXEC`에는 `F_SETFD`가 필요:** `FD_CLOEXEC`는 파일 상태 플래그가 아니라 fd 플래그라서 `F_SETFD`로 설정한다 (raw/posix-fcntl.md:50-52). `F_SETFD`는 허용 목록에 없다. 목록의 `F_SETFL`과 `FD_CLOEXEC`는 함께 쓸 수 없는 조합이다.
 - 판단: non-blocking은 `fcntl(fd, F_SETFL, O_NONBLOCK)`로 한다. `FD_CLOEXEC` 대신 CGI 자식에서 `execve` 전에 필요 없는 fd를 `close`한다 → [[concepts/cgi]]. `F_SETFD`를 써도 되는지는 **미확인**(평가자 합의).
+
+### 1.12 POSIX `poll()` vs macOS 실측
+
+- POSIX: `POLLHUP`은 `events`에 넣지 않아도 조건이 맞으면 설정해야 한다 (raw/posix-poll.md:86).
+- 실측: macOS는 `events=0`인 pipe 읽는 쪽에 쓰는 쪽이 닫혀도 `POLLHUP`을 보고하지 않았다. Ubuntu는 보고했다 (raw/os-observed-pipe-poll.md:180, raw/os-observed-pipe-poll.md:195).
+- 판단: 평가는 Ubuntu에서 한다. 다 쓴 fd는 `events=0`으로 두지 말고 poll 목록에서 뺀다. 그러면 두 동작 어느 쪽이든 영향이 없다 → [[sources/os-observed-pipe-poll]].
 
 ## 2. 평가표에만 있는 기준
 

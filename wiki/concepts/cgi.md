@@ -1,7 +1,7 @@
 ---
 title: CGI
 type: concept
-sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc3875.txt, raw/rfc9112.txt, raw/rfc9110.txt, raw/posix-poll.md, raw/posix-signal-h.md, raw/posix-waitpid.md, raw/posix-bind.md, raw/posix-exit.md, raw/php-cgi-force-redirect.md, raw/php-ini-core.md, raw/rfc6265.txt, raw/posix-fcntl.md, raw/pep-0594.md]
+sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc3875.txt, raw/rfc9112.txt, raw/rfc9110.txt, raw/posix-poll.md, raw/posix-signal-h.md, raw/posix-waitpid.md, raw/posix-bind.md, raw/posix-exit.md, raw/php-cgi-force-redirect.md, raw/php-ini-core.md, raw/rfc6265.txt, raw/posix-fcntl.md, raw/pep-0594.md, raw/os-observed-pipe-poll.md]
 updated: 2026-10-15
 ---
 
@@ -42,7 +42,8 @@ updated: 2026-10-15
 - 스크립트는 서버가 본문을 다 받기 전에 실행해도 된다 (raw/rfc3875.txt:533-536).
 - **자식이 물려받은 fd:** `FD_CLOEXEC`가 없는 fd는 exec 뒤에도 열려 있다 (raw/posix-fcntl.md:52). 자식이 다른 클라이언트 소켓을 쥐고 있으면 서버가 그 연결을 `close`해도 실제로는 닫히지 않을 수 있다 (**판단**). `FD_CLOEXEC`는 `F_SETFD`로 설정하는데 이 명령은 subject 허용 목록에 없으므로 (raw/subject.md:157) 자식에서 `execve` 전에 필요 없는 fd를 `close`한다 → [[analysis/subject-vs-evaluation]] 1.11절.
 - **출력 pipe의 `POLLHUP`:** 스크립트가 출력을 다 쓰고 pipe의 쓰는 쪽을 닫으면 `POLLHUP`이 온다. `POLLHUP`은 `POLLIN`과 동시에 올 수 있다 (raw/posix-poll.md:74). 즉 아직 읽지 않은 출력이 남아 있을 수 있으므로, `POLLHUP`을 보자마자 닫지 말고 `read()`가 0(EOF)을 돌려줄 때까지 읽는다. RFC 3875의 "EOF까지 모두 읽음 (MUST)"(raw/rfc3875.txt:1522-1524)을 지키는 방법이다.
-- **입력 pipe:** 스크립트가 본문을 다 읽지 않고 종료하면 서버의 입력 pipe 쓰기가 실패할 수 있다. POSIX는 write가 -1을 돌려줄 오류 상태를 `POLLERR`로 보고한다고 한다 (raw/posix-poll.md:70). 읽는 쪽이 모두 닫힌 pipe가 실제로 어떤 비트로 보고되는지는 이 문서에 없다 (**미확인**, OS별로 실측 필요). `POLLERR`와 `POLLHUP` 둘 다 "입력 전달 중단"으로 처리하면 안전하다. 신호(`SIGPIPE`) 처리는 [[concepts/resilience]].
+  - 실측: Ubuntu에서는 남은 데이터를 다 읽은 뒤 `POLLIN` 없이 `POLLHUP`만 온다. macOS는 `POLLIN`도 함께 켠다 (raw/os-observed-pipe-poll.md:178, raw/os-observed-pipe-poll.md:193). 그래서 **`POLLHUP`만 와도 `read()`해서 0을 확인한다.** `POLLIN`일 때만 읽으면 Ubuntu에서 EOF를 놓치고 busy waiting이 된다 (**판단**) → [[sources/os-observed-pipe-poll]].
+- **입력 pipe:** 스크립트가 본문을 다 읽지 않고 종료하면 서버의 입력 pipe 쓰기가 실패할 수 있다. POSIX는 write가 -1을 돌려줄 오류 상태를 `POLLERR`로 보고한다고 한다 (raw/posix-poll.md:70). 읽는 쪽이 모두 닫힌 pipe는 실측에서 macOS는 `POLLHUP`, Ubuntu는 `POLLOUT`+`POLLERR`로 보고했고, 그 뒤 `write()`는 양쪽 모두 -1이었다 (raw/os-observed-pipe-poll.md:171-172, raw/os-observed-pipe-poll.md:186-187). Ubuntu는 `POLLOUT`도 켜므로 `POLLERR`·`POLLHUP`을 **먼저** 검사해 "입력 전달 중단"으로 처리한다 (**판단**) → [[sources/os-observed-pipe-poll]]. 신호(`SIGPIPE`) 처리는 [[concepts/resilience]].
 - 스크립트 출력의 헤더·본문 길이에는 제한이 없다. 고정 크기 버퍼를 가정하면 안 된다 (raw/rfc3875.txt:1760-1764).
 
 ## 2. 메타변수 (환경 변수)

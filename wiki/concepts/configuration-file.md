@@ -1,7 +1,7 @@
 ---
 title: 설정 파일
 type: concept
-sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc9110.txt, raw/nginx-core-module.md, raw/nginx-request-processing.md, raw/posix-bind.md, raw/nginx-index-module.md, raw/nginx-autoindex-module.md, raw/evaluation-sheet.md, raw/rfc3986.txt, raw/nginx-rewrite-module.md, raw/nginx-server-names.md]
+sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc9110.txt, raw/nginx-core-module.md, raw/nginx-request-processing.md, raw/posix-bind.md, raw/nginx-index-module.md, raw/nginx-autoindex-module.md, raw/evaluation-sheet.md, raw/rfc3986.txt, raw/nginx-rewrite-module.md, raw/nginx-server-names.md, raw/os-observed-bind.md]
 updated: 2026-10-15
 ---
 
@@ -151,7 +151,8 @@ subject 기능을 NGINX에서는 어떤 지시자로 하는지 정리했다. 설
 
 - 일부 포트만 `bind`에 실패했을 때 나머지 포트로 계속 서비스할지, 전체를 종료할지는 과제 문서가 정하지 않는다. 평가표는 "어떤 선택이든 일관되고 크래시하지 않을 것"을 요구한다 (raw/evaluation-sheet-en.md:109). 디펜스에서 선택 이유를 설명한다 (**판단**).
 - non-blocking 소켓의 `bind`는 바로 할당할 수 없으면 `EINPROGRESS`로 실패하고 나중에 완료될 수 있다 (raw/posix-bind.md:50). `socket` → `bind` → `listen`을 마친 뒤 `O_NONBLOCK`을 켜면 이 경우를 피할 수 있다 (**판단**).
-- 서버 재시작 직후 같은 포트의 `bind` 실패 여부, `SO_REUSEADDR`(`setsockopt`, raw/subject.md:113)의 효과, `0.0.0.0`과 특정 IP를 같은 포트로 함께 설정했을 때의 충돌 여부는 POSIX 문서에 없다 (**미확인**, [[source-wishlist]] OS 실측).
+- **재시작 직후 bind (실측):** 서버가 먼저 연결을 닫은 직후 재시작하면 `SO_REUSEADDR` 없이는 양쪽 OS 모두 `EADDRINUSE`다. Ubuntu에서는 처음 listener에도 옵션이 켜져 있어야 재bind가 된다 (raw/os-observed-bind.md:213-214, raw/os-observed-bind.md:221-222). 그래서 모든 listen 소켓에 `bind` 전에 `setsockopt(SO_REUSEADDR)`를 켠다 (`setsockopt`는 허용 함수, raw/subject.md:113) (**판단**). 옵션을 켜도 이미 listen 중인 같은 `IP:port`는 양쪽 모두 실패하므로 동시 실행 검사는 그대로다 (raw/os-observed-bind.md:246-247, raw/os-observed-bind.md:271-272) → [[sources/os-observed-bind]].
+- **`0.0.0.0:P`와 특정 IP의 `:P` (실측):** 옵션 없이는 양쪽 모두 충돌한다. 옵션을 켜면 macOS는 둘 다 성공하고 Ubuntu는 실패한다 (raw/os-observed-bind.md:238-243, raw/os-observed-bind.md:263-268). OS마다 다르므로 **설정 파싱 단계에서 겹침으로 거부**한다 (**판단**).
 
 > [!note] virtual host 모순 해소 (2026-10-15)
 > 구버전 정리본은 "다른 호스트네임으로 여러 서버"를 `curl --resolve`로 테스트했다 (raw/evaluation-sheet.md:65-68). 영어 원문에는 이 항목이 없다 (raw/evaluation-sheet-en.md:63-73).

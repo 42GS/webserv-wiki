@@ -30,6 +30,8 @@ updated: 2026-10-15
 | [[sources/posix-bind]] | POSIX `bind()` — EADDRINUSE·EADDRNOTAVAIL, non-blocking 비동기 할당 | `raw/posix-bind.md` |
 | [[sources/siege]] | siege 매뉴얼 — 옵션(-c·-r·-t·-d·-b), Availability의 의미 | `raw/siege.pod` |
 | [[sources/siegerc]] | siege 기본 설정 템플릿 — connection=close, protocol, timeout, failures | `raw/siegerc.in` |
+| [[sources/os-observed-bind]] | OS 실측(macOS·Ubuntu) — 재시작 직후 bind, `SO_REUSEADDR`, `0.0.0.0`과 특정 IP 충돌 | `raw/os-observed-bind.md` |
+| [[sources/os-observed-pipe-poll]] | OS 실측(macOS·Ubuntu) — 한쪽이 닫힌 pipe의 `poll()` 비트 차이 | `raw/os-observed-pipe-poll.md` |
 | [[sources/posix-exit]] | POSIX `_Exit()` — 프로세스 종료의 결과(좀비, fd 닫힘, 자식 입양) | `raw/posix-exit.md` |
 | [[sources/nginx-index-module]] | NGINX index 모듈 — `/`로 끝나는 요청, 파일 목록 순서, 내부 리다이렉트 | `raw/nginx-index-module.md` |
 | [[sources/nginx-autoindex-module]] | NGINX autoindex 모듈 — index가 없을 때 리스팅, 기본 off, 형식 | `raw/nginx-autoindex-module.md` |

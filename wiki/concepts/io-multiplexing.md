@@ -1,7 +1,7 @@
 ---
 title: I/O 멀티플렉싱과 non-blocking 규칙
 type: concept
-sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/posix-poll.md, raw/posix-send.md, raw/posix-recv.md, raw/evaluation-sheet.md, raw/posix-fcntl.md]
+sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/posix-poll.md, raw/posix-send.md, raw/posix-recv.md, raw/evaluation-sheet.md, raw/posix-fcntl.md, raw/os-observed-pipe-poll.md]
 updated: 2026-10-15
 ---
 
@@ -73,6 +73,10 @@ updated: 2026-10-15
 | `POLLNVAL` | fd가 열려 있지 않음 | 서버 버그 신호. 항목 제거 | raw/posix-poll.md:78 |
 
 - `POLLHUP`·`POLLERR`·`POLLNVAL`은 `events`에 넣지 않아도 조건이 맞으면 설정된다 (raw/posix-poll.md:86). 매 루프에서 항상 확인한다.
+- **OS 차이 (실측, [[sources/os-observed-pipe-poll]]):**
+  - 비트 검사 순서: Ubuntu는 읽는 쪽이 닫힌 pipe에 `POLLOUT`+`POLLERR`를 함께 보고한다 (raw/os-observed-pipe-poll.md:186). `POLLERR`·`POLLHUP`을 `POLLOUT`보다 먼저 본다 (**판단**).
+  - `POLLHUP`만 와도 읽기: Ubuntu는 데이터를 다 읽은 pipe에 `POLLIN` 없이 `POLLHUP`만 보고한다 (raw/os-observed-pipe-poll.md:193). `POLLHUP`에서도 `read()`해서 0을 확인한다 (**판단**).
+  - `events=0`으로 남겨 두지 않기: Ubuntu는 `events=0`이어도 `POLLHUP`을 보고하고 macOS는 보고하지 않았다 (raw/os-observed-pipe-poll.md:180, raw/os-observed-pipe-poll.md:195). 다 쓴 fd를 `events=0`으로 남기면 Ubuntu에서 `poll()`이 바로 돌아와 busy waiting이 된다 (raw/posix-poll.md:175). 목록에서 뺀다 (**판단**).
 - `POLLERR`로 오류를 알 수 있으므로, read/write 뒤에 errno를 보지 않고도 클라이언트를 제거할 수 있다 → 규칙 6·7.
 
 ### POLLOUT은 보낼 데이터가 있을 때만

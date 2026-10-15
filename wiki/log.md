@@ -229,3 +229,8 @@
 
 ## [2026-10-15] query | wishlist 정리: tester 자료 제외
 - 결정: 평가 첨부 `tester`, `cgi_tester` 사용법은 받지 않음 (사용자 결정) → source-wishlist `[-]`
+
+## [2026-10-15] ingest | OS 실측: bind, pipe poll (macOS·Ubuntu Docker)
+- 생성: raw/os-observed-bind.md, raw/os-observed-pipe-poll.md (소스·명령·출력 그대로), sources/os-observed-bind, sources/os-observed-pipe-poll
+- 갱신: concepts/cgi (입력·출력 pipe, 미확인 해소), concepts/io-multiplexing (OS 차이), concepts/configuration-file (SO_REUSEADDR, 0.0.0.0 겹침 거부, 미확인 해소), sources/posix-bind, analysis/subject-vs-evaluation (1.12 macOS vs POSIX), overview, index, source-wishlist 5-1
+- 메모: Ubuntu는 OrbStack 커널 7.0.14 컨테이너 기준(평가 머신 커널 아님). 첫 측정은 테스트 코드가 소켓을 닫지 않는 버그로 결과 1건이 틀려 고친 뒤 재측정
