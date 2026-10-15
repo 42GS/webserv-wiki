@@ -49,4 +49,4 @@ updated: 2026-10-15
 - C3·C4 때문에 `REDIRECT_URL`은 넘기지 않고, `PATH_TRANSLATED`는 `PATH_INFO`가 있을 때만 넣는다 → [[sources/php-src-cgi-main]] "과제 적용".
 
 > [!note] 측정 범위
-> Ubuntu 24.04 패키지 하나, arm64 이미지, 웹 서버 없이 직접 실행, GET만 측정했다. POST 본문(`CONTENT_LENGTH`·stdin) 처리와 평가 PC의 php.ini는 측정하지 않았다.
+> Ubuntu 24.04 패키지 하나, arm64 이미지, 웹 서버 없이 직접 실행, GET만 측정했다. POST 본문(`CONTENT_LENGTH`·stdin) 처리는 측정하지 않았다. 평가 PC와 같은 Ubuntu 22.04(php8.1-cgi)에서 같은 스크립트로 다시 측정해 같은 결과를 얻었다 → [[sources/ubuntu2204-observed-tools]].

@@ -1,7 +1,7 @@
 ---
 title: CGI
 type: concept
-sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc3875.txt, raw/rfc9112.txt, raw/rfc9110.txt, raw/posix-poll.md, raw/posix-signal-h.md, raw/posix-waitpid.md, raw/posix-bind.md, raw/posix-exit.md, raw/php-cgi-force-redirect.md, raw/php-ini-core.md, raw/rfc6265.txt, raw/posix-fcntl.md, raw/pep-0594.md, raw/os-observed-pipe-poll.md, raw/php-src-cgi_main.c, raw/php-cgi-observed-env.md]
+sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc3875.txt, raw/rfc9112.txt, raw/rfc9110.txt, raw/posix-poll.md, raw/posix-signal-h.md, raw/posix-waitpid.md, raw/posix-bind.md, raw/posix-exit.md, raw/php-cgi-force-redirect.md, raw/php-ini-core.md, raw/rfc6265.txt, raw/posix-fcntl.md, raw/pep-0594.md, raw/os-observed-pipe-poll.md, raw/php-src-cgi_main.c, raw/php-cgi-observed-env.md, raw/ubuntu2204-observed-tools.md]
 updated: 2026-10-15
 ---
 
@@ -96,7 +96,7 @@ RFC 3875 목록에 없는 비표준 변수다. 이 과제에서 CGI로 `php-cgi`
 - Ubuntu 24.04 php-cgi로 위 동작을 실측했다 → [[sources/php-cgi-observed-env]]. `REDIRECT_STATUS`가 없으면 php-cgi는 헤더 없이 안내 HTML만 출력하고 exit 255로 끝난다 (raw/php-cgi-observed-env.md:142-152). 아래 5절 표대로 502가 된다.
 - `cgi.redirect_status_env`로 다른 변수 이름을 쓰게 할 수도 있지만 보안 주의가 붙어 있다 (raw/php-ini-core.md:558-564).
 - php-cgi는 기본 설정(`cgi.rfc2616_headers` = 0)에서 응답 코드를 RFC 3875 `Status:` 헤더로 보낸다 (raw/php-ini-core.md:434, raw/php-ini-core.md:568). 아래 3절의 Status 처리로 받는다. `cgi.nph` 기본값은 0이다 (raw/php-ini-core.md:430). 켜면 항상 `Status: 200`을 보낸다 (raw/php-ini-core.md:556).
-- 위 값은 PHP 기본 설정 기준이다. 평가 PC의 php-cgi 설정은 **미확인**이다.
+- 위 값은 PHP 기본 설정 기준이다. 평가 PC와 같은 Ubuntu 22.04의 apt 패키지(php8.1-cgi 8.1.2)도 `cgi.force_redirect=1`, `cgi.fix_pathinfo=1`이었고, 위 실측과 같은 결과가 나왔다 (raw/ubuntu2204-observed-tools.md:85, raw/ubuntu2204-observed-tools.md:301-306) → [[sources/ubuntu2204-observed-tools]]. 평가 PC가 기본 `php.ini`를 쓰는지는 **미확인**이다 (확인: `php-cgi -i`).
 
 ## 3. CGI 응답 파싱
 
@@ -187,7 +187,7 @@ RFC 3875 목록에 없는 비표준 변수다. 이 과제에서 CGI로 `php-cgi`
 ## 6. 테스트 스크립트 작성 (Python)
 
 subject는 시연용 기본 파일을 제출하라고 한다 (raw/subject.md:184). CGI 스크립트를 Python으로 쓴다면:
-- **`import cgi`를 쓰지 않는다.** `cgi` 모듈은 Python 3.13에서 제거됐고 3.11·3.12에서는 `DeprecationWarning`을 낸다 (raw/pep-0594.md:182-190, raw/pep-0594.md:218). 평가 Ubuntu의 Python이 3.13 이상이면 import에서 실패해 스크립트가 에러로 끝나고 502가 된다 (**판단**). 평가 머신의 Python 버전은 **미확인** — 확인: 평가 머신에서 `python3 --version`. `cgi`를 쓰지 않으면 버전과 무관하다.
+- **`import cgi`를 쓰지 않는다.** `cgi` 모듈은 Python 3.13에서 제거됐고 3.11·3.12에서는 `DeprecationWarning`을 낸다 (raw/pep-0594.md:182-190, raw/pep-0594.md:218). Python이 3.13 이상이면 import에서 실패해 스크립트가 에러로 끝나고 502가 된다 (**판단**). 평가 PC와 같은 Ubuntu 22.04의 기본 Python은 3.10.12이고 `import cgi`가 성공했다 (raw/ubuntu2204-observed-tools.md:92-93). 평가 PC에 다른 Python이 설치돼 있는지는 **미확인**이다 (확인: `python3 --version`). `cgi`를 쓰지 않으면 버전과 무관하다.
 - query는 `QUERY_STRING` 환경변수를 `urllib.parse.parse_qs`로 파싱한다 (raw/pep-0594.md:324). 본문은 표준 입력에서 `CONTENT_LENGTH` 바이트를 읽는다 (raw/rfc3875.txt:1073-1075). 2절 메타변수를 그대로 쓰는 방식이라 서버 구현을 확인하는 데도 낫다 (**판단**).
 - multipart 본문은 `email.message.Message`로 바꾸라고 한다 (raw/pep-0594.md:328-330). 업로드는 서버가 직접 처리할지부터 정한다 → [[concepts/file-upload]]. → [[sources/pep-0594]]
 

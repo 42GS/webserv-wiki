@@ -50,7 +50,7 @@ updated: 2026-10-15
 - 해당 함수의 매크로·헬퍼(`FD_SET` 등)도 사용 가능 (raw/subject.md:138).
 
 > [!note] 결정: `poll()` 사용 (2026-10-15)
-> 개발은 macOS, 평가는 Ubuntu에서 한다(사용자 결정). POSIX 표준인 `poll()`(raw/posix-poll.md:6)을 쓰면 같은 코드가 양쪽에서 돌고(두 OS에서 실측, raw/os-observed-pipe-poll.md:171, raw/os-observed-pipe-poll.md:186), 디펜스에서 설명할 이벤트 메커니즘도 하나다 (raw/evaluation-sheet-en.md:50). `epoll`은 Linux 전용, `kqueue`는 BSD·macOS 계열 전용이라 한 코드로 두 OS를 지원하기 어렵다고 알려져 있지만, 각 OS 문서로 확인하지 않은 일반 지식이라 이 결정의 근거로 쓰지 않는다 (**미확인** — 확인: Ubuntu `man 7 epoll`의 CONFORMING TO/STANDARDS 절, macOS `man 2 kqueue`).
+> 개발은 macOS, 평가는 Ubuntu 22.04에서 한다(사용자 결정·확인). POSIX 표준인 `poll()`(raw/posix-poll.md:6)을 쓰면 같은 코드가 양쪽에서 돌고(두 OS에서 실측, raw/os-observed-pipe-poll.md:171, raw/os-observed-pipe-poll.md:186), 디펜스에서 설명할 이벤트 메커니즘도 하나다 (raw/evaluation-sheet-en.md:50). `epoll`은 Linux 전용, `kqueue`는 BSD·macOS 계열 전용이라 한 코드로 두 OS를 지원하기 어렵다고 알려져 있지만, 각 OS 문서로 확인하지 않은 일반 지식이라 이 결정의 근거로 쓰지 않는다 (**미확인** — 확인: Ubuntu `man 7 epoll`의 CONFORMING TO/STANDARDS 절, macOS `man 2 kqueue`).
 - `fcntl()`은 `F_SETFL`, `O_NONBLOCK`, `FD_CLOEXEC` 플래그로만 사용 가능 (raw/subject.md:155-157).
   - non-blocking 설정은 `fcntl(fd, F_SETFL, O_NONBLOCK)`이다. `F_SETFL`은 파일 상태 플래그를 인자 값으로 설정하고, 성공하면 -1이 아닌 값을 돌려준다 (raw/posix-fcntl.md:58-60, raw/posix-fcntl.md:198-200).
   - POSIX는 `F_GETFL`로 읽어서 수정한 뒤 쓰라고 권하지만 (raw/posix-fcntl.md:391), `F_GETFL`은 허용 목록에 없다. 그래서 인자를 `O_NONBLOCK` 하나로 주면 다른 상태 플래그는 지워질 수 있다. `socket`·`accept`·`pipe`로 막 만든 fd에는 문제가 될 가능성이 낮다고 보지만 근거는 없다 (**판단**) → [[analysis/subject-vs-evaluation]] 1.11절.

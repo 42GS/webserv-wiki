@@ -342,3 +342,9 @@
 - 생성: raw/valgrind-observed-sigint.md (Dockerfile·프로그램·스크립트·valgrind 출력 그대로, ubuntu:24.04 digest, valgrind-3.22.0), sources/valgrind-observed-sigint
 - 갱신: concepts/resilience ("SIGINT·SIGTERM과 누수 검사"의 valgrind **미확인** 해소), concepts/testing (링크), index, overview
 - 메모: SIGINT 기본 동작으로 끝나면 definitely lost 0, 할당 전부가 still reachable (raw/valgrind-observed-sigint.md:111-138). 핸들러를 두고 해제 없이 `main`에서 반환하면 definitely lost (raw/valgrind-observed-sigint.md:157-163). 모두 해제한 경우만 "All heap blocks were freed" (raw/valgrind-observed-sigint.md:212-215). 기존 판단(플래그 + 정리 후 종료) 유지. `leaks`·`e_fence`는 **미확인**. 첫 시도에서 비대화형 쉘의 백그라운드 작업으로 띄운 `default` 모드가 SIGINT에 끝나지 않아, valgrind를 포그라운드로 돌리고 보조 프로세스가 시그널을 보내게 바꿨다.
+
+## [2026-10-15] ingest | Ubuntu 22.04 실측: 도구 버전, siege 설정, php-cgi·valgrind 재측정
+- 사용자 확인 (2026-10-15): 평가 PC는 Ubuntu 22.04.
+- 생성: raw/ubuntu2204-observed-tools.md (ubuntu:22.04 digest, apt 기본 패키지, 버전·`siege -C`·siege v4.0.7과 master diff·php-cgi·valgrind 출력 그대로), sources/ubuntu2204-observed-tools
+- 갱신: concepts/cgi (php.ini 기본값, Python 버전 **미확인**을 22.04 기준으로 좁힘), concepts/testing (siege 설정 **미확인** → 22.04 실측 + 평가 PC 설정만 미확인), concepts/resilience, concepts/io-multiplexing·overview (평가 OS 22.04), sources/siege·siegerc·siege-sock (4.0.7과 차이), sources/php-ini-core·php-cgi-observed-env·php-src-cgi-main, index
+- 메모: 22.04 apt 패키지는 php8.1-cgi 8.1.2, valgrind 3.18.1, Python 3.10.12(`import cgi` 가능), siege 4.0.7 (raw/ubuntu2204-observed-tools.md:84-93). php-cgi·valgrind 결과는 24.04와 같았다. siege 4.0.7의 `sock.c`는 이름 해석 부분만 master와 달라 기존 timeout 분석이 그대로 맞는다. 컨테이너 커널은 OrbStack 7.0.14라서 커널 동작은 22.04 기준으로 확인하지 못한다. 평가 PC가 기본 패키지·설정을 그대로 쓰는지는 **미확인**.

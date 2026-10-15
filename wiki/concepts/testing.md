@@ -1,7 +1,7 @@
 ---
 title: 테스트 도구와 평가 시연
 type: concept
-sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/siege.pod, raw/siegerc.in, raw/evaluation-sheet.md, raw/rfc9112.txt, raw/pep-0594.md, raw/siege-sock.c]
+sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/siege.pod, raw/siegerc.in, raw/evaluation-sheet.md, raw/rfc9112.txt, raw/pep-0594.md, raw/siege-sock.c, raw/ubuntu2204-observed-tools.md]
 updated: 2026-10-15
 ---
 
@@ -69,7 +69,8 @@ curl -X POST -H "Content-Type: plain/text" \
 | `failures` | 1024 | 연결 실패가 이만큼 쌓이면 siege 중단. 4xx·5xx는 세지 않음 | raw/siegerc.in:381-389 |
 | `concurrent` / `limit` | 25 / 255 | 기본 동시 사용자 / 상한 | raw/siegerc.in:277, raw/siegerc.in:202 |
 
-- 템플릿이므로 평가 PC의 실제 설정 파일과 다를 수 있다 (**미확인**). 평가 전에 평가자와 `~/.siege/siege.conf`의 `connection`, `protocol`, `timeout`을 함께 확인하면 좋다.
+- 위 표는 master 템플릿 기준이다. 평가 PC와 같은 Ubuntu 22.04의 apt 패키지는 siege 4.0.7이고 (raw/ubuntu2204-observed-tools.md:87), 처음 실행할 때 만들어지는 `~/.siege/siege.conf`는 `/etc/siege/siegerc`와 같았다 (raw/ubuntu2204-observed-tools.md:141-142). `siege -C`로 본 적용값도 위 표와 같다: `connection: close`, `protocol: HTTP/1.1`, `socket timeout: 30`, `failures until abort: 1024` (raw/ubuntu2204-observed-tools.md:162-175) → [[sources/ubuntu2204-observed-tools]].
+- 평가 PC가 기본 패키지·기본 설정을 그대로 쓰는지는 **미확인**이다. 평가 전에 평가자와 `siege -C`로 `connection`, `protocol`, `socket timeout`을 함께 확인하면 좋다.
 - `delay` 기본값은 매뉴얼(0.5초, raw/siege.pod:186-187)과 템플릿(0.0, raw/siegerc.in:350)이 다르다. 평가표의 availability 확인은 `-b`로 하므로 (raw/evaluation-sheet-en.md:114) 그때는 영향이 없다.
 
 ### 서버 구현에 주는 결론
@@ -80,7 +81,7 @@ curl -X POST -H "Content-Type: plain/text" \
 ## 권장 사항
 
 - 한 프로그램으로만 테스트하지 말고 Python/Go 등으로 테스트를 작성 (raw/subject.md:190).
-- 평가자는 원칙적으로 설정 파일 외에는 수정하지 않고, 수정하려면 평가받는 사람과 합의해야 하므로 (raw/evaluation-sheet-en.md:24), 시연용 설정·파일·CGI 스크립트(정상/에러/무한 루프)를 미리 준비한다 (raw/subject.md:184, raw/evaluation-sheet-en.md:91). Python으로 쓸 때는 `cgi` 모듈을 쓰지 않는다 (Python 3.13에서 제거, raw/pep-0594.md:188-190, raw/pep-0594.md:218) → [[concepts/cgi]] 6절.
+- 평가자는 원칙적으로 설정 파일 외에는 수정하지 않고, 수정하려면 평가받는 사람과 합의해야 하므로 (raw/evaluation-sheet-en.md:24), 시연용 설정·파일·CGI 스크립트(정상/에러/무한 루프)를 미리 준비한다 (raw/subject.md:184, raw/evaluation-sheet-en.md:91). Python으로 쓸 때는 `cgi` 모듈을 쓰지 않는다 (Python 3.13에서 제거, raw/pep-0594.md:188-190, raw/pep-0594.md:218; Ubuntu 22.04의 Python 3.10에는 아직 있다, raw/ubuntu2204-observed-tools.md:92-93) → [[concepts/cgi]] 6절.
 
 ## 관련
 

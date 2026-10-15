@@ -10,7 +10,7 @@ updated: 2026-10-15
 원본: `raw/php-src-cgi_main.c`. <https://raw.githubusercontent.com/php/php-src/6d99ccc268b5ec88cc281eb3e90e29b59677fda3/sapi/cgi/cgi_main.c>를 2026-10-15에 받아 그대로 저장했다. C 소스라 변환하지 않았다.
 
 - 커밋 `6d99ccc268b5ec88cc281eb3e90e29b59677fda3` (2024-09-26)는 받을 때 `PHP-8.3` 브랜치에서 이 파일을 마지막으로 바꾼 커밋이었다. (받을 때 GitHub API에서 본 값이고 raw 파일에는 없다.)
-- Ubuntu 24.04의 `php8.3-cgi`는 `8.3.6-0ubuntu0.24.04.11`이고, changelog에 `REDIRECT_STATUS` 검사를 고친 CVE-2024-8927 패치가 들어 있다 (2026-10-15 컨테이너에서 확인, raw에 없음). 태그 `php-8.3.6` 원본은 이 패치 전이라 `HTTP_REDIRECT_STATUS`도 받는다 (같은 날 태그 파일을 받아 읽음, raw에 없음). 그래서 패치 뒤 브랜치 파일을 받았다. 평가 PC의 php-cgi가 같은 코드인지는 **미확인**이다 (평가 때 `php-cgi -v`).
+- Ubuntu 24.04의 `php8.3-cgi`는 `8.3.6-0ubuntu0.24.04.11`이고, changelog에 `REDIRECT_STATUS` 검사를 고친 CVE-2024-8927 패치가 들어 있다 (2026-10-15 컨테이너에서 확인, raw에 없음). 태그 `php-8.3.6` 원본은 이 패치 전이라 `HTTP_REDIRECT_STATUS`도 받는다 (같은 날 태그 파일을 받아 읽음, raw에 없음). 그래서 패치 뒤 브랜치 파일을 받았다. 평가 PC와 같은 Ubuntu 22.04의 `php8.1-cgi`에도 이 패치가 들어 있고, 실측 결과가 이 코드와 맞았다 → [[sources/ubuntu2204-observed-tools]]. 평가 PC에 설치된 버전은 **미확인**이다 (평가 때 `php-cgi -v`).
 - 받은 목적: php-cgi가 실행할 파일을 어느 변수로 찾는지, `REDIRECT_STATUS` 값에 조건이 있는지 → [[concepts/cgi]] "php-cgi가 추가로 요구하는 변수". 아래 내용은 코드를 읽은 결과이고, 실제 실행 결과는 [[sources/php-cgi-observed-env]]에 있다.
 
 ## 과제와 관련된 부분
@@ -52,5 +52,5 @@ updated: 2026-10-15
 
 - 서버는 실행할 스크립트의 절대 경로를 `SCRIPT_FILENAME`으로 넘긴다. php-cgi는 이 값을 `PATH_TRANSLATED`보다 먼저 쓴다.
 - 서버는 `REDIRECT_URL`을 넘기지 않는다. 넘기면 `PATH_TRANSLATED` 쪽 파일이 실행될 수 있다.
-- `PATH_TRANSLATED`는 RFC 3875대로 `PATH_INFO`가 있을 때만 넣는다 (raw/rfc3875.txt:803-805 → [[concepts/cgi]]). 평가 PC의 php.ini가 `cgi.fix_pathinfo=0`이면 `PATH_TRANSLATED`가 실행할 파일이 되므로, `/t.php/x/y` 요청에서 `/x/y`에 해당하는 파일을 PHP로 실행하려 할 수 있다. 평가 PC 설정은 **미확인**이다 (평가 때 `php-cgi -i`).
+- `PATH_TRANSLATED`는 RFC 3875대로 `PATH_INFO`가 있을 때만 넣는다 (raw/rfc3875.txt:803-805 → [[concepts/cgi]]). 평가 PC의 php.ini가 `cgi.fix_pathinfo=0`이면 `PATH_TRANSLATED`가 실행할 파일이 되므로, `/t.php/x/y` 요청에서 `/x/y`에 해당하는 파일을 PHP로 실행하려 할 수 있다. Ubuntu 22.04 패키지의 기본값은 1이었다 ([[sources/ubuntu2204-observed-tools]]). 평가 PC 설정은 **미확인**이다 (평가 때 `php-cgi -i`).
 - `REDIRECT_STATUS`에는 어떤 값이든 넣으면 된다. 흔한 값 `200`을 쓴다.

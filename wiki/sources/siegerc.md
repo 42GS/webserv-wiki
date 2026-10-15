@@ -10,7 +10,7 @@ updated: 2026-10-15
 원본: `raw/siegerc.in`. <https://raw.githubusercontent.com/JoeDog/siege/master/doc/siegerc.in>을 2026-10-15에 받아 그대로 저장했다.
 
 - 이 파일을 마지막으로 바꾼 커밋: `9d9c08f01cf65e10db63f3276fe0dcdb3f72e1af` (2023-04-10). (받을 때 GitHub에서 본 값이고 raw 파일에는 없다.)
-- **템플릿**이다. 빌드할 때 `%_VERSION%` 같은 자리표시자가 채워진다 (raw/siegerc.in:1-2). 평가 PC에 설치된 siege의 실제 설정 파일(`$HOME/.siege/siege.conf`, raw/siege.pod:22)이 이 템플릿과 같은지는 **미확인**이다. 평가 때 직접 확인한다.
+- **템플릿**이다. 빌드할 때 `%_VERSION%` 같은 자리표시자가 채워진다 (raw/siegerc.in:1-2). Ubuntu 22.04 apt 패키지(siege 4.0.7)에서는 처음 실행할 때 만들어지는 `$HOME/.siege/siege.conf`(raw/siege.pod:22)가 `/etc/siege/siegerc`와 같았고, 4.0.7 템플릿과는 `json_output` 기본값(4.0.7은 `true`)·`auth-url` 설명·오타만 다르다. 아래 표의 설정은 차이가 없다 → [[sources/ubuntu2204-observed-tools]]. 평가 PC의 실제 설정 파일은 **미확인**이다. 평가 때 `siege -C`로 확인한다.
 - 명령줄 옵션이 설정 파일보다 우선한다 (raw/siege.pod:18-20).
 
 ## 과제와 관련된 설정

@@ -10,7 +10,7 @@ updated: 2026-10-15
 원본: `raw/siege-sock.c`. <https://raw.githubusercontent.com/JoeDog/siege/master/src/sock.c>을 2026-10-15에 받아 그대로 저장했다. C 소스라 변환하지 않았다.
 
 - 이 파일을 마지막으로 바꾼 커밋: `e2a6bc94c0c7ae44fa775f9f74eac5311cefd987` (2023-12-06). (받을 때 GitHub에서 본 값이고 raw 파일에는 없다.)
-- `master` 브랜치 파일이다. 평가 PC에 설치된 siege가 같은 코드인지는 **미확인**이다 (평가 때 `siege -V`로 버전 확인).
+- `master` 브랜치 파일이다. Ubuntu 22.04 apt 패키지인 siege 4.0.7의 태그 파일과는 이름 해석 부분(97~236줄)의 매크로·메시지·주석만 다르고, 아래 표의 준비 검사·`timeout`·`socket_read` 코드는 같다 (`new_socket` 안에서는 236줄의 `#if` 조건만 다름) → [[sources/ubuntu2204-observed-tools]]. 평가 PC에 설치된 버전은 **미확인**이다 (평가 때 `siege -V`).
 - 받은 목적: 설정 `timeout`("socket connection timeouts", raw/siegerc.in:353-354)이 응답을 기다릴 때도 걸리는지 확인하는 것 → [[source-wishlist]] 6절.
 
 ## 과제와 관련된 부분

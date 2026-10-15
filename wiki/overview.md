@@ -8,7 +8,7 @@ updated: 2026-10-15
 # webserv 개요
 
 C++98로 HTTP 서버를 만드는 42 과제. 실행은 `./webserv [configuration file]` (raw/subject.md:118).
-근거 소스: [[sources/subject]], [[sources/evaluation-sheet-en]] (평가표 영어 원문), [[sources/rfc9110]] (HTTP 의미론), [[sources/rfc9112]] (HTTP/1.1 메시지·연결), [[sources/rfc1945]] (HTTP/1.0), [[sources/rfc3875]] (CGI/1.1), [[sources/rfc7578]], [[sources/rfc2046]] (multipart/form-data), [[sources/rfc3986]] (URI), [[sources/php-cgi-force-redirect]], [[sources/php-ini-core]], [[sources/php-src-cgi-main]], [[sources/php-cgi-observed-env]] (php-cgi), [[sources/pep-0594]] (Python `cgi` 모듈 제거), [[sources/rfc6265]] (쿠키), [[sources/iana-http-status-codes]] (status code 목록), [[sources/rfc6585]] (431), [[sources/nginx-core-module]], [[sources/nginx-request-processing]], [[sources/nginx-server-names]], [[sources/nginx-index-module]], [[sources/nginx-autoindex-module]], [[sources/nginx-rewrite-module]] (NGINX 비교 기준), [[sources/posix-poll]], [[sources/posix-signal-h]], [[sources/posix-send]], [[sources/posix-recv]], [[sources/posix-waitpid]], [[sources/posix-bind]], [[sources/posix-exit]], [[sources/posix-fcntl]] (POSIX), [[sources/siege]], [[sources/siegerc]], [[sources/siege-sock]] (부하 테스트 도구), [[sources/os-observed-bind]], [[sources/os-observed-pipe-poll]] (macOS·Ubuntu 실측), [[sources/nginx-observed-directory]], [[sources/nginx-observed-encoded-slash]] (NGINX 실측), [[sources/valgrind-observed-sigint]] (valgrind 실측). 구버전 한국어 정리본 [[sources/evaluation-sheet]]은 이력용이다.
+근거 소스: [[sources/subject]], [[sources/evaluation-sheet-en]] (평가표 영어 원문), [[sources/rfc9110]] (HTTP 의미론), [[sources/rfc9112]] (HTTP/1.1 메시지·연결), [[sources/rfc1945]] (HTTP/1.0), [[sources/rfc3875]] (CGI/1.1), [[sources/rfc7578]], [[sources/rfc2046]] (multipart/form-data), [[sources/rfc3986]] (URI), [[sources/php-cgi-force-redirect]], [[sources/php-ini-core]], [[sources/php-src-cgi-main]], [[sources/php-cgi-observed-env]] (php-cgi), [[sources/pep-0594]] (Python `cgi` 모듈 제거), [[sources/rfc6265]] (쿠키), [[sources/iana-http-status-codes]] (status code 목록), [[sources/rfc6585]] (431), [[sources/nginx-core-module]], [[sources/nginx-request-processing]], [[sources/nginx-server-names]], [[sources/nginx-index-module]], [[sources/nginx-autoindex-module]], [[sources/nginx-rewrite-module]] (NGINX 비교 기준), [[sources/posix-poll]], [[sources/posix-signal-h]], [[sources/posix-send]], [[sources/posix-recv]], [[sources/posix-waitpid]], [[sources/posix-bind]], [[sources/posix-exit]], [[sources/posix-fcntl]] (POSIX), [[sources/siege]], [[sources/siegerc]], [[sources/siege-sock]] (부하 테스트 도구), [[sources/os-observed-bind]], [[sources/os-observed-pipe-poll]] (macOS·Ubuntu 실측), [[sources/nginx-observed-directory]], [[sources/nginx-observed-encoded-slash]] (NGINX 실측), [[sources/valgrind-observed-sigint]] (valgrind 실측), [[sources/ubuntu2204-observed-tools]] (평가 PC와 같은 Ubuntu 22.04의 도구 버전·siege 설정·재측정). 구버전 한국어 정리본 [[sources/evaluation-sheet]]은 이력용이다.
 
 ## 무엇이 점수를 결정하나
 
@@ -26,7 +26,7 @@ C++98로 HTTP 서버를 만드는 42 과제. 실행은 `./webserv [configuration
 
 ## 현재 종합 판단
 
-- 멀티플렉서는 `poll()`로 정했다. 개발은 macOS, 평가는 Ubuntu라 두 OS에서 같은 코드가 돌아야 한다 → [[concepts/io-multiplexing]].
+- 멀티플렉서는 `poll()`로 정했다. 개발은 macOS, 평가는 Ubuntu 22.04(사용자 확인, 2026-10-15)라 두 OS에서 같은 코드가 돌아야 한다 → [[concepts/io-multiplexing]].
 - 구조의 중심은 **이벤트 루프 하나**다. socket·listen socket·CGI pipe가 모두 같은 `poll()`에 들어가야 한다 (raw/subject.md:130, raw/subject.md:136).
 - 평가표가 subject보다 엄격하다 (`-1`/`0` 모두 처리, 에러 시 클라이언트 제거, README 0점, siege 99.5% 초과). 양쪽을 모두 만족하게 구현한다. → [[analysis/subject-vs-evaluation]]
 - 평가표는 EAGAIN까지 반복 I/O를 허용하지만 errno 금지와 충돌한다. **readiness 1회에 I/O 1번**이 안전하다(판단). → [[concepts/io-multiplexing]]
@@ -49,7 +49,7 @@ C++98로 HTTP 서버를 만드는 42 과제. 실행은 `./webserv [configuration
 - 문서로 정해지지 않는 응답은 판단으로 확정했다: 끝에 `/`가 없는 디렉토리 요청은 301, 리스팅 off + index 없음은 403(둘 다 NGINX 실측과 같음). root 위로 올라가는 `..`는 400 + 연결 닫기(NGINX 실측, 사용자 결정). Host 없는 HTTP/1.1은 400, 막힌 메서드는 405 + `Allow` (RFC MUST) → [[concepts/configuration-file]], [[concepts/status-codes]].
 - 요청 경로는 query 분리 → 세그먼트 분할 → 한 번만 디코딩 → `%00`·`%2F` 거부 → `..` 제거 → 매핑 → root 안인지 확인 순서로 처리한다. `%2F`는 400으로 거부한다(사용자 결정). NGINX는 `%2F`를 구분자로 쓰고 디코딩을 먼저 하므로 이 점은 NGINX와 다르다(실측) → [[concepts/security]], [[sources/nginx-observed-encoded-slash]].
 - 리다이렉트 설정은 `return 코드 URL` 형식으로 받는다. index·`error_page`·CGI local redirect 같은 내부 리다이렉트는 반복 횟수에 상한을 두고 넘으면 500 → [[concepts/configuration-file]], [[concepts/resilience]].
-- Python CGI 스크립트에서는 `cgi` 모듈을 쓰지 않는다(3.13에서 제거). `QUERY_STRING`·표준 입력으로 직접 처리한다 → [[concepts/cgi]].
+- Python CGI 스크립트에서는 `cgi` 모듈을 쓰지 않는다(3.13에서 제거. Ubuntu 22.04의 Python 3.10에는 아직 있다). `QUERY_STRING`·표준 입력으로 직접 처리한다 → [[concepts/cgi]].
 - php-cgi는 기본 설정에서 `REDIRECT_STATUS`가 없으면 실행을 거부한다(값은 보지 않음). 실행할 파일은 `SCRIPT_FILENAME`에서 먼저 찾는다. RFC 3875 변수에 더해 `REDIRECT_STATUS`와 `SCRIPT_FILENAME`을 넣고, `REDIRECT_URL`은 넣지 않는다(판단) → [[concepts/cgi]].
 - 보너스 쿠키·세션: 응답 헤더 구조가 같은 이름의 `Set-Cookie` 여러 개를 담을 수 있어야 한다. 세션은 식별자만 쿠키에, 상태는 서버에 둔다 → [[concepts/bonus]].
 - non-blocking은 `fcntl(fd, F_SETFL, O_NONBLOCK)`로 설정한다. `FD_CLOEXEC`는 허용 목록상 설정할 방법이 없어, CGI 자식에서 `execve` 전에 필요 없는 fd를 닫는다 → [[concepts/cgi]].

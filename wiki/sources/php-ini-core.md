@@ -26,4 +26,4 @@ updated: 2026-10-15
 | `cgi.nph` | `"0"` | 켜면 항상 `Status: 200`을 보냄 | raw/php-ini-core.md:430, raw/php-ini-core.md:554-556 |
 | `doc_root` | NULL | `FORCE_REDIRECT` 없이 컴파일된 PHP를 CGI로 쓸 때 설정 권장. 대안이 `cgi.force_redirect` | raw/php-ini-core.md:408, raw/php-ini-core.md:510-512 |
 
-- 기본값은 PHP 기본 설정 기준이다. 평가 PC에 설치된 php-cgi의 실제 `php.ini` 값은 **미확인**이다 (`php-cgi -i` 등으로 확인).
+- 기본값은 PHP 기본 설정 기준이다. Ubuntu 22.04 apt 패키지(php8.1-cgi)의 `php.ini`에서도 `cgi.force_redirect`·`cgi.fix_pathinfo`가 1, `cgi.discard_path`가 0이었다 → [[sources/ubuntu2204-observed-tools]]. 평가 PC의 실제 `php.ini` 값은 **미확인**이다 (`php-cgi -i` 등으로 확인).

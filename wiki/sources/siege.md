@@ -10,7 +10,7 @@ updated: 2026-10-15
 원본: `raw/siege.pod`. <https://raw.githubusercontent.com/JoeDog/siege/master/doc/siege.pod>을 2026-10-15에 받아 그대로 저장했다. POD(Perl 문서) 일반 텍스트라 변환하지 않았다.
 
 - 이 파일을 마지막으로 바꾼 커밋: `9c240ec5a16afc811049986e68777417a50da083` (2022-04-17). 받은 날 저장소의 최신 태그는 `v4.2.0`. (둘 다 받을 때 GitHub에서 본 값이고 raw 파일에는 없다.)
-- `master` 브랜치 파일이라 이후 바뀔 수 있다. 평가 환경의 siege 버전은 **미확인**이다 (평가 때 `siege -V`로 확인).
+- `master` 브랜치 파일이라 이후 바뀔 수 있다. Ubuntu 22.04 apt 패키지는 siege 4.0.7이고, 그 태그의 이 파일과는 urls.txt 변수 설명·오타·예시 수치만 다르다 → [[sources/ubuntu2204-observed-tools]]. 평가 PC에 설치된 버전은 **미확인**이다 (평가 때 `siege -V`로 확인).
 - 평가표는 이 도구로 스트레스 테스트를 한다 (raw/evaluation-sheet-en.md:113-118).
 
 ## 과제와 관련된 부분

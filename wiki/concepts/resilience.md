@@ -1,7 +1,7 @@
 ---
 title: 안정성 (크래시·hang·누수)
 type: concept
-sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/siege.pod, raw/siegerc.in, raw/posix-signal-h.md, raw/posix-send.md, raw/posix-waitpid.md, raw/posix-bind.md, raw/posix-exit.md, raw/posix-poll.md, raw/nginx-rewrite-module.md, raw/nginx-index-module.md, raw/nginx-core-module.md, raw/rfc3875.txt, raw/siege-sock.c, raw/valgrind-observed-sigint.md]
+sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/siege.pod, raw/siegerc.in, raw/posix-signal-h.md, raw/posix-send.md, raw/posix-waitpid.md, raw/posix-bind.md, raw/posix-exit.md, raw/posix-poll.md, raw/nginx-rewrite-module.md, raw/nginx-index-module.md, raw/nginx-core-module.md, raw/rfc3875.txt, raw/siege-sock.c, raw/valgrind-observed-sigint.md, raw/ubuntu2204-observed-tools.md]
 updated: 2026-10-15
 ---
 
@@ -59,6 +59,7 @@ subject와 평가표 모두 "서버가 항상 살아 있어야 한다"를 가장
   - 기본 동작으로 끝나면 definitely lost는 0이지만, 해제하지 않은 메모리가 모두 still reachable로 보고된다 (raw/valgrind-observed-sigint.md:111-138).
   - 핸들러를 두고도 해제 없이 `main`에서 반환하면 definitely lost가 된다 (raw/valgrind-observed-sigint.md:157-163).
   - 모두 해제하고 끝낸 경우만 "All heap blocks were freed -- no leaks are possible"이 나왔다 (raw/valgrind-observed-sigint.md:212-215).
+  - 평가 PC와 같은 Ubuntu 22.04의 valgrind 3.18.1에서도 네 경우가 같은 분류로 나왔다 (raw/ubuntu2204-observed-tools.md:429-555) → [[sources/ubuntu2204-observed-tools]].
   - still reachable을 누수로 볼지는 평가자 판단이다. `leaks`·`e_fence`의 보고 방식은 **미확인**이다 (확인: 각 도구로 같은 프로그램 실행).
 - 판단: 시그널 핸들러에서는 종료 플래그만 세우고, 메인 루프가 플래그를 보고 연결·CGI 자식·메모리를 정리한 뒤 종료한다.
 - CGI 자식은 서버가 끝나도 직접 끝나지는 않고(일부 경우 `SIGHUP`으로 간접 종료) 시스템 프로세스에 입양된다 (raw/posix-exit.md:70-72). 그래서 종료할 때 실행 중인 CGI를 `kill`로 끝내고 `waitpid`로 회수해야 한다. 그러지 않으면 무한 루프 스크립트가 서버가 꺼진 뒤에도 계속 돌 수 있다. `poll()` 대기 중 핸들러를 둔 시그널을 잡으면 `poll()`이 -1로 돌아온다 (raw/posix-poll.md:114, raw/posix-poll.md:126-128). 이때도 errno를 보지 않고 플래그만 확인하면 된다 → [[analysis/subject-vs-evaluation]] 1.8절.
