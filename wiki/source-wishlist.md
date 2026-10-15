@@ -8,6 +8,7 @@ updated: 2026-10-15
 
 `raw/`에 넣을 후보다. 공식 자료만 넣는다(블로그·위키·포럼 제외).
 URL은 2026-10-15에 접속해 HTTP 200을 확인했다. 받아서 넣은 소스는 체크하고 log에 ingest를 남긴다.
+받지 않기로 한 항목은 `[-]`로 표시하고 이유를 적는다.
 
 - **P1**: 지금 열려 있는 **미확인** 항목을 해소하거나 0점 위험 영역을 다룸
 - **P2**: 필수 기능 구현에 직접 필요
@@ -63,8 +64,8 @@ URL은 2026-10-15에 접속해 HTTP 200을 확인했다. 받아서 넣은 소스
 | [x] | P2 | `waitpid()` — `raw/posix-waitpid.md`로 ingest (2026-10-15) | <https://pubs.opengroup.org/onlinepubs/9799919799/functions/waitpid.html> | `WNOHANG`으로 CGI 자식 회수 | `raw/posix-waitpid.md` |
 | [x] | P2 | `_Exit()` — "Consequences of Process Termination" — `raw/posix-exit.md`로 ingest (2026-10-15) | <https://pubs.opengroup.org/onlinepubs/9799919799/functions/_Exit.html> | 회수하지 않은 자식이 좀비가 되는지 (2026-10-15 페이지에 "zombie process" 문장 있음 확인) → [[concepts/cgi]] | `raw/posix-exit.md` |
 | [x] | P2 | `bind()` — `raw/posix-bind.md`로 ingest (2026-10-15) | <https://pubs.opengroup.org/onlinepubs/9799919799/functions/bind.html> | 같은 포트 중복 bind 실패 (`EADDRINUSE`) | `raw/posix-bind.md` |
-| [ ] | P2 | Linux `epoll(7)` | <https://man7.org/linux/man-pages/man7/epoll.7.html> | Linux에서 epoll을 쓸 경우 | `raw/linux-epoll-7.md` |
-| [ ] | P2 | FreeBSD `kqueue(2)` | <https://man.freebsd.org/cgi/man.cgi?query=kqueue&sektion=2> | macOS에서 kqueue를 쓸 경우. macOS 자체 man page는 터미널 `man 2 kqueue`가 더 정확함 | `raw/kqueue-2.md` |
+| [-] | P2 | Linux `epoll(7)` — 받지 않음: `poll()` 사용 결정 (2026-10-15) | <https://man7.org/linux/man-pages/man7/epoll.7.html> | Linux에서 epoll을 쓸 경우 | `raw/linux-epoll-7.md` |
+| [-] | P2 | FreeBSD `kqueue(2)` — 받지 않음: `poll()` 사용 결정 (2026-10-15) | <https://man.freebsd.org/cgi/man.cgi?query=kqueue&sektion=2> | macOS에서 kqueue를 쓸 경우. macOS 자체 man page는 터미널 `man 2 kqueue`가 더 정확함 | `raw/kqueue-2.md` |
 
 ## 4-1. NGINX 실측 (문서로 확인 불가)
 

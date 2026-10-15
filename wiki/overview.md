@@ -26,6 +26,7 @@ C++98로 HTTP 서버를 만드는 42 과제. 실행은 `./webserv [configuration
 
 ## 현재 종합 판단
 
+- 멀티플렉서는 `poll()`로 정했다. 개발은 macOS, 평가는 Ubuntu라 두 OS에서 같은 코드가 돌아야 한다 → [[concepts/io-multiplexing]].
 - 구조의 중심은 **이벤트 루프 하나**다. socket·listen socket·CGI pipe가 모두 같은 `poll()`에 들어가야 한다 (raw/subject.md:130, raw/subject.md:136).
 - 평가표가 subject보다 엄격하다 (`-1`/`0` 모두 처리, 에러 시 클라이언트 제거, README 0점, siege 99.5% 초과). 양쪽을 모두 만족하게 구현한다. → [[analysis/subject-vs-evaluation]]
 - 평가표는 EAGAIN까지 반복 I/O를 허용하지만 errno 금지와 충돌한다. **readiness 1회에 I/O 1번**이 안전하다. → [[concepts/io-multiplexing]]
@@ -59,6 +60,7 @@ C++98로 HTTP 서버를 만드는 42 과제. 실행은 `./webserv [configuration
 - HEAD를 지원할지 (RFC는 MUST, subject는 요구 안 함) → [[analysis/subject-vs-evaluation]]
 - 허용 함수 목록이 `<ctime>`, `exit` 같은 표준 라이브러리에도 적용되는지 (Date 헤더, CGI 자식 종료, 리스팅 시간 표시) → [[analysis/subject-vs-evaluation]]
 - `shutdown` 없이 연결을 안전하게 닫는 방법 → [[concepts/connection-management]]
+- Ubuntu 평가에서 `fcntl()`(subject상 "For macOS only" 절) 사용이 인정되는지 → [[concepts/io-multiplexing]]
 - read/write 외 함수(`poll`, `bind`)의 errno를 봐도 되는지, `waitpid` 매크로를 써도 되는지, `/dev/urandom` 읽기가 `poll()` 예외인지, `FD_CLOEXEC`를 위해 `F_SETFD`를 써도 되는지 → [[analysis/subject-vs-evaluation]]
 - index 파일이 CGI 확장자일 때 CGI로 실행할지 → [[concepts/configuration-file]]
 - 업로드를 서버가 직접 저장할지 CGI에 넘길지, multipart가 아닌 본문을 받을지 → [[concepts/file-upload]]
