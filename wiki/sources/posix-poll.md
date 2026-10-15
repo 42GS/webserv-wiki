@@ -12,6 +12,7 @@ POSIX.1-2024 (IEEE Std 1003.1-2024, The Open Group Base Specifications Issue 8) 
 
 > [!note] 변환 방법
 > opengroup 페이지에는 `div#content`가 없어서, 위쪽 내비게이션 다음부터 "return to top of page" 직전까지를 본문으로 잘라 변환했다. 변환·검증 도구는 [[sources/nginx-core-module]]과 같다. 공백을 뺀 11,504자가 같았고, 단어 단위 차이 78건은 모두 태그 경계에서 단어가 갈라진 것이었다.
+> 2026-10-15 원본 HTML 본문 전체를 변환본과 직접 읽어 대조했다: 글자가 빠지거나 바뀐 곳 없음. 구조 차이: `<p>`가 든 목록 항목(raw/posix-poll.md:34, 36, 104, 106) 글머리표 없음.
 
 ## 과제와 관련된 절
 

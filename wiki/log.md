@@ -287,3 +287,11 @@
 - 갱신: CLAUDE.md (디렉토리 구조, "웹 문서 받기": pandoc 3.10 공식 Docker 이미지 digest 고정, 변환 검증은 직접 읽기), source-wishlist "받는 방법"
 - 메모: 무료 변환기 4개(pandoc GPL-2.0, turndown MIT, markdownify MIT, html2text GPL-3.0, GitHub 저장소 정보로 확인) 중 사용자가 pandoc 선택. pandoc 3.11부터 `<code>` 없는 `<pre>`를 줄바꿈 텍스트+NBSP로 읽는 변경(#11810)을 3.1~3.12 이미지로 직접 실행해 확인하고 3.10으로 고정 (사용자 결정)
 - 메모: 기존 raw HTML 변환본(nginx 6개, POSIX 8개, php 2개, PEP 594, 평가표 영어 원문)은 삭제한 스크립트로만 검증했다. 원본과 직접 읽어 대조하지 않았다 (**미확인**)
+
+## [2026-10-15] lint | 기존 raw HTML 변환본 18개 직접 대조
+- 방법: 각 `raw/<name>.source.html` 본문과 `raw/<name>.md`를 절 단위로 나란히 읽었다. raw는 고치지 않았다.
+- 결과: 18개 모두 글자가 빠지거나 바뀐 곳 없음. 앞 항목의 "스크립트로만 검증 (**미확인**)" 해소.
+- 구조 차이(글자는 같음): `<p>`·note가 든 목록 항목의 글머리표 없음, 중첩 목록 평탄화, 번호 목록이 글머리표로, 표가 줄 단위로 풀림, note 상자·강조 표시 없음, SYNOPSIS 한 줄로 합쳐짐. 파일별 내역은 각 source 페이지 "변환 검증" 콜아웃에 적었다.
+- 영향: 위키 인용 가운데 목록 구조에 기대는 문장을 찾아 읽었다. sources/posix-exit의 `SIGCHLD` 전송 행이 "Otherwise" 조건(raw/posix-exit.md:58)을 빠뜨렸고 기본 동작 "무시"에 근거가 없었다 → 조건과 SA_NOCLDWAIT 구현 정의(54행), signal.h 표(raw/posix-signal-h.md:146-154, 304-306) 추가. concepts/cgi·resilience, sources/posix-waitpid의 해당 인용은 조건이 맞아 그대로 둠.
+- 갱신: sources 18개 "변환 검증" 콜아웃 (evaluation-sheet-en은 새로 추가), sources/posix-exit.
+- 메모: pep-0594 raw 머리말은 "`div#content`"라고 적었지만 실제 본문 요소는 `section#pep-content`다. raw는 고치지 않고 source 페이지에 적었다.

@@ -12,6 +12,7 @@ updated: 2026-10-15
 
 > [!note] 변환 검증
 > `tools/nginx2md.py`로 변환하고 `tools/verify_md.py` PASS (공백을 뺀 9,111자 일치, 단어 1,656개 일치).
+> 2026-10-15 원본 HTML 본문 전체를 변환본과 직접 읽어 대조했다: 글자가 빠지거나 바뀐 곳 없음. 구조 차이: 번호 목록(raw/nginx-server-names.md:40-46)이 글머리표 목록으로 바뀜, `<p>`가 든 목록 항목(190-196행) 글머리표 없음.
 
 ## 과제와 관련된 절
 
@@ -27,7 +28,7 @@ updated: 2026-10-15
 
 ## 핵심
 
-- 매칭 순서: 정확한 이름 → `*`로 시작하는 가장 긴 와일드카드 → `*`로 끝나는 가장 긴 와일드카드 → 처음 맞는 정규식. 처음 맞는 것에서 멈춘다 (raw/nginx-server-names.md:38-46).
+- 매칭 순서: 정확한 이름 → `*`로 시작하는 가장 긴 와일드카드 → `*`로 끝나는 가장 긴 와일드카드 → 처음 맞는 정규식. 처음 맞는 것에서 멈춘다 (raw/nginx-server-names.md:40-46).
 - `*`는 이름의 맨 앞이나 맨 끝, 점 경계에만 올 수 있다. `*.example.org`는 `www.sub.example.org`에도 맞는다 (raw/nginx-server-names.md:52).
 - 빈 이름 `""`은 Host가 없는 요청에 맞는다. `server_name`이 없으면 빈 이름을 쓴다 (raw/nginx-server-names.md:110-120).
 - IP 주소로 요청하면 Host에 IP가 들어오므로 IP를 이름으로 넣어 매칭할 수 있다 (raw/nginx-server-names.md:126).

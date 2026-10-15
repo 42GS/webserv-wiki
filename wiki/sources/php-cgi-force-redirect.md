@@ -12,6 +12,7 @@ PHP 매뉴얼 "Installed as CGI binary" 장의 한 절이다. 같은 장의 다�
 
 > [!note] 변환 검증
 > `tools/extract_div.py`로 본문 div(`security.cgi-bin.force-redirect`)만 잘라 `tools/nginx2md.py`로 변환하고 `tools/verify_md.py`로 검증했다. 684자, 단어 121개가 같았다 (PASS). 페이지 아래의 사용자 댓글은 공식 자료가 아니라서 제외했다.
+> 2026-10-15 원본 HTML 본문 전체를 변환본과 직접 읽어 대조했다: 글자가 빠지거나 바뀐 곳 없음. 구조 차이 없음.
 
 ## 핵심
 

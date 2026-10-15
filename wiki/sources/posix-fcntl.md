@@ -12,6 +12,7 @@ POSIX.1-2024 (IEEE Std 1003.1-2024) 표준 문서다 (raw/posix-fcntl.md:6).
 
 > [!note] 변환 검증
 > `tools/posix_wrap.py` → `tools/nginx2md.py`로 변환하고 `tools/verify_md.py`로 검증했다. 28,091자, 단어 5,520개가 같았다 (PASS).
+> 2026-10-15 원본 HTML 본문 전체를 변환본과 직접 읽어 대조했다: 글자가 빠지거나 바뀐 곳 없음. 구조 차이: SYNOPSIS가 한 줄로 합쳐짐, F_SETOWN_EX 항목(raw/posix-fcntl.md:74-84)의 글머리표와 하위 목록 없음, `<p>`가 든 목록 글머리표·번호 없음.
 
 ## 과제와 관련된 부분
 
