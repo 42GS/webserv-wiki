@@ -31,7 +31,7 @@ C++98로 HTTP 서버를 만드는 42 과제. 실행은 `./webserv [configuration
 - 평가표가 subject보다 엄격하다 (`-1`/`0` 모두 처리, 에러 시 클라이언트 제거, README 0점, siege 99.5% 초과). 양쪽을 모두 만족하게 구현한다. → [[analysis/subject-vs-evaluation]]
 - 평가표는 EAGAIN까지 반복 I/O를 허용하지만 errno 금지와 충돌한다. **readiness 1회에 I/O 1번**이 안전하다. → [[concepts/io-multiplexing]]
 - virtual host는 선택 사항이다. 구현하지 않으면 같은 `interface:port` 중복 설정을 에러로 거부한다 (raw/evaluation-sheet-en.md:108). → [[concepts/configuration-file]]
-- status code는 상황별 표 [[concepts/status-codes]]를 기준으로 정한다. 평가에서 코드가 틀리면 점수가 없다 (raw/evaluation-sheet-en.md:67). UNKNOWN 메서드는 501, 막힌 메서드는 405 + `Allow` (raw/rfc9110.txt:3800-3804, raw/rfc9110.txt:4724-4725).
+- status code는 상황별 표 [[concepts/status-codes]]를 기준으로 정한다. 평가에서 코드가 틀리면 점수가 없다 (raw/evaluation-sheet-en.md:67). UNKNOWN 메서드는 501, 막힌 메서드는 405 + `Allow` (raw/rfc9110.txt:3800-3804, raw/rfc9110.txt:4724-4726).
 - 요청 파서는 RFC 9112 순서(요청줄 → 헤더 → 본문 길이 → chunked)를 따른다. Host 누락, 헤더 이름 뒤 공백, 잘못된 `Content-Length`는 400 MUST다. 헤더 크기 상한 초과는 4xx MUST이고 431로 응답한다(판단) → [[concepts/request-parsing]].
 - 응답은 `HTTP/1.1`로 보낸다(RFC 9110 SHOULD). HTTP/1.0만으로는 과제가 설명되지 않는다(DELETE는 RFC 1945 부록, 405·413 없음). HTTP/0.9는 지원하지 않고 400, HTTP/1.0 POST에 `Content-Length`가 없으면 400 (판단) → [[sources/rfc1945]], [[concepts/request-parsing]].
 - 연결은 HTTP/1.1 기준 persistent가 기본이다. 본문을 다 읽지 않고 응답(413 등)하면 연결을 닫는다 → [[concepts/connection-management]].

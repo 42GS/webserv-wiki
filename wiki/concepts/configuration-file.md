@@ -121,7 +121,7 @@ subject 기능을 NGINX에서는 어떤 지시자로 하는지 정리했다. 설
 
 ## 라우트 규칙을 응답으로 옮길 때 (RFC 9110)
 
-- **허용 메서드:** 라우트에서 막은 메서드는 405로 응답하고 `Allow`에 허용 메서드 목록을 넣는다 (MUST, raw/rfc9110.txt:4724-4725, raw/rfc9110.txt:7605-7607). 서버가 아예 모르는 메서드는 501이다 (raw/rfc9110.txt:3800-3804).
+- **허용 메서드:** 라우트에서 막은 메서드는 405로 응답하고 `Allow`에 허용 메서드 목록을 넣는다 (MUST, raw/rfc9110.txt:4724-4726, raw/rfc9110.txt:7605-7607). 서버가 아예 모르는 메서드는 501이다 (raw/rfc9110.txt:3800-3804).
 - **redirection:** 설정에 상태 코드를 같이 적게 하는 게 좋다. 영구/임시, 메서드 유지 여부에 따라 301·302·307·308이 갈린다 (raw/rfc9110.txt:7384-7387, raw/rfc9110.txt:7492-7495). `Location`을 보낸다 (raw/rfc9110.txt:7378-7379). 표는 [[concepts/status-codes]].
   - 설정 형식은 NGINX `return`처럼 코드와 URL을 함께 받는다 (예: `return 301 /new/;`, raw/nginx-rewrite-module.md:107, raw/nginx-rewrite-module.md:115).
   - NGINX는 로컬 경로를 scheme·server_name·port로 완전한 URL로 바꿔 보낸다 (raw/nginx-rewrite-module.md:115). RFC 9110은 `Location`에 상대 참조를 허용하므로 (raw/rfc9110.txt:4743-4745) 이 과제는 설정한 경로를 그대로 보낸다 (**판단**). 완전한 URL을 만들려면 Host나 server_name이 필요해 구현이 복잡해진다.
@@ -151,7 +151,7 @@ subject 기능을 NGINX에서는 어떤 지시자로 하는지 정리했다. 설
 
 - 일부 포트만 `bind`에 실패했을 때 나머지 포트로 계속 서비스할지, 전체를 종료할지는 과제 문서가 정하지 않는다. 평가표는 "어떤 선택이든 일관되고 크래시하지 않을 것"을 요구한다 (raw/evaluation-sheet-en.md:109). 디펜스에서 선택 이유를 설명한다 (**판단**).
 - non-blocking 소켓의 `bind`는 바로 할당할 수 없으면 `EINPROGRESS`로 실패하고 나중에 완료될 수 있다 (raw/posix-bind.md:50). `socket` → `bind` → `listen`을 마친 뒤 `O_NONBLOCK`을 켜면 이 경우를 피할 수 있다 (**판단**).
-- **재시작 직후 bind (실측):** 서버가 먼저 연결을 닫은 직후 재시작하면 `SO_REUSEADDR` 없이는 양쪽 OS 모두 `EADDRINUSE`다. Ubuntu에서는 처음 listener에도 옵션이 켜져 있어야 재bind가 된다 (raw/os-observed-bind.md:213-214, raw/os-observed-bind.md:221-222). 그래서 모든 listen 소켓에 `bind` 전에 `setsockopt(SO_REUSEADDR)`를 켠다 (`setsockopt`는 허용 함수, raw/subject.md:113) (**판단**). 옵션을 켜도 이미 listen 중인 같은 `IP:port`는 양쪽 모두 실패하므로 동시 실행 검사는 그대로다 (raw/os-observed-bind.md:246-247, raw/os-observed-bind.md:271-272) → [[sources/os-observed-bind]].
+- **재시작 직후 bind (실측):** 서버가 먼저 연결을 닫은 직후 재시작하면 `SO_REUSEADDR` 없이는 양쪽 OS 모두 `EADDRINUSE`다 (raw/os-observed-bind.md:196, raw/os-observed-bind.md:213). Ubuntu에서는 처음 listener에도 옵션이 켜져 있어야 재bind가 된다 (raw/os-observed-bind.md:214, raw/os-observed-bind.md:221-222). 그래서 모든 listen 소켓에 `bind` 전에 `setsockopt(SO_REUSEADDR)`를 켠다 (`setsockopt`는 허용 함수, raw/subject.md:113) (**판단**). 옵션을 켜도 이미 listen 중인 같은 `IP:port`는 양쪽 모두 실패하므로 동시 실행 검사는 그대로다 (raw/os-observed-bind.md:246-247, raw/os-observed-bind.md:271-272) → [[sources/os-observed-bind]].
 - **`0.0.0.0:P`와 특정 IP의 `:P` (실측):** 옵션 없이는 양쪽 모두 충돌한다. 옵션을 켜면 macOS는 둘 다 성공하고 Ubuntu는 실패한다 (raw/os-observed-bind.md:238-243, raw/os-observed-bind.md:263-268). OS마다 다르므로 **설정 파싱 단계에서 겹침으로 거부**한다 (**판단**).
 
 > [!note] virtual host 모순 해소 (2026-10-15)

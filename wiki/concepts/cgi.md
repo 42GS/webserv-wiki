@@ -66,7 +66,7 @@ updated: 2026-10-15
 | `PATH_INFO` | 경로 정보가 있을 때 | 스크립트 경로 뒤 나머지. URL 디코딩된 상태, 대소문자 보존 (MUST) | raw/rfc3875.txt:715-721, raw/rfc3875.txt:735-736 |
 | `PATH_TRANSLATED` | `PATH_INFO`가 있으면 SHOULD | `PATH_INFO`를 서버 문서 경로로 바꾼 값. `PATH_INFO`가 NULL이면 NULL (MUST) | raw/rfc3875.txt:750-754, raw/rfc3875.txt:803-805 |
 | `REMOTE_HOST` | SHOULD | 클라이언트 도메인 이름. 없으면 `REMOTE_ADDR` 값으로 대체 가능 | raw/rfc3875.txt:870-872 |
-| `HTTP_*` | SHOULD | 요청 헤더. 이름을 대문자로, `-`를 `_`로 바꾸고 `HTTP_`를 붙임 | raw/rfc3875.txt:1030, raw/rfc3875.txt:1038-1042 |
+| `HTTP_*` | SHOULD | 요청 헤더. 이름을 대문자로, `-`를 `_`로 바꾸고 `HTTP_`를 붙임 | raw/rfc3875.txt:1030-1031, raw/rfc3875.txt:1038-1042 |
 | `AUTH_TYPE`, `REMOTE_USER` | 인증을 할 때만 MUST | 과제에 인증이 없으므로 설정하지 않는다 | raw/rfc3875.txt:609-611, raw/rfc3875.txt:903-906 |
 | `REMOTE_IDENT` | MAY | 설정하지 않는다 | raw/rfc3875.txt:876-880 |
 
