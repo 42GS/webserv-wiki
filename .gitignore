@@ -223,3 +223,4 @@ xcuserdata/
 
 ### Obsidian ###
 .obsidian/workspace*.json
+.obsidian/graph*.json
