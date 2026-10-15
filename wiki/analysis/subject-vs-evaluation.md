@@ -49,7 +49,7 @@ subject는 "허용된 syscall/라이브러리 호출" 목록을 준다 (raw/subj
 ### 1.6 HTTP/1.0 기준점 vs HTTP/1.1 기본 동작
 
 - subject: HTTP/1.0을 기준점으로 제안하지만 강제하지 않는다 (raw/subject.md:123).
-- RFC 9112: 받은 메시지가 HTTP/1.1이면 persistent가 기본이다 (raw/rfc9112.txt:1350-1351). HTTP/1.1 요청에는 Host가 MUST이고 없으면 400 (raw/rfc9112.txt:437, raw/rfc9112.txt:445-448). chunked 파싱은 MUST (raw/rfc9112.txt:1071-1072).
+- RFC 9112: 받은 메시지가 HTTP/1.1이면 persistent가 기본이다 (raw/rfc9112.txt:1350-1351). HTTP/1.1 요청에는 Host가 MUST이고 없으면 400 (raw/rfc9112.txt:437-438, raw/rfc9112.txt:445-448). chunked 파싱은 MUST (raw/rfc9112.txt:1071-1072).
 - 브라우저는 HTTP/1.1 이상으로 요청한다 (**미확인**, 평가 시 브라우저 네트워크 탭에서 확인 가능, raw/evaluation-sheet-en.md:97-98).
 - RFC 1945 (HTTP/1.0): 요청마다 연결을 닫는 것이 기본이다 (raw/rfc1945.txt:420-422). 1.0 서버는 0.9 요청도 이해하고 클라이언트와 같은 버전으로 응답해야 한다 (raw/rfc1945.txt:694-703). status code 목록에 405·411·413·414·505가 없다 (raw/rfc1945.txt:1487-1501). 과제 필수 메서드인 DELETE는 본문이 아니라 "일관되게 구현되지 않은 기능"인 부록 D에 있다 (raw/rfc1945.txt:3185-3199, raw/rfc1945.txt:3223-3226). 즉 과제 요구사항은 HTTP/1.0만으로 다 설명되지 않는다.
 - RFC 9110: 서버는 요청의 메이저 버전 이하에서 자신이 따르는 가장 높은 버전으로 응답한다 (SHOULD, raw/rfc9110.txt:2054-2056). HTTP/1.0 요청에 `HTTP/1.1`로 응답해도 된다.
@@ -78,7 +78,7 @@ subject는 "허용된 syscall/라이브러리 호출" 목록을 준다 (raw/subj
 
 ### 1.10 `/dev/urandom` 읽기와 poll() 예외 (질문)
 
-- 세션 식별자는 추측하기 어려워야 한다 (raw/rfc6265.txt:1716-1731). 허용 함수에는 난수 함수가 없다 (raw/subject.md:113).
+- 세션 식별자는 추측하기 어려워야 한다 (**판단**: 추측할 수 있으면 남의 세션을 쓸 수 있다. RFC 6265는 서버가 흔히 식별자만 쿠키에 넣는다고 설명할 뿐 이 요구를 직접 적지 않는다, raw/rfc6265.txt:1716-1720). 허용 함수에는 난수 함수가 없다 (raw/subject.md:113).
 - `open`·`read`로 `/dev/urandom`을 읽을 수는 있다. 그러나 `poll()` 없이 읽어도 되는 예외는 "일반 디스크 파일"이다 (raw/subject.md:134). `/dev/urandom`은 장치 파일이라 이 예외에 들어가는지 불분명하다 (**미확인**).
 - 판단 보류. 확인 방법: 동료·평가자 합의. 보너스 항목이라 필수 평가에는 영향이 없다.
 

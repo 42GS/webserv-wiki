@@ -247,3 +247,17 @@
 - 생성: tools/cite_show.py (git diff 기준 새 인용의 원문 줄 출력)
 - 갱신: tools/lint_wiki.py (인용 범위의 첫 줄·끝 줄이 빈 줄이면 오류), CLAUDE.md (7단계를 커밋 전 검사 3단계로: lint → cite_show 대조 → 영향 범위 grep)
 - 새 검사로 기존 위키에서 찾은 빈 줄 인용 6건 수정 (모두 이번 세션 작성분): rfc9110 1567-1572→1568-1572, 1567-1570→1568-1570(2곳), rfc6585 7-12→7-11, rfc1945 3185-3191→3185-3199(2곳, 문장이 다음 페이지 3199줄에서 끝남)
+
+## [2026-10-15] lint | 기존 인용 전수 대조
+- 범위: 위키 전체 인용 1,376건을 `tools/cite_show.py --all`로 원문과 하나씩 대조 (sources → concepts → analysis·overview·wishlist·log 순)
+- 주장과 근거가 맞지 않던 것 (내용 수정):
+  - concepts/bonus, analysis/subject-vs-evaluation: "세션 식별자는 추측하기 어려워야"에 근거가 없음 → **판단** 표시
+  - concepts/bonus: `HTTP_COOKIE`를 "넘겨야 한다"의 근거가 이름 규칙(rfc3875 1038-1042)뿐 → subject.md:178을 근거로, RFC 3875는 모든 헤더를 넘길 의무가 없음(1051-1052)도 적음
+  - concepts/connection-management: "recv 0 = 상대 종료"의 근거가 평가표뿐 → posix-recv.md:72 추가
+  - concepts/resilience, concepts/testing: siege `timeout`을 "30초 안에 응답 없으면 실패"로 씀 → 원문은 "socket connection timeouts". 응답 대기에도 걸리는지는 **미확인**, source-wishlist 6절에 siege `src/sock.c` 추가
+  - concepts/io-multiplexing: 미확인(epoll·kqueue OS 전용)을 poll 결정의 근거로 씀 → 근거에서 빼고, 양쪽 OS 동작은 pipe/poll 실측으로 인용
+  - concepts/configuration-file: "양쪽 OS 모두 EADDRINUSE"에 Ubuntu 줄만 인용 → macOS 줄(os-observed-bind 196) 추가
+- 보완: sources/pep-0594 (머리말의 `div#content`는 extract_div.py가 감싼 요소), concepts/resilience (poll -1 근거 줄 명시)
+- 문장 중간에서 끊긴 범위 11건을 문장 끝까지 넓힘: rfc2046 934-1306, rfc1945 2809-2823, rfc9110 4050-4055·8563-8570·7492-7495·7413-7416·4724-4726, rfc9112 1760-1767·437-438, rfc3986 1816-1844, rfc3875 1030-1031
+- 메모: 근거가 되는 절이 범위 안에서 끝나는 인용은 다음 문장이 같은 줄에서 시작해도 그대로 두었다. log의 기존 항목 인용 25건은 모두 맞았다
+- 도구: tools/cite_show.py에 `--all PAGE...` 추가 (6ec5419)
