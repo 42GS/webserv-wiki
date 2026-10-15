@@ -1,8 +1,8 @@
 ---
 title: 안정성 (크래시·hang·누수)
 type: concept
-sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/siege.pod, raw/siegerc.in, raw/posix-signal-h.md, raw/posix-send.md, raw/posix-waitpid.md, raw/posix-bind.md, raw/posix-exit.md, raw/posix-poll.md, raw/nginx-rewrite-module.md, raw/nginx-index-module.md, raw/nginx-core-module.md, raw/rfc3875.txt, raw/siege-sock.c, raw/valgrind-observed-sigint.md, raw/ubuntu2204-observed-tools.md, raw/siege-observed-ubuntu2204.md]
-updated: 2026-10-15
+sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/siege.pod, raw/siegerc.in, raw/posix-signal-h.md, raw/posix-send.md, raw/posix-waitpid.md, raw/posix-bind.md, raw/posix-exit.md, raw/posix-poll.md, raw/nginx-rewrite-module.md, raw/nginx-index-module.md, raw/nginx-core-module.md, raw/rfc3875.txt, raw/siege-sock.c, raw/valgrind-observed-sigint.md, raw/ubuntu2204-observed-tools.md, raw/siege-observed-ubuntu2204.md, raw/macos-observed-sigpipe-leaks.md]
+updated: 2026-10-16
 ---
 
 # 안정성 (크래시·hang·누수)
@@ -49,7 +49,7 @@ subject와 평가표 모두 "서버가 항상 살아 있어야 한다"를 가장
 > 아무 처리도 하지 않으면 읽는 쪽이 없는 pipe에 쓰는 순간 서버 프로세스가 종료된다 (raw/posix-signal-h.md:192-196, raw/posix-signal-h.md:296-298). 디펜스 중 예기치 않은 종료는 0점이다 (raw/evaluation-sheet-en.md:24).
 > 소켓도 마찬가지다. 연결이 끊긴 SOCK_STREAM 소켓에 `send`하면 `EPIPE`로 실패하고, `MSG_NOSIGNAL`이 없으면 `SIGPIPE`가 발생한다 (raw/posix-send.md:118-120). `EPIPE` 실패는 시그널과 별개로 일어나므로, `SIGPIPE`를 무시하면 프로세스는 살고 `send`는 -1을 돌려준다 (**판단**, 120줄에서 끌어낸 추론).
 >
-> 대안: `send`의 flags에 `MSG_NOSIGNAL`을 주면 `SIGPIPE` 없이 `EPIPE`만 돌려준다 (raw/posix-send.md:58-60). macOS가 이 플래그를 지원하는지는 **미확인**이다. 또 pipe(CGI)에 쓰는 `write`에는 flags가 없어 이 방법을 쓸 수 없다. 그래서 허용 함수 `signal`로 `SIGPIPE`를 무시하는 쪽을 기본으로 한다.
+> 대안: `send`의 flags에 `MSG_NOSIGNAL`을 주면 `SIGPIPE` 없이 `EPIPE`만 돌려준다 (raw/posix-send.md:58-60). macOS도 이 플래그를 지원한다: SDK 헤더에 정의가 있고 (raw/macos-observed-sigpipe-leaks.md:51-53), 끊긴 TCP 연결에 이 플래그로 보내면 프로세스가 살아 있고 `send`가 -1과 errno 32를 돌려줬다 (raw/macos-observed-sigpipe-leaks.md:118-124) → [[sources/macos-observed-sigpipe-leaks]]. 또 pipe(CGI)에 쓰는 `write`에는 flags가 없어 이 방법을 쓸 수 없다. 그래서 허용 함수 `signal`로 `SIGPIPE`를 무시하는 쪽을 기본으로 한다.
 
 ### SIGINT·SIGTERM과 누수 검사
 
@@ -60,7 +60,11 @@ subject와 평가표 모두 "서버가 항상 살아 있어야 한다"를 가장
   - 핸들러를 두고도 해제 없이 `main`에서 반환하면 definitely lost가 된다 (raw/valgrind-observed-sigint.md:157-163).
   - 모두 해제하고 끝낸 경우만 "All heap blocks were freed -- no leaks are possible"이 나왔다 (raw/valgrind-observed-sigint.md:212-215).
   - 평가 PC와 같은 Ubuntu 22.04의 valgrind 3.18.1에서도 네 경우가 같은 분류로 나왔다 (raw/ubuntu2204-observed-tools.md:429-555) → [[sources/ubuntu2204-observed-tools]].
-  - still reachable을 누수로 볼지는 평가자 판단이다. `leaks`·`e_fence`의 보고 방식은 **미확인**이다 (확인: 각 도구로 같은 프로그램 실행).
+  - still reachable을 누수로 볼지는 평가자 판단이다.
+- macOS `leaks -atExit`로 같은 프로그램을 실측했다 → [[sources/macos-observed-sigpipe-leaks]]:
+  - SIGINT 기본 동작으로 끝나면 아무것도 출력하지 않고 종료 코드 0이다 (raw/macos-observed-sigpipe-leaks.md:224-226). 검사가 실행되지 않은 것으로 보인다 (**판단**).
+  - 해제 없이 `main`에서 반환한 경우도 `0 leaks`였다 (raw/macos-observed-sigpipe-leaks.md:254-256). valgrind가 definitely lost로 보고한 경우다. leaks가 0이어도 valgrind에서 깨끗하다는 보장은 없다 (**판단**).
+  - `e_fence`의 보고 방식은 **미확인**이다 (확인: Ubuntu 22.04에서 electric-fence 패키지 문서를 읽고 같은 프로그램 실행).
 - 판단: 시그널 핸들러에서는 종료 플래그만 세우고, 메인 루프가 플래그를 보고 연결·CGI 자식·메모리를 정리한 뒤 종료한다.
 - CGI 자식은 서버가 끝나도 직접 끝나지는 않고(일부 경우 `SIGHUP`으로 간접 종료) 시스템 프로세스에 입양된다 (raw/posix-exit.md:70-72). 그래서 종료할 때 실행 중인 CGI를 `kill`로 끝내고 `waitpid`로 회수해야 한다. 그러지 않으면 무한 루프 스크립트가 서버가 꺼진 뒤에도 계속 돌 수 있다. `poll()` 대기 중 핸들러를 둔 시그널을 잡으면 `poll()`이 -1로 돌아온다 (raw/posix-poll.md:114, raw/posix-poll.md:126-128). 이때도 errno를 보지 않고 플래그만 확인하면 된다 → [[analysis/subject-vs-evaluation]] 1.8절.
 

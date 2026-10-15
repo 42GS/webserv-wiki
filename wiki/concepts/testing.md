@@ -2,7 +2,7 @@
 title: 테스트 도구와 평가 시연
 type: concept
 sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/siege.pod, raw/siegerc.in, raw/evaluation-sheet.md, raw/rfc9112.txt, raw/pep-0594.md, raw/siege-sock.c, raw/ubuntu2204-observed-tools.md, raw/siege-observed-ubuntu2204.md]
-updated: 2026-10-15
+updated: 2026-10-16
 ---
 
 # 테스트 도구와 평가 시연
@@ -17,7 +17,7 @@ updated: 2026-10-15
 | `telnet`, `curl` | 기본 요청 시연 | raw/evaluation-sheet-en.md:77, raw/subject.md:123 |
 | 브라우저 네트워크 탭 | 헤더 확인 | raw/evaluation-sheet-en.md:97-98 |
 | NGINX | 동작·헤더 비교 기준 | raw/subject.md:141, raw/subject.md:186 |
-| `leaks`, `valgrind`, `e_fence` | 누수 검사. SIGINT 종료 시 valgrind 보고는 [[sources/valgrind-observed-sigint]] | raw/evaluation-sheet-en.md:25 |
+| `leaks`, `valgrind`, `e_fence` | 누수 검사. SIGINT 종료 시 valgrind 보고는 [[sources/valgrind-observed-sigint]], macOS `leaks` 보고는 [[sources/macos-observed-sigpipe-leaks]] | raw/evaluation-sheet-en.md:25 |
 
 ## 평가표에 나온 명령
 

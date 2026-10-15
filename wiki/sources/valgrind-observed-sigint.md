@@ -2,7 +2,7 @@
 title: valgrind 실측 — SIGINT로 끝난 프로세스의 누수 보고
 type: source
 sources: [raw/valgrind-observed-sigint.md, raw/evaluation-sheet-en.md]
-updated: 2026-10-15
+updated: 2026-10-16
 ---
 
 # valgrind 실측 — SIGINT로 끝난 프로세스의 누수 보고
@@ -32,4 +32,4 @@ updated: 2026-10-15
 - "All heap blocks were freed"를 보이는 것은 `cleanup` 모드뿐이었다. 기존 판단(핸들러는 플래그만 세우고, 메인 루프가 정리한 뒤 종료)을 유지한다 → [[concepts/resilience]].
 
 > [!note] 측정 범위
-> Linux(arm64)의 valgrind 하나만 측정했다. 평가표가 함께 드는 `leaks`·`e_fence`는 측정하지 않았다 (raw/evaluation-sheet-en.md:25). SIGINT는 `kill`로 프로세스 하나에 보냈고, 터미널에서 Ctrl-C를 눌렀을 때와 같은지는 확인하지 않았다. 테스트 프로그램은 `pause()`를 쓰지만 서버에서는 쓰지 않는다.
+> Linux(arm64)의 valgrind 하나만 측정했다. 평가표가 함께 드는 `leaks`·`e_fence`는 측정하지 않았다 (raw/evaluation-sheet-en.md:25). `leaks`는 이후 macOS에서 따로 측정했다 → [[sources/macos-observed-sigpipe-leaks]]. SIGINT는 `kill`로 프로세스 하나에 보냈고, 터미널에서 Ctrl-C를 눌렀을 때와 같은지는 확인하지 않았다. 테스트 프로그램은 `pause()`를 쓰지만 서버에서는 쓰지 않는다.

@@ -353,3 +353,8 @@
 - 생성: raw/siege-observed-ubuntu2204.md (테스트 서버 코드·스크립트·출력 그대로, ubuntu2204-observed-tools와 같은 이미지), sources/siege-observed-ubuntu2204
 - 갱신: sources/siege-sock (`O_NDELAY` **미확인** 해소, 실제 동작 **미확인** → 실측), concepts/testing (`-b`·`-d` **미확인**, 부하 요청 `Connection: close` **미확인** 해소, timeout 행), concepts/resilience (timeout 행), source-wishlist 6절, overview, index
 - 메모: glibc에서 `O_NDELAY`는 `O_NONBLOCK`과 같다 (raw/siege-observed-ubuntu2204.md:104-105). 응답 없는 서버에 대해 siege는 `timeout` 30초·5초 모두 150초 동안 끝나지 않았다 (raw/siege-observed-ubuntu2204.md:197-229). 부하 요청은 HTTP/1.1 + `Connection: close` (raw/siege-observed-ubuntu2204.md:140-161). `-b`가 `-d`보다 우선 (raw/siege-observed-ubuntu2204.md:164-194). `protocol` 줄 없는 설정 파일이면 HTTP/1.0으로 요청했다 (raw/siege-observed-ubuntu2204.md:239-240).
+
+## [2026-10-16] ingest | macOS 실측: MSG_NOSIGNAL과 leaks -atExit의 SIGINT 종료 보고
+- 생성: raw/macos-observed-sigpipe-leaks.md (SDK 헤더, 테스트 프로그램 3개, 명령, 출력 그대로), sources/macos-observed-sigpipe-leaks
+- 갱신: concepts/resilience (macOS `MSG_NOSIGNAL` **미확인** 해소, `leaks` **미확인** 해소, `e_fence`만 남김), concepts/testing (도구 표), sources/valgrind-observed-sigint (측정 범위 노트), overview, index
+- 메모: macOS SDK에 `MSG_NOSIGNAL`이 있고, 끊긴 TCP 연결에 `MSG_NOSIGNAL`·`SO_NOSIGPIPE`로 보내면 프로세스가 살고 `EPIPE`가 돌아왔다 (raw/macos-observed-sigpipe-leaks.md:51-53, raw/macos-observed-sigpipe-leaks.md:118-131). `leaks -atExit`는 SIGINT 기본 종료에서 아무것도 출력하지 않고 exit 0 (raw/macos-observed-sigpipe-leaks.md:224-226), 해제 없이 `main` 반환도 0 leaks (raw/macos-observed-sigpipe-leaks.md:254-256). 대조 실험에서는 누수를 보고했다 (raw/macos-observed-sigpipe-leaks.md:386-388). 기존 판단(플래그 + 정리 후 종료, SIGPIPE 무시) 유지.
