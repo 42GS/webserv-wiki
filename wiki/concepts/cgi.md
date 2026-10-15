@@ -1,7 +1,7 @@
 ---
 title: CGI
 type: concept
-sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc3875.txt, raw/rfc9112.txt, raw/rfc9110.txt, raw/posix-poll.md, raw/posix-signal-h.md, raw/posix-waitpid.md, raw/posix-bind.md, raw/posix-exit.md, raw/php-cgi-force-redirect.md, raw/php-ini-core.md, raw/rfc6265.txt, raw/posix-fcntl.md, raw/pep-0594.md, raw/os-observed-pipe-poll.md]
+sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc3875.txt, raw/rfc9112.txt, raw/rfc9110.txt, raw/posix-poll.md, raw/posix-signal-h.md, raw/posix-waitpid.md, raw/posix-bind.md, raw/posix-exit.md, raw/php-cgi-force-redirect.md, raw/php-ini-core.md, raw/rfc6265.txt, raw/posix-fcntl.md, raw/pep-0594.md, raw/os-observed-pipe-poll.md, raw/php-src-cgi_main.c]
 updated: 2026-10-15
 ---
 
@@ -85,10 +85,14 @@ RFC 3875 목록에 없는 비표준 변수다. 이 과제에서 CGI로 `php-cgi`
 
 | 변수 | 필요한 이유 | 넣을 값 | 근거 |
 |---|---|---|---|
-| `REDIRECT_STATUS` | `cgi.force_redirect`(기본 켜짐)일 때 PHP는 이 변수로 웹 서버 리다이렉트를 거친 요청인지 판단한다. 없으면 실행을 거부한다 | 값의 조건은 문서에 없다 (**미확인**). 흔히 쓰는 `200`을 넣는다 (**판단**) | raw/php-cgi-force-redirect.md:8, raw/php-cgi-force-redirect.md:17, raw/php-ini-core.md:428, raw/php-ini-core.md:548 |
-| `SCRIPT_FILENAME` | `cgi.fix_pathinfo`(기본 켜짐) 설명에서 PHP 문서는 스크립트가 `PATH_TRANSLATED` 대신 `SCRIPT_FILENAME`을 쓰라고 권한다. 서버가 이 변수를 넣어야 하는지는 문서에 없다 (아래 **미확인**) | 실행할 스크립트의 절대 경로 (**판단**) | raw/php-ini-core.md:426, raw/php-ini-core.md:544 |
+| `REDIRECT_STATUS` | `cgi.force_redirect`(기본 켜짐)일 때 PHP는 이 변수로 웹 서버 리다이렉트를 거친 요청인지 판단한다. 없으면 실행을 거부한다 | 값은 검사하지 않고 변수가 있는지만 본다 (raw/php-src-cgi_main.c:1898). 흔히 쓰는 `200`을 넣는다 (**판단**) | raw/php-cgi-force-redirect.md:8, raw/php-cgi-force-redirect.md:17, raw/php-ini-core.md:428, raw/php-ini-core.md:548 |
+| `SCRIPT_FILENAME` | `cgi.fix_pathinfo`(기본 켜짐) 설명에서 PHP 문서는 스크립트가 `PATH_TRANSLATED` 대신 `SCRIPT_FILENAME`을 쓰라고 권한다. php-cgi는 이 변수로 실행할 파일을 찾는다 (아래) | 실행할 스크립트의 절대 경로 (**판단**) | raw/php-ini-core.md:426, raw/php-ini-core.md:544, raw/php-src-cgi_main.c:1161-1170 |
 
-- php-cgi가 실행할 파일을 정확히 어느 변수로 찾는지는 문서에 없다 (**미확인**). `SCRIPT_FILENAME`과 `PATH_TRANSLATED`를 함께 설정한다 (**판단**).
+- php-cgi는 실행할 파일을 `SCRIPT_FILENAME`에서 찾고, 이것이 없을 때만 `PATH_TRANSLATED`를 쓴다 (raw/php-src-cgi_main.c:1161-1170). 예외 두 가지에서는 `PATH_TRANSLATED`가 실행할 파일이 된다 → [[sources/php-src-cgi-main]]:
+  - `REDIRECT_URL`도 함께 있을 때 (Apache용 처리, raw/php-src-cgi_main.c:1229-1240)
+  - `cgi.fix_pathinfo`가 꺼져 있고 `cgi.discard_path`(기본 0, raw/php-ini-core.md:424)도 꺼져 있을 때 (raw/php-src-cgi_main.c:1424-1434)
+- 그래서 `SCRIPT_FILENAME`에 스크립트 절대 경로를 넣고, `REDIRECT_URL`은 넣지 않으며, `PATH_TRANSLATED`는 위 표대로 `PATH_INFO`가 있을 때만 넣는다 (**판단**).
+- `REDIRECT_STATUS` 검사는 CGI 모드일 때만 한다. php-cgi는 `SERVER_SOFTWARE`, `SERVER_NAME`, `GATEWAY_INTERFACE`, `REQUEST_METHOD` 중 하나가 있으면 CGI 모드로 본다 (raw/php-src-cgi_main.c:1787-1795, raw/php-src-cgi_main.c:1886-1887). 서버는 위 표에서 MUST인 `GATEWAY_INTERFACE`·`REQUEST_METHOD`를 넘기므로 이 검사를 받는다 (**판단**).
 - `cgi.redirect_status_env`로 다른 변수 이름을 쓰게 할 수도 있지만 보안 주의가 붙어 있다 (raw/php-ini-core.md:558-564).
 - php-cgi는 기본 설정(`cgi.rfc2616_headers` = 0)에서 응답 코드를 RFC 3875 `Status:` 헤더로 보낸다 (raw/php-ini-core.md:434, raw/php-ini-core.md:568). 아래 3절의 Status 처리로 받는다. `cgi.nph` 기본값은 0이다 (raw/php-ini-core.md:430). 켜면 항상 `Status: 200`을 보낸다 (raw/php-ini-core.md:556).
 - 위 값은 PHP 기본 설정 기준이다. 평가 PC의 php-cgi 설정은 **미확인**이다.

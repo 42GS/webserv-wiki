@@ -327,3 +327,8 @@
 - 사용자 결정 (2026-10-15): virtual host 미구현, HEAD 지원, index 파일이 CGI 확장자면 CGI로 실행, 업로드는 서버가 `multipart/form-data`만 저장, 쿠키·세션 보너스는 CGI 예제
 - 갱신: concepts/configuration-file·http-features·file-upload·bonus·status-codes(415 행, IANA 이름), analysis/subject-vs-evaluation(1.3, 1.10, 6절), overview(현재 종합 판단, 열린 질문 5건 정리), index
 - 메모: 업로드 라우트에 multipart가 아닌 본문이 오면 415로 거부한다 (판단, raw/rfc9110.txt:7738-7740). 세션을 CGI 예제로 하는 것이 평가표의 "웹 서버의 세션 시스템"(raw/evaluation-sheet-en.md:126)으로 인정되는지는 열린 질문으로 남겼다.
+
+## [2026-10-15] ingest | PHP 소스 sapi/cgi/cgi_main.c
+- 생성: raw/php-src-cgi_main.c (원문 그대로, PHP-8.3 브랜치 커밋 6d99ccc, 2024-09-26), sources/php-src-cgi-main
+- 갱신: concepts/cgi ("php-cgi가 추가로 요구하는 변수" 표와 설명의 **미확인** 2건 해소), sources/php-cgi-force-redirect, source-wishlist 3절, index, overview
+- 메모: php-cgi는 실행할 파일을 `SCRIPT_FILENAME`에서 찾고 없을 때만 `PATH_TRANSLATED`를 쓴다 (raw/php-src-cgi_main.c:1161-1170). `REDIRECT_URL`이 함께 있거나 `cgi.fix_pathinfo`가 꺼져 있으면 `PATH_TRANSLATED`가 실행 파일이 된다 (raw/php-src-cgi_main.c:1229-1240, raw/php-src-cgi_main.c:1424-1434). `REDIRECT_STATUS`는 변수가 있는지만 본다 (raw/php-src-cgi_main.c:1898). 태그 php-8.3.6 원본은 `HTTP_REDIRECT_STATUS`도 받지만, Ubuntu 24.04 패키지는 CVE-2024-8927 패치로 받지 않아 패치 뒤 브랜치 파일을 받았다. 평가 PC의 php-cgi 버전과 php.ini는 **미확인**.

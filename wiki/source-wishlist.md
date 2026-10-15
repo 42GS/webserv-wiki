@@ -41,6 +41,7 @@ URL은 2026-10-15에 접속해 HTTP 200을 확인했다. 받아서 넣은 소스
 |---|---|---|---|---|---|
 | [x] | P1 | RFC 3875 — CGI Version 1.1 — `raw/rfc3875.txt`로 ingest (2026-10-15) | <https://www.rfc-editor.org/rfc/rfc3875> | 4.1 Request Meta-Variables (환경 변수 목록), CGI 응답 형식 → [[concepts/cgi]] 미확인 해소 | `raw/rfc3875.txt` |
 | [x] | P2 | PHP 매뉴얼 — Installed as CGI binary — 장 첫 페이지는 목차뿐이라 하위 절 `raw/php-cgi-force-redirect.md`와 기본값 근거 `raw/php-ini-core.md`로 ingest (2026-10-15) | <https://www.php.net/manual/en/security.cgi-bin.php> | `php-cgi` 실행 시 주의점 | `raw/php-cgi-security.md` |
+| [x] | P2 | PHP 소스 `sapi/cgi/cgi_main.c` (PHP-8.3 브랜치, 커밋 6d99ccc) — `raw/php-src-cgi_main.c`로 ingest (2026-10-15) | <https://github.com/php/php-src/blob/PHP-8.3/sapi/cgi/cgi_main.c> | php-cgi가 실행할 파일을 찾는 변수, `REDIRECT_STATUS` 값의 조건 → [[concepts/cgi]] | `raw/php-src-cgi_main.c` |
 | [x] | P3 | PEP 594 — `raw/pep-0594.md`로 ingest (2026-10-15) | <https://peps.python.org/pep-0594/> | Python 표준 라이브러리 `cgi` 모듈 제거 — Python CGI 스크립트 작성 시 참고 | `raw/pep-0594.md` |
 
 ## 4. NGINX (subject가 비교·참고 대상으로 듦, raw/subject.md:141, raw/subject.md:161)

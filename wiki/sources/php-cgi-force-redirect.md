@@ -23,4 +23,4 @@ PHP 매뉴얼 "Installed as CGI binary" 장의 한 절이다 (원본 HTML의 탐
 
 ## 이 문서로 확인하지 못한 것
 
-- `REDIRECT_STATUS`에 어떤 값을 넣어야 하는지 → [[concepts/cgi]].
+- `REDIRECT_STATUS`에 어떤 값을 넣어야 하는지. 소스로 확인했다: 값은 보지 않고 변수가 있는지만 본다 → [[sources/php-src-cgi-main]].
