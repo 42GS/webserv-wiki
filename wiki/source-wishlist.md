@@ -19,7 +19,7 @@ URL은 2026-10-15에 접속해 HTTP 200을 확인했다. 받아서 넣은 소스
 | | 우선 | 소스 | URL | 해소할 것 | 제안 파일명 |
 |---|---|---|---|---|---|
 | [x] | P1 | 42 EvalHub 평가표 **영어 원문** — `raw/evaluation-sheet-en.md`로 ingest (2026-10-15) | <https://www.42evalhub.com/common/webserv> | 정리본의 미확인 3건 (Norm 문구, URL 빠진 curl, 1.6 세 번째 항목), "같은 포트" 문구 → [[analysis/subject-vs-evaluation]] | `raw/evaluation-sheet-en.md` |
-| [ ] | P2 | 평가 첨부 `tester`, `cgi_tester` 사용법 | 42 intra 평가 페이지 (공개 URL 없음) | 테스터가 기대하는 동작 → [[concepts/testing]] | `raw/tester-notes.md` |
+| [-] | P2 | 평가 첨부 `tester`, `cgi_tester` 사용법 — 받지 않음: 사용자 결정 (2026-10-15) | 42 intra 평가 페이지 (공개 URL 없음) | 테스터가 기대하는 동작 → [[concepts/testing]] | `raw/tester-notes.md` |
 
 ## 2. HTTP 명세 (RFC)
 

@@ -226,3 +226,6 @@
 - 갱신: concepts/cgi (6절 Python 테스트 스크립트 작성), concepts/testing, overview, index, source-wishlist
 - 새 미확인: 평가 Ubuntu의 Python 버전 (`cgi`를 쓰지 않으면 결론에 영향 없음)
 - 수정: analysis/subject-vs-evaluation 6절에 Ubuntu에서의 `fcntl()` 허용 질문 추가 (멀티플렉서 결정 때 overview에만 넣고 빠뜨림)
+
+## [2026-10-15] query | wishlist 정리: tester 자료 제외
+- 결정: 평가 첨부 `tester`, `cgi_tester` 사용법은 받지 않음 (사용자 결정) → source-wishlist `[-]`
