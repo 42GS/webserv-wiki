@@ -20,7 +20,7 @@ updated: 2026-10-15
 | `connection` | `close` | 요청마다 연결을 새로 맺음 (**판단**). keep-alive는 권장하지 않는다는 경고가 붙어 있음 | raw/siegerc.in:255-268 |
 | `protocol` | `HTTP/1.1` | 요청 프로토콜. 서버의 HTTP/1.1 구현이 이상하면 HTTP/1.0으로 바꾸라고 안내 | raw/siegerc.in:205-213 |
 | `chunked` | `true` | chunked 응답을 처리 | raw/siegerc.in:216-223 |
-| `timeout` | (주석, 기본 30초) | 소켓 연결 타임아웃 | raw/siegerc.in:353-358 |
+| `timeout` | (주석, 기본 30초) | 소켓 연결 타임아웃. 소스에서의 쓰임은 [[sources/siege-sock]] | raw/siegerc.in:353-358 |
 | `failures` | (주석, 기본 1024) | 연결 실패가 이만큼 쌓이면 중단. 4xx·5xx는 세지 않음 | raw/siegerc.in:381-393 |
 | `concurrent` | `25` | 기본 동시 사용자 수 | raw/siegerc.in:271-277 |
 | `limit` | `255` | 동시 사용자 상한 | raw/siegerc.in:193-202 |

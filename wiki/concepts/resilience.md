@@ -1,7 +1,7 @@
 ---
 title: 안정성 (크래시·hang·누수)
 type: concept
-sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/siege.pod, raw/siegerc.in, raw/posix-signal-h.md, raw/posix-send.md, raw/posix-waitpid.md, raw/posix-bind.md, raw/posix-exit.md, raw/posix-poll.md, raw/nginx-rewrite-module.md, raw/nginx-index-module.md, raw/nginx-core-module.md, raw/rfc3875.txt]
+sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/siege.pod, raw/siegerc.in, raw/posix-signal-h.md, raw/posix-send.md, raw/posix-waitpid.md, raw/posix-bind.md, raw/posix-exit.md, raw/posix-poll.md, raw/nginx-rewrite-module.md, raw/nginx-index-module.md, raw/nginx-core-module.md, raw/rfc3875.txt, raw/siege-sock.c]
 updated: 2026-10-15
 ---
 
@@ -24,7 +24,7 @@ subject와 평가표 모두 "서버가 항상 살아 있어야 한다"를 가장
 | siege 중 프로세스 메모리가 무한히 늘지 않음 | raw/evaluation-sheet-en.md:115 |
 | hang 상태 연결 없음 | raw/evaluation-sheet-en.md:116 |
 | 재시작 없이 `siege -b`를 무한히 돌릴 수 있음 | raw/evaluation-sheet-en.md:117 |
-| `siege -b` availability 99.5% 초과. Availability는 소켓 연결 성공률이고 4xx·5xx는 포함되지 않는다 → 연결 거부·끊김·타임아웃을 막는 게 핵심. 기본 설정의 siege는 `connection = close`라 요청마다 새 연결을 맺는다고 보고(raw/siegerc.in:268, **판단**), 소켓 타임아웃(설정 파일 설명은 "socket connection timeouts", 기본 30초, raw/siegerc.in:353-354)도 실패로 센다. 이 타임아웃이 응답 대기에도 걸리는지는 **미확인**(siege 소스에서 `timeout` 사용처를 확인 → [[source-wishlist]] 6절) | raw/evaluation-sheet-en.md:114, raw/siege.pod:373-378 |
+| `siege -b` availability 99.5% 초과. Availability는 소켓 연결 성공률이고 4xx·5xx는 포함되지 않는다 → 연결 거부·끊김·타임아웃을 막는 게 핵심. 기본 설정의 siege는 `connection = close`라 요청마다 새 연결을 맺는다고 보고(raw/siegerc.in:268, **판단**), 소켓 타임아웃(설정 파일 설명은 "socket connection timeouts", 기본 30초, raw/siegerc.in:353-354)도 실패로 센다. siege 소스에서 이 값은 `read()` 직전마다 하는 준비 검사의 대기 시간으로도 쓰인다 (raw/siege-sock.c:360-362, raw/siege-sock.c:611-626). 다만 그 검사가 읽기·쓰기 집합을 함께 보므로 응답 대기에는 실제로 걸리지 않을 수 있다 (raw/siege-sock.c:370-374, **판단**) → [[sources/siege-sock]] | raw/evaluation-sheet-en.md:114, raw/siege.pod:373-378 |
 | CGI 에러·무한 루프에도 크래시 없이 에러가 보여야 함 | raw/evaluation-sheet-en.md:91-93 |
 
 ## 설계로 이어지는 점

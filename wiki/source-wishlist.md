@@ -99,7 +99,9 @@ POSIX가 동작을 정하지 않아 OS별로 직접 확인해야 하는 것. 평
 |---|---|---|---|---|---|
 | [x] | P2 | siege 매뉴얼 (`doc/siege.pod`) — `raw/siege.pod`로 ingest (2026-10-15) | <https://raw.githubusercontent.com/JoeDog/siege/master/doc/siege.pod> | `-b` 옵션 의미, availability 계산, keep-alive 동작 → [[concepts/testing]]. 기존 `joedog.org/siege-manual/`은 404 | `raw/siege-manual.md` |
 | [x] | P2 | siege 기본 설정 템플릿 (`doc/siegerc.in`) — `raw/siegerc.in`으로 ingest (2026-10-15) | <https://raw.githubusercontent.com/JoeDog/siege/master/doc/siegerc.in> | keep-alive 기본값 (`connection`), 동시 사용자 상한 → [[concepts/testing]] | `raw/siegerc.in` |
-| [ ] | P2 | siege 소켓 코드 (`src/sock.c`) | <https://raw.githubusercontent.com/JoeDog/siege/master/src/sock.c> | `timeout` 설정이 연결뿐 아니라 응답 읽기 대기에도 걸리는지 → [[concepts/testing]], [[concepts/resilience]]. 2026-10-15 HTTP 200 확인 | `raw/siege-sock.c` |
+| [x] | P2 | siege 소켓 코드 (`src/sock.c`) — `raw/siege-sock.c`로 ingest (2026-10-15). 읽기마다 준비 검사에 쓰이지만 select 구현상 응답 대기에 실효가 없을 수 있음(판단). 다른 파일의 타이머는 **미확인** | <https://raw.githubusercontent.com/JoeDog/siege/master/src/sock.c> | `timeout` 설정이 연결뿐 아니라 응답 읽기 대기에도 걸리는지 → [[concepts/testing]], [[concepts/resilience]]. 2026-10-15 HTTP 200 확인 | `raw/siege-sock.c` |
+
+| [ ] | P3 | siege 나머지 소스 (`src/`의 `client.c` 등) | <https://github.com/JoeDog/siege/tree/master/src> | 응답 대기에 별도 타이머·`SO_RCVTIMEO`가 있는지 → [[sources/siege-sock]] | `raw/siege-<파일>.c` |
 
 ## 7. 쿠키·세션 (보너스)
 

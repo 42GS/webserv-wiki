@@ -1,7 +1,7 @@
 ---
 title: 테스트 도구와 평가 시연
 type: concept
-sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/siege.pod, raw/siegerc.in, raw/evaluation-sheet.md, raw/rfc9112.txt, raw/pep-0594.md]
+sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/siege.pod, raw/siegerc.in, raw/evaluation-sheet.md, raw/rfc9112.txt, raw/pep-0594.md, raw/siege-sock.c]
 updated: 2026-10-15
 ---
 
@@ -65,7 +65,7 @@ curl -X POST -H "Content-Type: plain/text" \
 |---|---|---|---|
 | `connection` | `close` | **요청마다 새 TCP 연결** (**판단**). keep-alive는 권장하지 않음 | raw/siegerc.in:255-268 |
 | `protocol` | `HTTP/1.1` | HTTP/1.1 파싱 규칙 적용 (Host 필수 등) → [[concepts/request-parsing]] | raw/siegerc.in:213 |
-| `timeout` | 30초 | 소켓 연결 타임아웃. 타임아웃은 연결 실패로 집계 → Availability 하락. 응답 대기에도 걸리는지는 **미확인**(siege 소스에서 `timeout` 사용처 확인 → [[source-wishlist]] 6절) | raw/siegerc.in:353-354, raw/siege.pod:374-376 |
+| `timeout` | 30초 | 소켓 연결 타임아웃. 타임아웃은 연결 실패로 집계 → Availability 하락. siege 소스에서 이 값은 `read()` 직전마다 하는 준비 검사의 대기 시간으로도 쓰인다 (raw/siege-sock.c:360-362, raw/siege-sock.c:611-626). 다만 그 검사가 읽기·쓰기 집합을 함께 보므로 응답 대기에는 실제로 걸리지 않을 수 있다 (raw/siege-sock.c:370-374, **판단**) → [[sources/siege-sock]] | raw/siegerc.in:353-354, raw/siege.pod:374-376 |
 | `failures` | 1024 | 연결 실패가 이만큼 쌓이면 siege 중단. 4xx·5xx는 세지 않음 | raw/siegerc.in:381-389 |
 | `concurrent` / `limit` | 25 / 255 | 기본 동시 사용자 / 상한 | raw/siegerc.in:277, raw/siegerc.in:202 |
 

@@ -311,3 +311,8 @@
 - 인용·표기 정정: 정리본 첨부 31-33 → 32-33, rfc1945 절 이름 2곳, "_" 문장 지시 대상 140 추가, rfc3875 Status 정의 1443-1445, cgi 표의 "1355-1357, 502 정의"가 502행 인용처럼 읽히던 표기, 측정일 인용(os-observed 3-4, nginx-observed 3), REMOTE_ADDR MUST 인용, RFC 7230 대체 관계(9110·9112가 일부씩).
 - 출처 표시: siege·siegerc 커밋 정보는 받을 때 GitHub에서 본 값(raw에 없음), PHP 장 이름은 원본 HTML 메뉴.
 - 구조: 깨진 위키링크 없음, inbound 없는 페이지는 index·log뿐, 인용한 raw는 모두 frontmatter `sources`에 있음, 표 칸 수 불일치 없음 (목록은 검색으로 뽑고 읽어서 확인).
+
+## [2026-10-15] ingest | siege 소켓 코드 (src/sock.c)
+- 생성: raw/siege-sock.c (원문 그대로, 커밋 e2a6bc9, 2023-12-06), sources/siege-sock
+- 갱신: concepts/resilience·testing (응답 대기 timeout **미확인** → 원문 확인 + 판단), sources/siegerc, source-wishlist 6절(체크, 나머지 소스 항목 추가), index, overview
+- 메모: `timeout`은 연결 직후와 `read()` 직전마다 하는 준비 검사의 대기 시간이다 (raw/siege-sock.c:360-362, raw/siege-sock.c:611-626). 그 검사가 읽기·쓰기 집합을 함께 보므로 응답 대기에는 실효가 없을 수 있다고 판단했다 (raw/siege-sock.c:370-374). 다른 소스 파일의 타이머, `O_NDELAY`와 `O_NONBLOCK`이 같은 값인지, 평가 PC의 siege 버전은 **미확인**.
