@@ -24,7 +24,7 @@ updated: 2026-10-15
 | Guidelines | Git 저장소 내용만, 크래시 시 0점, 설정 파일 외 수정은 평가받는 사람과 합의해야 함, 누수 검사 (raw/evaluation-sheet-en.md:18-25) | [[concepts/resilience]] |
 | Attachments | `subject.pdf`, `tester`, `cgi_tester` (raw/evaluation-sheet-en.md:29-31) | [[concepts/testing]] |
 | README.md Compliance Check | 필수 요소 하나라도 없으면 0점 (raw/evaluation-sheet-en.md:35-44) | [[concepts/build-and-submission]] |
-| Check the code | 이벤트 메커니즘 설명, 단일 `poll()`, readiness 후 I/O, errno 금지, 디스크 I/O가 루프를 막지 않음 (raw/evaluation-sheet-en.md:46-61) | [[concepts/io-multiplexing]] |
+| Check the code | 이벤트 메커니즘 설명, `poll()`을 하나만 쓰는지 질문, readiness 후 I/O, errno 금지, 디스크 I/O가 루프를 막지 않음 (raw/evaluation-sheet-en.md:46-61) | [[concepts/io-multiplexing]] |
 | Configuration | 여러 interface·port, 에러 페이지, body 제한, 라우트, index, 메서드 (raw/evaluation-sheet-en.md:63-73) | [[concepts/configuration-file]] |
 | Basic checks | GET/POST/DELETE, UNKNOWN, status code, 업로드 후 다운로드 (raw/evaluation-sheet-en.md:75-82) | [[concepts/http-features]] |
 | Check CGI | 작업 디렉토리, GET/POST, 에러·무한 루프 스크립트 (raw/evaluation-sheet-en.md:84-93) | [[concepts/cgi]] |

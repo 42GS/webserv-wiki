@@ -43,7 +43,7 @@ URL은 2026-10-15에 접속해 HTTP 200을 확인했다. 받아서 넣은 소스
 | [x] | P2 | PHP 매뉴얼 — Installed as CGI binary — 장 첫 페이지는 목차뿐이라 하위 절 `raw/php-cgi-force-redirect.md`와 기본값 근거 `raw/php-ini-core.md`로 ingest (2026-10-15) | <https://www.php.net/manual/en/security.cgi-bin.php> | `php-cgi` 실행 시 주의점 | `raw/php-cgi-security.md` |
 | [x] | P3 | PEP 594 — `raw/pep-0594.md`로 ingest (2026-10-15) | <https://peps.python.org/pep-0594/> | Python 표준 라이브러리 `cgi` 모듈 제거 — Python CGI 스크립트 작성 시 참고 | `raw/pep-0594.md` |
 
-## 4. NGINX (subject가 비교 기준으로 지정, raw/subject.md:141, raw/subject.md:161)
+## 4. NGINX (subject가 비교·참고 대상으로 듦, raw/subject.md:141, raw/subject.md:161)
 
 | | 우선 | 소스 | URL | 해소할 것 | 제안 파일명 |
 |---|---|---|---|---|---|
@@ -73,7 +73,7 @@ URL은 2026-10-15에 접속해 HTTP 200을 확인했다. 받아서 넣은 소스
 > [!note] 정리 (2026-10-15)
 > 처음 4건 중 두 건은 RFC가 답을 정하므로 닫았다. 나머지 두 건(디렉토리 301, 리스팅 off 403)은 RFC가 코드를 정하지 않아 **판단**으로 확정한 뒤, NGINX 실측으로 같음을 확인했다 ([[sources/nginx-observed-directory]]). subject는 NGINX를 비교 대상으로 쓸 수 있다고 할 뿐 따르라고 하지 않는다 (raw/subject.md:186).
 
-nginx.org에 정적 파일 모듈 문서가 없고(`ngx_http_static_module.html` 404, 2026-10-15 확인), access 모듈 문서에도 응답 코드가 없다. subject가 권하는 대로 NGINX를 직접 실행해 비교한다 (raw/subject.md:186). 로컬에는 NGINX가 설치되어 있지 않다 (2026-10-15 확인). NGINX 공식 Docker 이미지로 측정했다.
+nginx.org에 정적 파일 모듈 문서가 없고(`ngx_http_static_module.html` 404, 2026-10-15 확인), access 모듈 문서에도 응답 코드가 없다. subject가 비교 대상으로 든 NGINX를 직접 실행해 비교한다 (raw/subject.md:186). 로컬에는 NGINX가 설치되어 있지 않다 (2026-10-15 확인). NGINX 공식 Docker 이미지로 측정했다.
 
 | | 우선 | 확인할 것 | 방법 | 결과 저장 |
 |---|---|---|---|---|
@@ -110,7 +110,7 @@ POSIX가 동작을 정하지 않아 OS별로 직접 확인해야 하는 것. 평
 ## 넣지 않는 것
 
 - C++98 표준(ISO/IEC 14882:1998)은 유료 문서다. cppreference는 커뮤니티 위키라 근거로 쓰지 않는다. 필요해지면 따로 정한다.
-- RFC 7230~7235는 대체된 문서라 넣지 않는다. 7230·7231·7232·7233·7235는 RFC 9110이 대체했고 (raw/rfc9110.txt:8-9), 7230은 RFC 9112도 대체했다 (raw/rfc9112.txt:8). 7234(캐싱)를 RFC 9111이 대체했다는 것은 RFC 9111을 받지 않아 머리말로 확인하지 않았다 (**미확인** — 확인: <https://www.rfc-editor.org/rfc/rfc9111.txt> 머리말). 캐싱은 과제 범위 밖이라 RFC 9111도 넣지 않는다.
+- RFC 7230~7235는 대체된 문서라 넣지 않는다. 7231·7232·7233·7235는 RFC 9110이 대체했고 (raw/rfc9110.txt:8-9), 7230은 RFC 9110과 RFC 9112가 일부씩 대체했다 (raw/rfc9110.txt:27-28, raw/rfc9112.txt:8, raw/rfc9112.txt:24). 7234(캐싱)를 RFC 9111이 대체했다는 것은 RFC 9111을 받지 않아 머리말로 확인하지 않았다 (**미확인** — 확인: <https://www.rfc-editor.org/rfc/rfc9111.txt> 머리말). 캐싱은 과제 범위 밖이라 RFC 9111도 넣지 않는다.
 
 ## 받는 방법
 

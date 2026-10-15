@@ -63,18 +63,18 @@ curl -X POST -H "Content-Type: plain/text" \
 
 | 설정 | 기본값 | 서버에 주는 의미 | 근거 |
 |---|---|---|---|
-| `connection` | `close` | **요청마다 새 TCP 연결.** keep-alive는 권장하지 않음 | raw/siegerc.in:255-268 |
+| `connection` | `close` | **요청마다 새 TCP 연결** (**판단**). keep-alive는 권장하지 않음 | raw/siegerc.in:255-268 |
 | `protocol` | `HTTP/1.1` | HTTP/1.1 파싱 규칙 적용 (Host 필수 등) → [[concepts/request-parsing]] | raw/siegerc.in:213 |
 | `timeout` | 30초 | 소켓 연결 타임아웃. 타임아웃은 연결 실패로 집계 → Availability 하락. 응답 대기에도 걸리는지는 **미확인**(siege 소스에서 `timeout` 사용처 확인 → [[source-wishlist]] 6절) | raw/siegerc.in:353-354, raw/siege.pod:374-376 |
 | `failures` | 1024 | 연결 실패가 이만큼 쌓이면 siege 중단. 4xx·5xx는 세지 않음 | raw/siegerc.in:381-389 |
 | `concurrent` / `limit` | 25 / 255 | 기본 동시 사용자 / 상한 | raw/siegerc.in:277, raw/siegerc.in:202 |
 
 - 템플릿이므로 평가 PC의 실제 설정 파일과 다를 수 있다 (**미확인**). 평가 전에 평가자와 `~/.siege/siege.conf`의 `connection`, `protocol`, `timeout`을 함께 확인하면 좋다.
-- `delay` 기본값은 매뉴얼(0.5초, raw/siege.pod:186-187)과 템플릿(0.0, raw/siegerc.in:350)이 다르다. 평가는 `-b`라서 영향이 없다.
+- `delay` 기본값은 매뉴얼(0.5초, raw/siege.pod:186-187)과 템플릿(0.0, raw/siegerc.in:350)이 다르다. 평가표의 availability 확인은 `-b`로 하므로 (raw/evaluation-sheet-en.md:114) 그때는 영향이 없다.
 
 ### 서버 구현에 주는 결론
 
-- 기본 설정의 siege는 요청마다 연결을 새로 맺는다 (raw/siegerc.in:268). 그래서 99.5%를 좌우하는 것은 **`accept` 처리, 응답 후 연결 종료, 연결이 몰릴 때 거부되지 않는지**다.
+- 기본 설정의 siege는 `connection = close`라 요청마다 연결을 새로 맺는다고 본다 (raw/siegerc.in:268, **판단**). 그래서 99.5%를 좌우하는 것은 **`accept` 처리, 응답 후 연결 종료, 연결이 몰릴 때 거부되지 않는지**다.
 - 매뉴얼의 `-g`·`-p` 예시 요청에는 `Connection: close` 헤더가 들어 있다 (raw/siege.pod:92-97, raw/siege.pod:118-123). 부하 테스트 요청에도 넣는지는 매뉴얼에 없다 (**미확인**). 넣는다면 서버는 응답 후 종료를 시작해야 한다 (MUST, raw/rfc9112.txt:1521-1526) → [[concepts/connection-management]].
 
 ## 권장 사항

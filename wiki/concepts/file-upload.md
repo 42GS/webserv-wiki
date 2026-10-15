@@ -16,7 +16,7 @@ updated: 2026-10-15
 | 평가: 파일 몇 개를 업로드하고 다시 받아 봄 | raw/evaluation-sheet-en.md:82 |
 | 평가: body 크기 제한 테스트 | raw/evaluation-sheet-en.md:70 |
 
-subject는 업로드 형식을 정하지 않는다. 브라우저의 폼 파일 업로드는 `multipart/form-data`를 쓴다. 이 형식은 HTML 폼에서 나왔고 대부분의 브라우저와 서버가 구현한다 (raw/rfc7578.txt:105-110). 평가에서 브라우저로 업로드할 수 있으므로 multipart 처리가 사실상 필요하다 (**판단**).
+subject는 업로드 형식을 정하지 않는다. 브라우저의 폼 파일 업로드는 `multipart/form-data`를 쓴다. 이 형식은 HTML 폼에서 나왔고 많은 브라우저와 서버가 구현한다 (raw/rfc7578.txt:105-110). 평가에서 브라우저로 업로드할 수 있으므로 multipart 처리가 사실상 필요하다 (**판단**).
 
 ## multipart/form-data 구조
 

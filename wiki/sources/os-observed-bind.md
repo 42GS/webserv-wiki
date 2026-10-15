@@ -7,7 +7,7 @@ updated: 2026-10-15
 
 # OS 실측 — bind 재시작·와일드카드 충돌
 
-원본: `raw/os-observed-bind.md`. 테스트 프로그램(`reuse.c`, `wildcard.c`)을 macOS와 Ubuntu 24.04 Docker 컨테이너에서 실행한 소스·명령·출력을 그대로 담았다 (2026-10-15).
+원본: `raw/os-observed-bind.md`. 테스트 프로그램(`reuse.c`, `wildcard.c`)을 macOS와 Ubuntu 24.04 Docker 컨테이너에서 실행한 소스·명령·출력을 그대로 담았다 (2026-10-15, raw/os-observed-bind.md:3-4).
 
 > [!note] 측정 환경의 한계
 > 컨테이너의 커널은 OrbStack VM의 Linux 커널(`7.0.14-orbstack`)이다 (raw/os-observed-bind.md:24, raw/os-observed-bind.md:29). 평가 머신의 Ubuntu 커널에서 측정한 것이 아니다. 결과의 원인(커널 내부 동작)은 확인하지 않았고 결과만 기록한다.

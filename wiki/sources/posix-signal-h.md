@@ -23,7 +23,7 @@ POSIX.1-2024 (IEEE Std 1003.1-2024) 표준 문서다 (raw/posix-signal-h.md:6).
 | 시그널 표 (114-292) | 시그널별 기본 동작 | [[concepts/resilience]], [[concepts/cgi]] |
 | 기본 동작 기호 (294-310) | T·A·I·S의 뜻 | [[concepts/resilience]] |
 
-다루지 않는 부분: 실시간 시그널, `sigaction`·`siginfo_t` 구조체, 스레드 관련 정의. 과제의 허용 함수는 `signal`과 `kill`뿐이다 (raw/subject.md:113).
+다루지 않는 부분: 실시간 시그널, `sigaction`·`siginfo_t` 구조체, 스레드 관련 정의. 과제의 허용 함수 중 시그널 관련은 `signal`과 `kill`뿐이다 (raw/subject.md:113).
 
 ## 과제 관련 시그널
 

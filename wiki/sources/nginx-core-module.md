@@ -8,7 +8,7 @@ updated: 2026-10-15
 # NGINX ngx_http_core_module
 
 원본: `raw/nginx-core-module.md`. <https://nginx.org/en/docs/http/ngx_http_core_module.html>을 2026-10-15에 받아 `div#content`의 텍스트를 markdown으로 옮겼다 (raw/nginx-core-module.md:1-4). 원본 HTML은 `raw/nginx-core-module.source.html`.
-subject는 동작이 궁금하면 NGINX와 비교하라고 하고 (raw/subject.md:186), 설정 파일은 NGINX `server` 섹션을 참고하라고 한다 (raw/subject.md:161). 이 문서는 그 비교 기준이다.
+subject는 동작이 궁금하면 NGINX와 비교해 볼 수 있다고 하고 (raw/subject.md:186), 설정 파일은 NGINX `server` 섹션을 참고해도 된다고 한다 (raw/subject.md:161). 이 문서는 그 비교 기준이다.
 
 > [!note] 변환 검증
 > 변환 스크립트와 별개의 방법(정규식으로 태그 제거)으로 HTML 텍스트를 뽑아 비교했다. 공백을 뺀 문자열 55,481자가 같았다. 단어 단위 차이 153건은 모두 HTML 태그 경계에서 단어가 갈라진 것이었다.
@@ -32,8 +32,8 @@ subject는 동작이 궁금하면 NGINX와 비교하라고 하고 (raw/subject.m
 
 ## 핵심
 
-- `root`는 URI 전체를 붙이고, `alias`는 location 부분을 바꿔 끼운다 (raw/nginx-core-module.md:1516, raw/nginx-core-module.md:132-140). subject 예시는 `alias` 방식이다.
-- location은 정규화된 URI로 매칭하고, prefix 중 가장 긴 것을 고른다 (raw/nginx-core-module.md:1063, raw/nginx-core-module.md:1067).
+- `root`는 URI 전체를 붙이고, `alias`는 location 부분을 바꿔 끼운다 (raw/nginx-core-module.md:1516, raw/nginx-core-module.md:132-140). subject 예시(`/kapouet` → `/tmp/www`)는 location 부분을 바꿔 끼우므로 `alias` 방식에 가깝다 (raw/subject.md:169, **판단**).
+- location은 정규화된 URI로 매칭한다. prefix 중 가장 긴 것을 기억해 두고, 정규식을 설정 순서대로 검사해 처음 맞는 것을 쓰며, 맞는 정규식(과 predicate)이 없을 때 기억한 prefix를 쓴다 (raw/nginx-core-module.md:1063, raw/nginx-core-module.md:1067).
 - `default_server`가 없으면 그 `address:port`의 첫 server가 기본이다 (raw/nginx-core-module.md:963).
 
 ## 이 문서로 확인하지 못한 것

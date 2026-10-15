@@ -20,8 +20,8 @@ updated: 2026-10-15
 | 단계 | 내용 | 위키 페이지 |
 |---|---|---|
 | 0. Guidelines | Git 저장소 내용만, 크래시 시 즉시 0점, 설정 파일 외 수정은 학생과 합의해야 함, 누수 검사 필수 (raw/evaluation-sheet.md:15-25) | [[concepts/resilience]] |
-| 0. Attachments | `tester`, `ubuntu_tester`, `cgi_tester`, `ubuntu_cgi_tester` (raw/evaluation-sheet.md:31-33) | [[concepts/testing]] |
-| 1.1 코드 질의 | I/O 멀티플렉싱 설명, 단일 `select()`, read/write 동시 감시, 1회 1 I/O, errno 금지 (raw/evaluation-sheet.md:39-57) | [[concepts/io-multiplexing]] |
+| 0. Attachments | `tester`, `ubuntu_tester`, `cgi_tester`, `ubuntu_cgi_tester` (raw/evaluation-sheet.md:32-33) | [[concepts/testing]] |
+| 1.1 코드 질의 | I/O 멀티플렉싱 설명, `select()` 한 개만 쓰는지 질문, read/write 동시 감시, 1회 1 I/O, errno 금지 (raw/evaluation-sheet.md:39-57) | [[concepts/io-multiplexing]] |
 | 1.2 Configuration | 여러 포트·호스트네임, 에러 페이지, body 제한, 라우트별 디렉토리·index·메서드 (raw/evaluation-sheet.md:59-77) | [[concepts/configuration-file]] |
 | 1.3 Basic checks | GET/POST/DELETE, UNKNOWN 메서드, 업로드 후 다운로드 (raw/evaluation-sheet.md:79-86) | [[concepts/http-features]] |
 | 1.4 CGI | 작업 디렉토리, GET/POST, 무한 루프·에러 스크립트 (raw/evaluation-sheet.md:88-97) | [[concepts/cgi]] |

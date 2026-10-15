@@ -32,9 +32,9 @@ updated: 2026-10-15
 - `*`는 이름의 맨 앞이나 맨 끝, 점 경계에만 올 수 있다. `*.example.org`는 `www.sub.example.org`에도 맞는다 (raw/nginx-server-names.md:52).
 - 빈 이름 `""`은 Host가 없는 요청에 맞는다. `server_name`이 없으면 빈 이름을 쓴다 (raw/nginx-server-names.md:110-120).
 - IP 주소로 요청하면 Host에 IP가 들어오므로 IP를 이름으로 넣어 매칭할 수 있다 (raw/nginx-server-names.md:126).
-- `_`는 특별한 이름이 아니다. default server는 `server_name`이 아니라 `listen`의 속성이다 (raw/nginx-server-names.md:150-152, raw/nginx-request-processing.md:46).
+- `_`는 특별한 이름이 아니다. default server는 `server_name`이 아니라 `listen`의 속성이다 (raw/nginx-server-names.md:140, raw/nginx-server-names.md:150-152, raw/nginx-request-processing.md:46).
 - server는 요청줄을 처리한 뒤, Host를 처리한 뒤에 정해진다. 둘 다로 정해지지 않으면 빈 이름을 쓴다 (raw/nginx-server-names.md:188-196).
-- 요청줄을 읽기 전에 쓰이는 설정(`client_header_buffer_size`, `merge_slashes`)은 default server 설정을 따른다 (raw/nginx-server-names.md:204).
+- 요청줄을 읽기 전에 쓰이는 설정(`client_header_buffer_size`, `merge_slashes`)은 default server 설정(SSL이면 SNI로 고른 server 설정)을 따른다 (raw/nginx-server-names.md:204).
 - 에러 응답은 그 시점에 요청을 맡은 server의 `error_page`로 처리한다 (raw/nginx-server-names.md:208).
 - 포트에 server가 하나뿐이면 이름을 검사하지 않는다 (raw/nginx-server-names.md:267).
 

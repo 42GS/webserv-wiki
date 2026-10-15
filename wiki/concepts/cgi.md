@@ -29,7 +29,7 @@ updated: 2026-10-15
 | 단계 | 할 일 | 근거 |
 |---|---|---|
 | 1. 스크립트 선택 | 설정의 확장자 규칙으로 CGI 여부 결정. URI 경로의 앞부분이 스크립트, 나머지는 스크립트가 해석할 경로(`PATH_INFO`) | raw/subject.md:173, raw/rfc3875.txt:457-464 |
-| 1-1. `..` 처리 | 경로를 script-path와 extra-path로 **나누기 전에** `..`를 제거하거나 해석 | raw/rfc3875.txt:1801-1803 → [[concepts/security]] |
+| 1-1. `..` 처리 | 경로를 script-path와 extra-path로 **나누기 전에** `..`를 제거하거나 해석 (should). 다른 방법으로, `PATH_TRANSLATED`를 만들 때 기대한 경로 밖으로 나가지 않게 해도 된다 | raw/rfc3875.txt:1801-1806 → [[concepts/security]] |
 | 2. 본문 준비 | chunked 등 transfer coding을 제거하고 `CONTENT_LENGTH`를 다시 계산 (MUST). 불가능하면 요청 거부 (SHOULD) | raw/rfc3875.txt:1093-1097, raw/subject.md:179 |
 | 3. 환경 구성 | 메타변수를 환경 변수로 전달 (아래 표) | raw/rfc3875.txt:1554-1557 |
 | 4. 실행 | `fork` 후 자식에서 표준 입출력을 pipe로 연결하고, **필요 없는 fd(listen 소켓, 다른 클라이언트 소켓, 다른 CGI pipe)를 닫은 뒤**, 작업 디렉토리를 스크립트 디렉토리로 바꾸고 (SHOULD) `execve` | raw/rfc3875.txt:1564-1566, raw/subject.md:113 |
@@ -43,7 +43,7 @@ updated: 2026-10-15
 - **자식이 물려받은 fd:** `FD_CLOEXEC`가 없는 fd는 exec 뒤에도 열려 있다 (raw/posix-fcntl.md:52). 자식이 다른 클라이언트 소켓을 쥐고 있으면 서버가 그 연결을 `close`해도 실제로는 닫히지 않을 수 있다 (**판단**). `FD_CLOEXEC`는 `F_SETFD`로 설정하는데 이 명령은 subject 허용 목록에 없으므로 (raw/subject.md:157) 자식에서 `execve` 전에 필요 없는 fd를 `close`한다 → [[analysis/subject-vs-evaluation]] 1.11절.
 - **출력 pipe의 `POLLHUP`:** 스크립트가 출력을 다 쓰고 pipe의 쓰는 쪽을 닫으면 `POLLHUP`이 온다. `POLLHUP`은 `POLLIN`과 동시에 올 수 있다 (raw/posix-poll.md:74). 즉 아직 읽지 않은 출력이 남아 있을 수 있으므로, `POLLHUP`을 보자마자 닫지 말고 `read()`가 0(EOF)을 돌려줄 때까지 읽는다. RFC 3875의 "EOF까지 모두 읽음 (MUST)"(raw/rfc3875.txt:1522-1524)을 지키는 방법이다.
   - 실측: Ubuntu에서는 남은 데이터를 다 읽은 뒤 `POLLIN` 없이 `POLLHUP`만 온다. macOS는 `POLLIN`도 함께 켠다 (raw/os-observed-pipe-poll.md:178, raw/os-observed-pipe-poll.md:193). 그래서 **`POLLHUP`만 와도 `read()`해서 0을 확인한다.** `POLLIN`일 때만 읽으면 Ubuntu에서 EOF를 놓치고 busy waiting이 된다 (**판단**) → [[sources/os-observed-pipe-poll]].
-- **입력 pipe:** 스크립트가 본문을 다 읽지 않고 종료하면 서버의 입력 pipe 쓰기가 실패할 수 있다. POSIX는 write가 -1을 돌려줄 오류 상태를 `POLLERR`로 보고한다고 한다 (raw/posix-poll.md:70). 읽는 쪽이 모두 닫힌 pipe는 실측에서 macOS는 `POLLHUP`, Ubuntu는 `POLLOUT`+`POLLERR`로 보고했고, 그 뒤 `write()`는 양쪽 모두 -1이었다 (raw/os-observed-pipe-poll.md:171-172, raw/os-observed-pipe-poll.md:186-187). Ubuntu는 `POLLOUT`도 켜므로 `POLLERR`·`POLLHUP`을 **먼저** 검사해 "입력 전달 중단"으로 처리한다 (**판단**) → [[sources/os-observed-pipe-poll]]. 신호(`SIGPIPE`) 처리는 [[concepts/resilience]].
+- **입력 pipe:** 스크립트가 본문을 다 읽지 않고 종료하면 서버의 입력 pipe 쓰기가 실패할 수 있다. POSIX는 fd 아래 객체의 상태에서만 생기고 write가 -1로 알릴 오류 상태를 `POLLERR`로 보고한다고 한다 (raw/posix-poll.md:70). 읽는 쪽이 모두 닫힌 pipe는 실측에서 macOS는 `POLLHUP`, Ubuntu는 `POLLOUT`+`POLLERR`로 보고했고, 그 뒤 `write()`는 양쪽 모두 -1이었다 (raw/os-observed-pipe-poll.md:171-172, raw/os-observed-pipe-poll.md:186-187). Ubuntu는 `POLLOUT`도 켜므로 `POLLERR`·`POLLHUP`을 **먼저** 검사해 "입력 전달 중단"으로 처리한다 (**판단**) → [[sources/os-observed-pipe-poll]]. 신호(`SIGPIPE`) 처리는 [[concepts/resilience]].
 - 스크립트 출력의 헤더·본문 길이에는 제한이 없다. 고정 크기 버퍼를 가정하면 안 된다 (raw/rfc3875.txt:1760-1764).
 
 ## 2. 메타변수 (환경 변수)
@@ -114,7 +114,7 @@ RFC 3875 목록에 없는 비표준 변수다. 이 과제에서 CGI로 `php-cgi`
 
 - 형식: `Status: 3자리코드 SP reason-phrase` (raw/rfc3875.txt:1447-1450).
 - 없으면 200 (raw/rfc3875.txt:1295-1296, raw/rfc3875.txt:1452-1453).
-- 서버는 이 값을 HTTP 상태줄의 코드로 쓰고, 응답 버전에 맞게 출력을 고쳐야 한다 (MUST, raw/rfc3875.txt:1297-1299).
+- `Status`는 스크립트의 처리 결과를 나타내는 3자리 코드다 (raw/rfc3875.txt:1443-1445). 서버는 이 값을 HTTP 상태줄의 코드로 쓴다 (**판단**). 응답이 응답 프로토콜 버전에 맞도록 출력을 고쳐야 한다 (MUST, raw/rfc3875.txt:1297-1299).
 
 ### 응답 유형 4가지
 
@@ -145,7 +145,7 @@ RFC 3875 목록에 없는 비표준 변수다. 이 과제에서 CGI로 `php-cgi`
 | 상황 | 코드 | 근거 |
 |---|---|---|
 | 스크립트가 타임아웃 안에 응답하지 않음 (무한 루프) | 504 | 서버는 gateway (raw/rfc3875.txt:423), 504 정의 (raw/rfc9110.txt:7901-7904) |
-| 출력이 CGI 응답 형식에 맞지 않음 (CGI 필드 없음, 헤더 문법 오류 등), 출력 없이 종료 | 502 | raw/rfc3875.txt:1247, raw/rfc3875.txt:1355-1357, 502 정의 (raw/rfc9110.txt:7882-7884) |
+| 출력이 CGI 응답 형식에 맞지 않음 (CGI 필드 없음, 헤더 문법 오류 등), 출력 없이 종료 | 502 | raw/rfc3875.txt:1247, raw/rfc3875.txt:1355-1357; 502 정의 (raw/rfc9110.txt:7882-7884) |
 | `fork`·`pipe` 실패 등 서버 내부 문제 | 500 | raw/rfc9110.txt:7865-7867 |
 
 - 타임아웃 시 `kill`로 종료하고 `waitpid`로 회수한다 (raw/subject.md:113). 스크립트가 잡거나 무시할 수 없는 시그널은 `SIGKILL`이다 (raw/posix-signal-h.md:186-190). `SIGTERM`은 스크립트가 잡을 수 있다 (raw/posix-signal-h.md:216-220).
@@ -173,7 +173,7 @@ RFC 3875 목록에 없는 비표준 변수다. 이 과제에서 CGI로 `php-cgi`
 
 주의:
 - `SIGCHLD`를 `SIG_IGN`으로 두면 자식이 끝나도 종료 상태를 받을 수 없다 [XSI] (raw/posix-waitpid.md:323). `SIGCHLD`는 기본 동작으로 둔다 → [[concepts/resilience]].
-- `waitpid`는 직접 만든 자식만 대상으로 한다. 스크립트가 만든 손자 프로세스는 회수할 수 없다 (raw/posix-waitpid.md:329). 스크립트를 `kill`해도 손자 프로세스는 함께 끝나지 않는다 (raw/posix-exit.md:70).
+- `waitpid`는 직접 만든 자식만 대상으로 한다. 스크립트가 만든 손자 프로세스는 회수할 수 없다 (raw/posix-waitpid.md:329). 스크립트를 `kill`해도 손자 프로세스가 직접 함께 끝나지는 않는다 (raw/posix-exit.md:70).
 - **회수하지 않으면 좀비가 남는다.** 끝난 프로세스는 좀비가 되고, 부모가 `wait`/`waitpid`로 상태를 가져갈 때 수명이 끝난다 (raw/posix-exit.md:58-64). `SIGCHLD`를 `SIG_IGN`으로 두면 좀비 없이 사라지지만 종료 상태를 받을 수 없다 [XSI] (raw/posix-exit.md:50-54). 이 과제는 `SIGCHLD`를 기본 동작으로 두고 `waitpid`로 회수한다.
 - 스크립트가 끝나면 그 프로세스의 fd가 모두 닫힌다 (raw/posix-exit.md:48). 그래서 출력 pipe의 쓰는 쪽이 닫혀 서버에 `POLLHUP`과 EOF가 온다 → 1절 설계 제약.
 - 자식에서 `execve`가 실패하면 자식 프로세스를 끝내야 한다. `exit`·`_exit`가 허용 함수 목록에 없다는 문제는 [[analysis/subject-vs-evaluation]] 1.4절.

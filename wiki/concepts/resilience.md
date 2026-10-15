@@ -24,7 +24,7 @@ subject와 평가표 모두 "서버가 항상 살아 있어야 한다"를 가장
 | siege 중 프로세스 메모리가 무한히 늘지 않음 | raw/evaluation-sheet-en.md:115 |
 | hang 상태 연결 없음 | raw/evaluation-sheet-en.md:116 |
 | 재시작 없이 `siege -b`를 무한히 돌릴 수 있음 | raw/evaluation-sheet-en.md:117 |
-| `siege -b` availability 99.5% 초과. Availability는 소켓 연결 성공률이고 4xx·5xx는 포함되지 않는다 → 연결 거부·끊김·타임아웃을 막는 게 핵심. 기본 설정의 siege는 요청마다 새 연결을 맺고(raw/siegerc.in:268), 소켓 타임아웃(설정 파일 설명은 "socket connection timeouts", 기본 30초, raw/siegerc.in:353-354)도 실패로 센다. 이 타임아웃이 응답 대기에도 걸리는지는 **미확인**(siege 소스에서 `timeout` 사용처를 확인 → [[source-wishlist]] 6절) | raw/evaluation-sheet-en.md:114, raw/siege.pod:373-378 |
+| `siege -b` availability 99.5% 초과. Availability는 소켓 연결 성공률이고 4xx·5xx는 포함되지 않는다 → 연결 거부·끊김·타임아웃을 막는 게 핵심. 기본 설정의 siege는 `connection = close`라 요청마다 새 연결을 맺는다고 보고(raw/siegerc.in:268, **판단**), 소켓 타임아웃(설정 파일 설명은 "socket connection timeouts", 기본 30초, raw/siegerc.in:353-354)도 실패로 센다. 이 타임아웃이 응답 대기에도 걸리는지는 **미확인**(siege 소스에서 `timeout` 사용처를 확인 → [[source-wishlist]] 6절) | raw/evaluation-sheet-en.md:114, raw/siege.pod:373-378 |
 | CGI 에러·무한 루프에도 크래시 없이 에러가 보여야 함 | raw/evaluation-sheet-en.md:91-93 |
 
 ## 설계로 이어지는 점
@@ -37,7 +37,7 @@ subject와 평가표 모두 "서버가 항상 살아 있어야 한다"를 가장
 
 ## 시그널 처리
 
-허용 함수는 `signal`과 `kill`이다 (raw/subject.md:113). POSIX가 정한 기본 동작과 과제에서의 처리:
+시그널 관련 허용 함수는 `signal`과 `kill`이다 (raw/subject.md:113). POSIX가 정한 기본 동작과 과제에서의 처리:
 
 | 시그널 | 기본 동작 | 과제에서 생기는 상황 | 처리 | 근거 |
 |---|---|---|---|---|
@@ -56,7 +56,7 @@ subject와 평가표 모두 "서버가 항상 살아 있어야 한다"를 가장
 - 평가표는 실행이 끝나기 전에 heap 할당을 모두 해제하라고 한다 (raw/evaluation-sheet-en.md:25).
 - `SIGINT`의 기본 동작은 비정상 종료라서 (raw/posix-signal-h.md:180-184) 해제 코드가 실행되지 않는다. 누수 검사 도구가 이 경우를 누수로 보고하는지는 **미확인**이다.
 - 판단: 시그널 핸들러에서는 종료 플래그만 세우고, 메인 루프가 플래그를 보고 연결·CGI 자식·메모리를 정리한 뒤 종료한다.
-- CGI 자식은 서버가 끝나도 같이 끝나지 않고 시스템 프로세스에 입양된다 (raw/posix-exit.md:70-72). 그래서 종료할 때 실행 중인 CGI를 `kill`로 끝내고 `waitpid`로 회수해야 한다. 그러지 않으면 무한 루프 스크립트가 서버가 꺼진 뒤에도 계속 돈다. `poll()` 대기 중 핸들러를 둔 시그널을 잡으면 `poll()`이 -1로 돌아온다 (raw/posix-poll.md:114, raw/posix-poll.md:126-128). 이때도 errno를 보지 않고 플래그만 확인하면 된다 → [[analysis/subject-vs-evaluation]] 1.8절.
+- CGI 자식은 서버가 끝나도 직접 끝나지는 않고(일부 경우 `SIGHUP`으로 간접 종료) 시스템 프로세스에 입양된다 (raw/posix-exit.md:70-72). 그래서 종료할 때 실행 중인 CGI를 `kill`로 끝내고 `waitpid`로 회수해야 한다. 그러지 않으면 무한 루프 스크립트가 서버가 꺼진 뒤에도 계속 돌 수 있다. `poll()` 대기 중 핸들러를 둔 시그널을 잡으면 `poll()`이 -1로 돌아온다 (raw/posix-poll.md:114, raw/posix-poll.md:126-128). 이때도 errno를 보지 않고 플래그만 확인하면 된다 → [[analysis/subject-vs-evaluation]] 1.8절.
 
 ## 관련
 

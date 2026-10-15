@@ -1,7 +1,7 @@
 ---
 title: NGINX — How nginx processes a request
 type: source
-sources: [raw/nginx-request-processing.md]
+sources: [raw/nginx-request-processing.md, raw/nginx-rewrite-module.md]
 updated: 2026-10-15
 ---
 
@@ -32,4 +32,4 @@ NGINX가 요청을 받을 때 어느 server, 어느 location이 처리할지 고
 - default server는 server 이름이 아니라 listen 포트의 속성이다 (raw/nginx-request-processing.md:46, raw/nginx-request-processing.md:94).
 - location은 query string을 뺀 URI 부분으로만 매칭한다 (raw/nginx-request-processing.md:147).
 - index 지시자는 찾은 index 파일로 내부 리다이렉트하고 location을 다시 찾는다 (raw/nginx-request-processing.md:168).
-- 444는 NGINX 비표준 코드로, 응답 없이 연결을 닫는다 (raw/nginx-request-processing.md:62). 과제에서는 쓰지 않는다.
+- 444는 연결을 닫는 NGINX 비표준 코드다 (raw/nginx-request-processing.md:62). 응답 헤더를 보내지 않는다는 설명은 rewrite 모듈 문서에 있다 (raw/nginx-rewrite-module.md:113). 과제에서는 쓰지 않는다.

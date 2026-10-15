@@ -107,7 +107,7 @@ last-chunk   = 1*("0") [ chunk-ext ] CRLF
 |---|---|
 | chunk-size는 16진수. 크기 0인 chunk 뒤 trailer, 빈 줄로 끝남 | raw/rfc9112.txt:1066-1069 |
 | 매우 큰 16진수 값의 오버플로를 막아야 함 (MUST) | raw/rfc9112.txt:1078-1081 |
-| 모르는 chunk extension은 무시 (MUST). 총 길이를 제한하고 넘으면 4xx | raw/rfc9112.txt:1108-1113 |
+| 모르는 chunk extension은 무시 (MUST). 총 길이를 제한하고 넘으면 4xx (ought to) | raw/rfc9112.txt:1108-1113 |
 | trailer는 선택적으로 버려도 됨 (MAY). 허용되지 않은 필드를 헤더에 합치면 안 됨 | raw/rfc9112.txt:1126-1134 |
 | 크기 0 chunk가 오지 않았으면 불완전한 본문 | raw/rfc9112.txt:1269-1271 |
 

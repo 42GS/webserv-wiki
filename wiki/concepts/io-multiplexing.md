@@ -67,8 +67,8 @@ updated: 2026-10-15
 | 비트 | 의미 | 할 일 | 근거 |
 |---|---|---|---|
 | `POLLIN` | 읽기가 막히지 않음. 결과는 데이터, EOF, 에러 중 하나 | listen 소켓이면 `accept`, 아니면 read 1회. 0이면 상대가 닫은 것 | raw/posix-poll.md:42, raw/posix-poll.md:80, raw/posix-poll.md:98, raw/posix-recv.md:72 |
-| `POLLOUT` | 1바이트 쓰기가 막히지 않음 | write 1회. 일부만 쓰일 수 있으니 보낸 위치를 기록 | raw/posix-poll.md:58, raw/posix-poll.md:171 |
-| `POLLERR` | read/write가 -1을 돌려줄 오류 상태. `EAGAIN`은 포함하지 않음 | 클라이언트 제거 | raw/posix-poll.md:70, raw/posix-poll.md:173 |
+| `POLLOUT` | 확인 시점에 1바이트 쓰기가 막히지 않았을 것 | write 1회. 일부만 쓰일 수 있으니 보낸 위치를 기록 | raw/posix-poll.md:58, raw/posix-poll.md:171 |
+| `POLLERR` | fd 아래 객체의 상태에서만 생기고 read/write가 -1로 알릴 오류 상태. `EAGAIN`은 포함하지 않음 | 클라이언트 제거 | raw/posix-poll.md:70, raw/posix-poll.md:173 |
 | `POLLHUP` | 장치 연결 끊김, 또는 pipe·FIFO의 쓰는 쪽이 모두 닫힘. 장치 연결 끊김의 의미는 장치마다 다름. `POLLIN`과 동시에 올 수 있고 `POLLOUT`과는 동시에 오지 않음 | 남은 데이터를 EOF까지 읽은 뒤 정리 (CGI pipe는 [[concepts/cgi]]) | raw/posix-poll.md:74, raw/posix-poll.md:82 |
 | `POLLNVAL` | fd가 열려 있지 않음 | 서버 버그 신호. 항목 제거 | raw/posix-poll.md:78 |
 
@@ -82,7 +82,7 @@ updated: 2026-10-15
 ### POLLOUT은 보낼 데이터가 있을 때만
 
 - 상태를 바꾸지 않고 `poll()`을 다시 부르면 바로 같은 결과가 돌아와 busy waiting이 된다 (raw/posix-poll.md:175).
-- 소켓은 대부분 쓰기 가능 상태라서, 보낼 데이터가 없는데 `POLLOUT`을 켜 두면 루프가 쉬지 않고 돈다. 응답이 준비됐을 때 켜고, 다 보내면 끈다.
+- 소켓은 대부분 쓰기 가능 상태라서, 보낼 데이터가 없는데 `POLLOUT`을 켜 두면 루프가 쉬지 않고 돈다. 응답이 준비됐을 때 켜고, 다 보내면 끈다 (**판단**).
 - 규칙 3(read와 write를 동시에 감시, raw/subject.md:131)은 한 번의 `poll()` 호출이 읽기와 쓰기 관심사를 함께 다룬다는 뜻으로 읽는다. 모든 fd에 항상 `POLLOUT`을 켜라는 뜻은 아니다 (**판단**).
 
 ### 그 밖의 동작

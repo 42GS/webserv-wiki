@@ -7,7 +7,7 @@ updated: 2026-10-15
 
 # OS 실측 — pipe의 poll revents
 
-원본: `raw/os-observed-pipe-poll.md`. 테스트 프로그램(`pipepoll.c`)을 macOS와 Ubuntu 24.04 Docker 컨테이너에서 실행한 소스·명령·출력을 그대로 담았다 (2026-10-15). 프로그램은 `SIGPIPE`를 무시하도록 설정한다 (raw/os-observed-pipe-poll.md:116).
+원본: `raw/os-observed-pipe-poll.md`. 테스트 프로그램(`pipepoll.c`)을 macOS와 Ubuntu 24.04 Docker 컨테이너에서 실행한 소스·명령·출력을 그대로 담았다 (2026-10-15, raw/os-observed-pipe-poll.md:3-4). 프로그램은 `SIGPIPE`를 무시하도록 설정한다 (raw/os-observed-pipe-poll.md:116).
 
 > [!note] 측정 환경의 한계
 > 컨테이너의 커널은 OrbStack VM의 Linux 커널이다 (raw/os-observed-pipe-poll.md:24, raw/os-observed-pipe-poll.md:29). 평가 머신의 Ubuntu 커널에서 측정한 것이 아니다.
@@ -26,7 +26,7 @@ updated: 2026-10-15
 | [5] 쓰는 쪽이 닫힘, `events=0` | **아무것도 안 옴** (`poll`=0) | `POLLHUP` | raw/os-observed-pipe-poll.md:180, raw/os-observed-pipe-poll.md:195 |
 
 > [!warning] 모순: macOS vs POSIX
-> POSIX는 `POLLHUP`을 `events`에 넣지 않아도 조건이 맞으면 설정해야 한다고 한다 (raw/posix-poll.md:86). macOS는 `events=0`일 때 쓰는 쪽이 닫힌 pipe에 `POLLHUP`을 보고하지 않았다 (raw/os-observed-pipe-poll.md:180). Ubuntu는 보고했다 (raw/os-observed-pipe-poll.md:195). → [[analysis/subject-vs-evaluation]] 1.12
+> POSIX는 `POLLHUP`을 `events`에 넣지 않아도 조건이 맞으면 설정해야 한다고 한다 (raw/posix-poll.md:86). macOS는 `events=0`일 때 쓰는 쪽이 닫힌 pipe에 `POLLHUP`을 보고하지 않았다 (raw/os-observed-pipe-poll.md:180). 같은 조건에서 `events=POLLIN`이면 `POLLHUP`을 보고했으므로 (raw/os-observed-pipe-poll.md:174) 조건은 참이었다고 본다 (**판단**). Ubuntu는 보고했다 (raw/os-observed-pipe-poll.md:195). → [[analysis/subject-vs-evaluation]] 1.12
 
 ## 과제 적용 (판단)
 

@@ -30,5 +30,5 @@ POSIX.1-2024 (IEEE Std 1003.1-2024, The Open Group Base Specifications Issue 8) 
 
 - `POLLHUP`·`POLLERR`·`POLLNVAL`은 요청하지 않아도 조건이 맞으면 `revents`에 설정된다 (raw/posix-poll.md:86).
 - `POLLHUP`은 `POLLIN`과 동시에 올 수 있다 (raw/posix-poll.md:74).
-- 쓰기 가능은 1바이트 쓰기가 막히지 않는다는 뜻일 뿐이다 (raw/posix-poll.md:171).
+- 쓰기 가능은 상태를 확인한 시점에 1바이트 쓰기가 막히지 않았을 것이라는 뜻일 뿐이다 (raw/posix-poll.md:171).
 - 상태를 바꾸지 않고 다시 호출하면 busy waiting이 된다 (raw/posix-poll.md:175).

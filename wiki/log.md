@@ -295,3 +295,19 @@
 - 영향: 위키 인용 가운데 목록 구조에 기대는 문장을 찾아 읽었다. sources/posix-exit의 `SIGCHLD` 전송 행이 "Otherwise" 조건(raw/posix-exit.md:58)을 빠뜨렸고 기본 동작 "무시"에 근거가 없었다 → 조건과 SA_NOCLDWAIT 구현 정의(54행), signal.h 표(raw/posix-signal-h.md:146-154, 304-306) 추가. concepts/cgi·resilience, sources/posix-waitpid의 해당 인용은 조건이 맞아 그대로 둠.
 - 갱신: sources 18개 "변환 검증" 콜아웃 (evaluation-sheet-en은 새로 추가), sources/posix-exit.
 - 메모: pep-0594 raw 머리말은 "`div#content`"라고 적었지만 실제 본문 요소는 `section#pep-content`다. raw는 고치지 않고 source 페이지에 적었다.
+
+## [2026-10-15] lint | 전체 직접 읽기 점검 (2회차)
+- 방법: 모든 페이지(sources 35, concepts 13, analysis, overview, index, wishlist)를 읽고 인용마다 원문 줄을 다시 열어 대조했다. 인용 옆에 원문 줄을 띄워 주는 표시용 스크립트만 썼고 판정은 읽어서 했다.
+- 원문보다 강한 주장 정정:
+  - subject "you can" 문장을 지시로 씀: NGINX와 비교하라(186), `server` 섹션을 참고하라(161) → 해도 된다 (sources/nginx-core-module, nginx-observed-directory, source-wishlist, concepts/configuration-file).
+  - 평가표의 질문을 요구로 씀: "단일 poll()/select()"(평가표 52, 정리본 47) → 하나만 쓰는지 질문.
+  - posix-exit 70 "자식을 직접 종료하지 않음"을 "끝나지 않음"으로 씀 → SIGHUP 간접 종료 예외 보충 (sources/posix-exit, concepts/resilience, concepts/cgi).
+  - NGINX location 매칭을 "가장 긴 prefix를 고른다"로 씀 → 정규식 검사 단계 보충 (sources/nginx-core-module, concepts/configuration-file, overview).
+  - 444 "응답 없이 닫는다"는 request-processing 문서에 없음 → rewrite 모듈 113(응답 헤더 없이) 인용.
+  - "평가는 -b라서 지연 없음" → availability 확인에 한정 (sources/siegerc, concepts/testing).
+  - RFC 7578 "numerous" → "대부분" 과장 (concepts/file-upload); NGINX 400은 헤더 필드 하나가 버퍼보다 클 때로 한정 (concepts/status-codes); analysis 1.3 HEAD "평가에 영향 없음" → 임의 테스트 가능성.
+- 빠진 조건·규범 수준 보충: php force_redirect "Apache에서만 시험"·"대부분의 웹 서버"·IIS 예외, posix-poll 171 "확인한 시점", POLLERR "기반 객체 상태" 조건, RFC 3875 9.8의 should와 대안(1801-1806), 작업 디렉토리 SHOULD, RFC 3986 must/should와 merge 첫 조건(1783-1785), RFC 9112 0.9 "ought to", chunk-ext·처리량 제한 "ought to", nginx-server-names 204의 SNI 조건.
+- 판단 표시 추가: siege `connection = close` → 요청마다 새 연결(여러 페이지), CGI `Status` → 상태줄 코드, HTTP_COOKIE 전달, alias 비교, 리스팅 HTML, %XX 오류 400, execve 주입 회피, POLLOUT 관리, pipe-poll 모순의 "조건이 참" 근거(174), overview의 502/504·I/O 1번.
+- 인용·표기 정정: 정리본 첨부 31-33 → 32-33, rfc1945 절 이름 2곳, "_" 문장 지시 대상 140 추가, rfc3875 Status 정의 1443-1445, cgi 표의 "1355-1357, 502 정의"가 502행 인용처럼 읽히던 표기, 측정일 인용(os-observed 3-4, nginx-observed 3), REMOTE_ADDR MUST 인용, RFC 7230 대체 관계(9110·9112가 일부씩).
+- 출처 표시: siege·siegerc 커밋 정보는 받을 때 GitHub에서 본 값(raw에 없음), PHP 장 이름은 원본 HTML 메뉴.
+- 구조: 깨진 위키링크 없음, inbound 없는 페이지는 index·log뿐, 인용한 raw는 모두 frontmatter `sources`에 있음, 표 칸 수 불일치 없음 (목록은 검색으로 뽑고 읽어서 확인).

@@ -11,7 +11,7 @@ updated: 2026-10-15
 
 - `./webserv [configuration file]` (raw/subject.md:118).
 - 설정 파일은 인자로 받거나 기본 경로에서 읽어야 함 (raw/subject.md:127). 인자 없이 실행하면 기본 경로의 설정 파일로 동작하게 한다 (**판단**).
-- NGINX 설정의 `server` 섹션을 참고하라고 권장 (raw/subject.md:161).
+- NGINX 설정의 `server` 섹션을 참고해도 된다고 함 (raw/subject.md:161).
 
 ## 필수 기능 (subject IV.3)
 
@@ -35,14 +35,14 @@ updated: 2026-10-15
 > [!note] subject 예시는 NGINX `alias` 방식 (2026-10-15 확인)
 > NGINX `root`는 경로를 만들 때 URI 전체를 root 값 뒤에 붙인다. `location /i/ { root /data/w3; }`에서 `/i/top.gif` → `/data/w3/i/top.gif` (raw/nginx-core-module.md:1507-1512, raw/nginx-core-module.md:1516).
 > NGINX `alias`는 location 부분을 바꿔 끼운다. `location /i/ { alias /data/w3/images/; }`에서 `/i/top.gif` → `/data/w3/images/top.gif` (raw/nginx-core-module.md:132-140).
-> subject 예시는 `/kapouet`를 떼고 `/tmp/www`에 붙이므로 **`alias` 방식**이다 (raw/subject.md:169). 설정 지시자 이름을 `root`로 하더라도 동작은 이 방식으로 구현하고, 디펜스에서 NGINX `root`와 다르다는 점을 설명할 수 있어야 한다.
+> subject 예시는 `/kapouet`를 떼고 `/tmp/www`에 붙이므로 **`alias` 방식**이다 (raw/subject.md:169, **판단**). 설정 지시자 이름을 `root`로 하더라도 동작은 이 방식으로 구현하고, 디펜스에서 NGINX `root`와 다르다는 점을 설명할 수 있어야 한다.
 
 ## location 매칭 (NGINX 기준)
 
 | 규칙 | 근거 |
 |---|---|
 | 매칭은 정규화된 URI로 한다: `%XX` 디코딩, `.`·`..` 해석, 연속된 `/` 합치기(설정에 따라). 문서는 세 가지를 나열할 뿐 순서는 적지 않는다 | raw/nginx-core-module.md:1063 |
-| prefix location 중 **가장 길게 매칭되는 것**을 고른다 | raw/nginx-core-module.md:1067 |
+| prefix location 중 **가장 길게 매칭되는 것**을 기억해 둔다. 정규식 location을 설정 순서대로 검사해 처음 맞는 것을 쓰고, 맞는 정규식(과 predicate)이 없으면 기억한 prefix를 쓴다 | raw/nginx-core-module.md:1067 |
 | `=` 수식어는 정확히 일치할 때만 매칭, 일치하면 검색 종료 | raw/nginx-core-module.md:1077 |
 | 연속 `/` 합치기는 prefix 매칭이 올바르게 동작하는 데 필요하다. `//scripts/one.php`가 `/scripts/`에 매칭되지 않는 문제를 막는다 | raw/nginx-core-module.md:1195-1205 |
 
@@ -95,13 +95,13 @@ server가 정해지는 시점:
 - **끝에 `/`가 없는 디렉토리 요청을 301로 보내는 이유 (판단):**
   - NGINX는 `/`로 끝나는 prefix location에 `/` 없는 URI가 오면 `/`를 붙인 URI로 301을 보낸다. 다만 문서상 이 동작은 `proxy_pass` 등을 쓰는 location에 대한 것이라 유사 사례다 (raw/nginx-core-module.md:1115).
   - 리스팅이나 index 페이지 안의 상대 링크는 기준 URI 경로의 **마지막 세그먼트를 뺀 부분**에 붙는다 (raw/rfc3986.txt:1799-1803). 그래서 `/dir`에서 `a.txt`는 `/a.txt`로, `/dir/`에서는 `/dir/a.txt`로 해석된다 (기준 URI `http://a/b/c/d;p?q`에서 `g` → `http://a/b/c/g`, raw/rfc3986.txt:1950-1954, raw/rfc3986.txt:1970). 기준 URI는 응답을 받은 URI이고, 리다이렉트를 거쳤다면 마지막 URI다 (raw/rfc3986.txt:1640-1645). 따라서 `/dir` → 301 → `/dir/` 뒤에는 링크가 맞게 해석된다.
-  - 301에는 `Location`을 보낸다 (SHOULD, raw/rfc9110.txt:7378-7379). NGINX는 `http://web/noindex/`처럼 절대 URL을 보냈다 (raw/nginx-observed-directory.md:115). 이 과제는 `return`과 같이 경로만 보낸다 (상대 참조 허용, raw/rfc9110.txt:4743-4745) (**판단**) → [[sources/nginx-observed-directory]].
-- 리스팅 형식은 평가가 브라우저로 시도하므로 (raw/evaluation-sheet-en.md:101) HTML이면 된다. NGINX 기본도 html이다 (raw/nginx-autoindex-module.md:63).
+  - 301에는 `Location`을 보낸다 (SHOULD, raw/rfc9110.txt:7378-7379). NGINX는 `http://web/noindex/`처럼 절대 URL을 보냈다 (raw/nginx-observed-directory.md:115). 이 과제는 경로만 보낸다 (상대 참조 허용, raw/rfc9110.txt:4743-4745) (**판단**) → [[sources/nginx-observed-directory]].
+- 리스팅 형식은 평가가 브라우저로 시도하므로 (raw/evaluation-sheet-en.md:101) HTML이면 된다 (**판단**). NGINX 기본도 html이다 (raw/nginx-autoindex-module.md:63).
 - 리스팅에 무엇을 보일지는 subject가 정하지 않는다 (raw/subject.md:170). NGINX는 크기와 시간도 보인다 (raw/nginx-autoindex-module.md:54, raw/nginx-autoindex-module.md:88). 시간 표시에는 시간 함수가 필요해 [[analysis/subject-vs-evaluation]] 1.4절의 질문에 걸린다. 이름만 보여도 요구사항은 충족한다 (**판단**).
 
 ## NGINX 지시자 대응표
 
-subject 기능을 NGINX에서는 어떤 지시자로 하는지 정리했다. 설정 문법을 NGINX와 비슷하게 맞추면 평가자가 이해하기 쉽다 (raw/subject.md:161).
+subject 기능을 NGINX에서는 어떤 지시자로 하는지 정리했다. subject는 NGINX `server` 섹션을 참고해도 된다고 한다 (raw/subject.md:161). 설정 문법을 NGINX와 비슷하게 맞추면 평가자가 이해하기 쉽다 (**판단**).
 
 | subject 기능 | NGINX 지시자 | NGINX 동작 | 근거 |
 |---|---|---|---|

@@ -7,8 +7,8 @@ updated: 2026-10-15
 
 # NGINX 실측 — 디렉토리 요청과 `..` 경로
 
-원본: `raw/nginx-observed-directory.md`. NGINX 공식 Docker 이미지(nginx/1.30.6)를 `autoindex off` 설정으로 띄우고, 같은 Docker 네트워크의 curl 컨테이너에서 요청한 응답과 NGINX 로그를 그대로 담았다 (2026-10-15, raw/nginx-observed-directory.md:12-33).
-문서로 확인할 수 없던 디렉토리 요청의 응답 코드를 확인하려고 측정했다. subject는 NGINX와 비교하라고 한다 (raw/subject.md:186).
+원본: `raw/nginx-observed-directory.md`. NGINX 공식 Docker 이미지(nginx/1.30.6)를 `autoindex off` 설정으로 띄우고, 같은 Docker 네트워크의 curl 컨테이너에서 요청한 응답과 NGINX 로그를 그대로 담았다 (2026-10-15, raw/nginx-observed-directory.md:3, raw/nginx-observed-directory.md:12-33).
+문서로 확인할 수 없던 디렉토리 요청의 응답 코드를 확인하려고 측정했다. subject는 특정 동작이 궁금하면 NGINX와 비교해 볼 수 있다고 한다 (raw/subject.md:186).
 
 ## 결과
 
