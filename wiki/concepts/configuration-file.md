@@ -1,7 +1,7 @@
 ---
 title: 설정 파일
 type: concept
-sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc9110.txt, raw/nginx-core-module.md, raw/nginx-request-processing.md, raw/posix-bind.md, raw/nginx-index-module.md, raw/nginx-autoindex-module.md, raw/evaluation-sheet.md, raw/rfc3986.txt, raw/nginx-rewrite-module.md, raw/nginx-server-names.md, raw/os-observed-bind.md]
+sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc9110.txt, raw/nginx-core-module.md, raw/nginx-request-processing.md, raw/posix-bind.md, raw/nginx-index-module.md, raw/nginx-autoindex-module.md, raw/evaluation-sheet.md, raw/rfc3986.txt, raw/nginx-rewrite-module.md, raw/nginx-server-names.md, raw/os-observed-bind.md, raw/nginx-observed-directory.md]
 updated: 2026-10-15
 ---
 
@@ -87,15 +87,15 @@ server가 정해지는 시점:
 
 | 순서 | 상황 | 처리 | 근거 |
 |---|---|---|---|
-| 1 | 끝에 `/`가 없는 디렉토리 요청 | index·autoindex 모듈 모두 다루지 않는다. 이 과제는 끝에 `/`를 붙인 경로로 **301** (**판단**, 아래 설명) | raw/nginx-index-module.md:12, raw/nginx-autoindex-module.md:12 |
+| 1 | 끝에 `/`가 없는 디렉토리 요청 | index·autoindex 모듈 모두 다루지 않는다. 이 과제는 끝에 `/`를 붙인 경로로 **301** (**판단**, 아래 설명). NGINX 실측도 index 유무와 관계없이 301 | raw/nginx-index-module.md:12, raw/nginx-autoindex-module.md:12, raw/nginx-observed-directory.md:78, raw/nginx-observed-directory.md:110 |
 | 2 | `/`로 끝나는 디렉토리 요청 | index 모듈이 index 파일을 순서대로 찾는다. 찾으면 그 파일로 내부 리다이렉트 | raw/nginx-index-module.md:40, raw/nginx-index-module.md:46 |
 | 3 | index 파일이 없음 | 보통 autoindex 모듈로 넘어간다. `autoindex on`이면 리스팅 | raw/nginx-autoindex-module.md:12 |
-| 4 | index 파일이 없고 `autoindex off` | **403** (**판단**). RFC는 코드를 정하지 않고 NGINX 문서에도 없다 → [[concepts/status-codes]] | raw/rfc9110.txt:7571-7572 |
+| 4 | index 파일이 없고 `autoindex off` | **403** (**판단**). RFC는 코드를 정하지 않고 NGINX 문서에도 없다. NGINX 실측은 403 → [[concepts/status-codes]] | raw/rfc9110.txt:7571-7572, raw/nginx-observed-directory.md:128 |
 
 - **끝에 `/`가 없는 디렉토리 요청을 301로 보내는 이유 (판단):**
   - NGINX는 `/`로 끝나는 prefix location에 `/` 없는 URI가 오면 `/`를 붙인 URI로 301을 보낸다. 다만 문서상 이 동작은 `proxy_pass` 등을 쓰는 location에 대한 것이라 유사 사례다 (raw/nginx-core-module.md:1115).
   - 리스팅이나 index 페이지 안의 상대 링크는 기준 URI 경로의 **마지막 세그먼트를 뺀 부분**에 붙는다 (raw/rfc3986.txt:1799-1803). 그래서 `/dir`에서 `a.txt`는 `/a.txt`로, `/dir/`에서는 `/dir/a.txt`로 해석된다 (예시: raw/rfc3986.txt:1970). 기준 URI는 응답을 받은 URI이고, 리다이렉트를 거쳤다면 마지막 URI다 (raw/rfc3986.txt:1640-1645). 따라서 `/dir` → 301 → `/dir/` 뒤에는 링크가 맞게 해석된다.
-  - 301에는 `Location`을 보낸다 (SHOULD, raw/rfc9110.txt:7378-7379).
+  - 301에는 `Location`을 보낸다 (SHOULD, raw/rfc9110.txt:7378-7379). NGINX는 `http://web/noindex/`처럼 절대 URL을 보냈다 (raw/nginx-observed-directory.md:115). 이 과제는 `return`과 같이 경로만 보낸다 (상대 참조 허용, raw/rfc9110.txt:4743-4745) (**판단**) → [[sources/nginx-observed-directory]].
 - 리스팅 형식은 평가가 브라우저로 시도하므로 (raw/evaluation-sheet-en.md:101) HTML이면 된다. NGINX 기본도 html이다 (raw/nginx-autoindex-module.md:63).
 - 리스팅에 무엇을 보일지는 subject가 정하지 않는다 (raw/subject.md:170). NGINX는 크기와 시간도 보인다 (raw/nginx-autoindex-module.md:54, raw/nginx-autoindex-module.md:88). 시간 표시에는 시간 함수가 필요해 [[analysis/subject-vs-evaluation]] 1.4절의 질문에 걸린다. 이름만 보여도 요구사항은 충족한다 (**판단**).
 

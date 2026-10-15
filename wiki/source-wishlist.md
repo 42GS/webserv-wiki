@@ -72,13 +72,13 @@ URL은 2026-10-15에 접속해 HTTP 200을 확인했다. 받아서 넣은 소스
 > [!note] 정리 (2026-10-15)
 > 4건 모두 실측 없이 정했다. 앞의 두 건은 RFC가 답을 정하므로 닫았다. 뒤의 두 건은 RFC가 코드를 정하지 않아 **판단**으로 확정했고, NGINX와 같은지는 디펜스 근거를 보강하는 **선택** 항목으로만 남긴다. subject는 NGINX를 비교 대상으로 쓸 수 있다고 할 뿐 따르라고 하지 않는다 (raw/subject.md:186).
 
-nginx.org에 정적 파일 모듈 문서가 없고(`ngx_http_static_module.html` 404, 2026-10-15 확인), access 모듈 문서에도 응답 코드가 없다. subject가 권하는 대로 NGINX를 직접 실행해 비교한다 (raw/subject.md:186). 로컬에는 NGINX가 설치되어 있지 않다 (2026-10-15 확인).
+nginx.org에 정적 파일 모듈 문서가 없고(`ngx_http_static_module.html` 404, 2026-10-15 확인), access 모듈 문서에도 응답 코드가 없다. subject가 권하는 대로 NGINX를 직접 실행해 비교한다 (raw/subject.md:186). 로컬에는 NGINX가 설치되어 있지 않다 (2026-10-15 확인). NGINX 공식 Docker 이미지로 측정했다.
 
 | | 우선 | 확인할 것 | 방법 | 결과 저장 |
 |---|---|---|---|---|
-| [ ] | 선택 | 끝에 `/`가 없는 디렉토리 요청에 301을 보내는지, `Location` 형식 — 과제는 **판단**으로 301 확정 ([[concepts/configuration-file]]) | NGINX 설치 후 `curl -i`로 요청 | `raw/nginx-observed-<주제>.md` (명령과 출력 그대로) |
+| [x] | 선택 | `raw/nginx-observed-directory.md`로 측정 (2026-10-15, 301·절대 URL) — 끝에 `/`가 없는 디렉토리 요청에 301을 보내는지, `Location` 형식 — 과제는 **판단**으로 301 확정 ([[concepts/configuration-file]]) | NGINX 설치 후 `curl -i`로 요청 | `raw/nginx-observed-<주제>.md` (명령과 출력 그대로) |
 | [x] | — | `limit_except`로 막힌 메서드의 응답 코드 — **닫음**: RFC 9110이 405 + `Allow` MUST (raw/rfc9110.txt:7603-7607) | — | — |
-| [ ] | 선택 | 리스팅 off + index 없는 디렉토리의 응답 코드 (index·autoindex 모듈 문서에 없음, 2026-10-15 확인) — 과제는 **판단**으로 403 확정 | 같은 방법 | 같은 형식 |
+| [x] | 선택 | `raw/nginx-observed-directory.md`로 측정 (2026-10-15, 403) — 리스팅 off + index 없는 디렉토리의 응답 코드 (index·autoindex 모듈 문서에 없음, 2026-10-15 확인) — 과제는 **판단**으로 403 확정 | 같은 방법 | 같은 형식 |
 | [x] | — | Host 헤더 없는 HTTP/1.1 요청의 응답 코드 — **닫음**: RFC 9112가 400 MUST (raw/rfc9112.txt:445-448) | — | — |
 
 ## 5-1. OS 실측 (POSIX 문서로 확인 불가)

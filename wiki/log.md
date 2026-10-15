@@ -234,3 +234,9 @@
 - 생성: raw/os-observed-bind.md, raw/os-observed-pipe-poll.md (소스·명령·출력 그대로), sources/os-observed-bind, sources/os-observed-pipe-poll
 - 갱신: concepts/cgi (입력·출력 pipe, 미확인 해소), concepts/io-multiplexing (OS 차이), concepts/configuration-file (SO_REUSEADDR, 0.0.0.0 겹침 거부, 미확인 해소), sources/posix-bind, analysis/subject-vs-evaluation (1.12 macOS vs POSIX), overview, index, source-wishlist 5-1
 - 메모: Ubuntu는 OrbStack 커널 7.0.14 컨테이너 기준(평가 머신 커널 아님). 첫 측정은 테스트 코드가 소켓을 닫지 않는 버그로 결과 1건이 틀려 고친 뒤 재측정
+
+## [2026-10-15] ingest | NGINX 실측: 디렉토리 요청과 `..` 경로
+- 생성: raw/nginx-observed-directory.md (nginx/1.30.6 Docker, 설정·명령·응답·로그 그대로), sources/nginx-observed-directory
+- 갱신: concepts/configuration-file (301·403 실측 근거, Location 형식 차이), concepts/security (6단계: 루트 위 `..` → 400), concepts/status-codes (400 행, 심볼릭 링크 403 행), overview, index, source-wishlist 4-1
+- 결정: root 위로 올라가는 `..` → 400 + 연결 닫기 (사용자 결정, NGINX와 같음). 미결이던 403/404 판단 해소
+- 메모: 정규화 뒤 최종 경로가 root 밖(심볼릭 링크)인 경우는 403으로 판단 (NGINX 미측정)

@@ -1,7 +1,7 @@
 ---
 title: 보안 — 경로·주입·길이·splitting·smuggling
 type: concept
-sources: [raw/rfc9110.txt, raw/rfc9112.txt, raw/rfc3875.txt, raw/nginx-core-module.md, raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc7578.txt, raw/rfc3986.txt, raw/rfc6265.txt, raw/rfc1945.txt, raw/rfc6585.txt]
+sources: [raw/rfc9110.txt, raw/rfc9112.txt, raw/rfc3875.txt, raw/nginx-core-module.md, raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc7578.txt, raw/rfc3986.txt, raw/rfc6265.txt, raw/rfc1945.txt, raw/rfc6585.txt, raw/nginx-observed-directory.md]
 updated: 2026-10-15
 ---
 
@@ -27,11 +27,11 @@ subject와 평가표에는 보안 항목이 따로 없다. 하지만 아래 문�
 | 3 | 세그먼트마다 `%XX`를 **한 번만** 디코딩한다. 16진수는 대소문자 구분 없음. `%`뒤에 16진수 두 자리가 아니면 400 | raw/rfc3986.txt:647-651, raw/rfc3986.txt:767-771 |
 | 4 | 디코딩 결과에 NUL(`%00`)이 있으면 거부한다 | raw/rfc3986.txt:2443-2445 |
 | 5 | 디코딩 결과에 `/`가 있는 세그먼트(원래 `%2F`)는 거부한다 (**판단**). `/`는 예약 문자라 디코딩하면 의미가 바뀐다. RFC 3875도 인코딩된 `/`가 `PATH_INFO`로 디코딩되는 요청을 거부할 수 있다고 한다 | raw/rfc3986.txt:689-692, raw/rfc3875.txt:737-741 |
-| 6 | 빈 세그먼트(연속 `/`)를 합치고, `.`·`..` 세그먼트를 remove_dot_segments 방식으로 제거한다. `..`는 루트 위로 올라가지 않는다 | raw/rfc3986.txt:1816-1843, raw/rfc3986.txt:2004-2005, raw/rfc3986.txt:2028, raw/nginx-core-module.md:1195-1205 |
+| 6 | 빈 세그먼트(연속 `/`)를 합치고, `.`·`..` 세그먼트를 remove_dot_segments 방식으로 제거한다. **`..`가 루트 위로 올라가면 400으로 거부하고 연결을 닫는다** (NGINX 실측, raw/nginx-observed-directory.md:159-164). RFC 3986처럼 루트에서 잘라내지 않는다 (사용자 결정) | raw/rfc3986.txt:1816-1843, raw/rfc3986.txt:2004-2005, raw/rfc3986.txt:2028, raw/nginx-core-module.md:1195-1205 |
 | 7 | 정규화된 경로로 location을 매칭하고 root·alias에 붙여 파일 경로를 만든다 → [[concepts/configuration-file]] | raw/nginx-core-module.md:1063-1067 |
 | 8 | 보안 검사는 디코딩 이후에 한다. 최종 파일 경로가 해당 root 안에 있는지 확인한다 | raw/rfc3986.txt:2442-2443 |
 
-- `%2e%2e`는 `..`과 동등하다. `%2E`는 비예약 문자 `.`에 해당하고, 비예약 문자의 인코딩은 디코딩해서 같게 본다 (raw/rfc3986.txt:735-743, raw/rfc3986.txt:2234-2236). 3단계에서 디코딩되므로 6단계에서 dot-segment로 제거된다.
+- `%2e%2e`는 `..`과 동등하다. `%2E`는 비예약 문자 `.`에 해당하고, 비예약 문자의 인코딩은 디코딩해서 같게 본다 (raw/rfc3986.txt:735-743, raw/rfc3986.txt:2234-2236). 3단계에서 디코딩되므로 6단계에서 dot-segment로 처리된다. NGINX도 인코딩된 `..`를 같은 400으로 거부했다 (raw/nginx-observed-directory.md:176-181).
 - 두 번 디코딩하면 `%252e%252e` → `%2e%2e` → `..`이 되어 검사를 통과한 뒤 상위 디렉토리를 가리키게 된다. 3단계에서 한 번만 디코딩한다 (raw/rfc3986.txt:767-771).
 - 6단계의 dot-segment 제거는 URI 수준의 정리다. 파일 시스템에는 심볼릭 링크 같은 다른 경로가 있을 수 있으므로 8단계 확인을 생략하지 않는다 (**판단**).
 - 파일 시스템이 특별한 의미를 주는 문자와 이름은 URI에서 온 데이터로 쓰지 못하게 제한하라고 한다 (raw/rfc3986.txt:2447-2460).
@@ -40,7 +40,8 @@ subject와 평가표에는 보안 항목이 따로 없다. 하지만 아래 문�
 > NGINX는 `%XX` 디코딩 → `.`·`..` 해석 → 연속 `/` 합치기 순서로 정규화한다 (raw/nginx-core-module.md:1063). 경로 전체를 먼저 디코딩하므로 `%2F`가 구분자가 된다. RFC 3986은 세그먼트를 나눈 뒤 디코딩하라고 한다 (raw/rfc3986.txt:754-758). 위 절차는 RFC 순서를 따르고, 둘이 갈리는 `%2F`는 5단계에서 거부해 어느 해석으로도 우회되지 않게 했다. 인코딩된 `..`를 막는 결과는 두 방식이 같다.
 
 과제 적용:
-- 위 절차로 만든 경로가 해당 라우트의 root 밖으로 나가면 거부한다. 응답 코드 선택은 [[concepts/status-codes]] 참고.
+- URI의 `..`가 루트 위로 올라가면 6단계에서 400 + 연결 닫기 (사용자 결정, NGINX와 같음) → [[sources/nginx-observed-directory]].
+- 6단계를 통과했는데 8단계에서 최종 파일 경로가 root 밖이면(심볼릭 링크 등) URI 자체는 올바르므로 403으로 거부한다 (**판단**, NGINX 미측정).
 - 보안상 `/` 합치기를 끄지 말라고 권한다 (raw/nginx-core-module.md:1207).
 - 업로드 파일명(raw/subject.md:172)과 DELETE 대상 경로(raw/evaluation-sheet-en.md:73)에도 같은 검사를 적용한다. multipart의 `filename`은 그대로 쓰지 말고 들어 있는 디렉토리 경로를 쓰지 말라고 한다 (raw/rfc7578.txt:215-220). 기존 파일을 실수로 덮어쓰지 않게 한다 (raw/rfc7578.txt:497-499) → [[concepts/file-upload]].
 - 업로드된 파일에는 실행 가능한 내용이 들어 있을 수 있다 (raw/rfc7578.txt:529-530). 업로드 위치에서 CGI가 실행되지 않게 한다 (**판단**) → [[concepts/file-upload]].
