@@ -65,7 +65,7 @@ curl -X POST -H "Content-Type: plain/text" \
 |---|---|---|---|
 | `connection` | `close` | **요청마다 새 TCP 연결.** keep-alive는 권장하지 않음 | raw/siegerc.in:255-268 |
 | `protocol` | `HTTP/1.1` | HTTP/1.1 파싱 규칙 적용 (Host 필수 등) → [[concepts/request-parsing]] | raw/siegerc.in:213 |
-| `timeout` | 30초 | 응답이 이보다 늦으면 연결 실패로 집계 → Availability 하락 | raw/siegerc.in:353-354 |
+| `timeout` | 30초 | 소켓 연결 타임아웃. 타임아웃은 연결 실패로 집계 → Availability 하락. 응답 대기에도 걸리는지는 **미확인**(siege 소스에서 `timeout` 사용처 확인 → [[source-wishlist]] 6절) | raw/siegerc.in:353-354, raw/siege.pod:374-376 |
 | `failures` | 1024 | 연결 실패가 이만큼 쌓이면 siege 중단. 4xx·5xx는 세지 않음 | raw/siegerc.in:381-389 |
 | `concurrent` / `limit` | 25 / 255 | 기본 동시 사용자 / 상한 | raw/siegerc.in:277, raw/siegerc.in:202 |
 

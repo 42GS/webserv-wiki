@@ -1,7 +1,7 @@
 ---
 title: 연결 관리 — keep-alive, 종료, 타임아웃
 type: concept
-sources: [raw/rfc9112.txt, raw/subject.md, raw/evaluation-sheet-en.md, raw/nginx-core-module.md, raw/siegerc.in, raw/rfc9110.txt, raw/rfc1945.txt]
+sources: [raw/rfc9112.txt, raw/subject.md, raw/evaluation-sheet-en.md, raw/nginx-core-module.md, raw/siegerc.in, raw/rfc9110.txt, raw/rfc1945.txt, raw/posix-recv.md]
 updated: 2026-10-15
 ---
 
@@ -51,7 +51,7 @@ HTTP/1.1은 기본이 persistent connection이다. 구현은 이를 지원하는
   과제 적용: 헤더 수신, 본문 수신, 응답 전송, keep-alive 대기를 따로 다루면 "hang 금지"를 상태별로 설명하기 쉽다. CGI 타임아웃은 [[concepts/cgi]] 5절.
 - 타임아웃으로 닫을 때는 graceful close를 하고, 상대의 연결 종료 신호를 계속 감시해야 한다 (SHOULD, raw/rfc9112.txt:1472-1476).
 - 서버는 언제든 연결을 닫을 수 있다 (MAY, raw/rfc9112.txt:1478-1479).
-- 과제 적용: "요청이 무한히 hang하면 안 됨"(raw/subject.md:139), "hanging connection 없음"(raw/evaluation-sheet-en.md:116)을 지키려면 타임아웃이 필요하다. `recv`가 0을 반환하면 상대가 닫은 것이므로 클라이언트를 정리한다 (raw/evaluation-sheet-en.md:56) → [[concepts/io-multiplexing]].
+- 과제 적용: "요청이 무한히 hang하면 안 됨"(raw/subject.md:139), "hanging connection 없음"(raw/evaluation-sheet-en.md:116)을 지키려면 타임아웃이 필요하다. `recv`가 0을 반환하면 상대가 정상 종료한 것이므로 (raw/posix-recv.md:72) 클라이언트를 정리한다. 평가는 반환값 -1과 0을 모두 처리하는지 본다 (raw/evaluation-sheet-en.md:56) → [[concepts/io-multiplexing]].
 
 ## 연결 종료
 

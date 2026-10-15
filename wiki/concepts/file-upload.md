@@ -76,7 +76,7 @@ Content-Type: text/plain
 4. 각 part의 헤더에서 `name`, `filename`을 읽는다. 파일이 아닌 필드(`filename` 없음)는 저장하지 않거나 무시한다.
 5. `filename`을 안전한 이름으로 바꾼다 (아래 절).
 6. 설정의 저장 위치에 쓴다. 디스크 파일 쓰기는 `poll()` 대상이 아니다 (raw/subject.md:134).
-7. 새 파일을 만들었으면 201 + `Location` (SHOULD, raw/rfc9110.txt:4050-4053) → [[concepts/status-codes]].
+7. 새 파일을 만들었으면 201 + `Location` (SHOULD, raw/rfc9110.txt:4050-4055) → [[concepts/status-codes]].
 
 ## filename 처리
 

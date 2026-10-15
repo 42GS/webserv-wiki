@@ -31,7 +31,7 @@ updated: 2026-10-15
 | GET | 대상 리소스의 현재 표현을 전송. 성공은 200 | raw/rfc9110.txt:3922-3927 |
 | GET | 요청 본문에는 정의된 의미가 없다. request smuggling 위험 때문에 거부하고 연결을 닫는 구현도 있다 | raw/rfc9110.txt:3957-3962 |
 | POST | 대상 리소스가 자기 방식으로 본문을 처리 (폼 데이터 전달, 새 리소스 생성 등) | raw/rfc9110.txt:4027-4041 |
-| POST | 새 리소스를 만들었으면 201 + `Location` (SHOULD) | raw/rfc9110.txt:4050-4053 |
+| POST | 새 리소스를 만들었으면 201 + `Location` (SHOULD) | raw/rfc9110.txt:4050-4055 |
 | DELETE | URI 매핑을 제거하는 연산. UNIX `rm`과 비슷하다 | raw/rfc9110.txt:4199-4204 |
 | DELETE | 성공 시 202(접수만 함), 204(본문 없음), 200(결과 본문 있음) 중 하나 (SHOULD) | raw/rfc9110.txt:4229-4239 |
 | HEAD | GET과 같지만 응답 본문을 보내면 안 됨 (MUST NOT). 헤더는 GET과 같게 (SHOULD) | raw/rfc9110.txt:3987-3988, raw/rfc9110.txt:3993-3994 |
