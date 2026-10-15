@@ -47,7 +47,7 @@ subject와 평가표 모두 "서버가 항상 살아 있어야 한다"를 가장
 
 > [!danger] SIGPIPE
 > 아무 처리도 하지 않으면 읽는 쪽이 없는 pipe에 쓰는 순간 서버 프로세스가 종료된다 (raw/posix-signal-h.md:192-196, raw/posix-signal-h.md:296-298). 디펜스 중 예기치 않은 종료는 0점이다 (raw/evaluation-sheet-en.md:24).
-> 소켓도 마찬가지다. 연결이 끊긴 SOCK_STREAM 소켓에 `send`하면 `EPIPE`로 실패하고, `MSG_NOSIGNAL`이 없으면 `SIGPIPE`가 발생한다 (raw/posix-send.md:118-120). `EPIPE` 실패는 시그널과 별개로 일어나므로, `SIGPIPE`를 무시하면 프로세스는 살고 `send`는 -1을 돌려준다(120줄에서 끌어낸 추론).
+> 소켓도 마찬가지다. 연결이 끊긴 SOCK_STREAM 소켓에 `send`하면 `EPIPE`로 실패하고, `MSG_NOSIGNAL`이 없으면 `SIGPIPE`가 발생한다 (raw/posix-send.md:118-120). `EPIPE` 실패는 시그널과 별개로 일어나므로, `SIGPIPE`를 무시하면 프로세스는 살고 `send`는 -1을 돌려준다 (**판단**, 120줄에서 끌어낸 추론).
 >
 > 대안: `send`의 flags에 `MSG_NOSIGNAL`을 주면 `SIGPIPE` 없이 `EPIPE`만 돌려준다 (raw/posix-send.md:58-60). macOS가 이 플래그를 지원하는지는 **미확인**이다. 또 pipe(CGI)에 쓰는 `write`에는 flags가 없어 이 방법을 쓸 수 없다. 그래서 허용 함수 `signal`로 `SIGPIPE`를 무시하는 쪽을 기본으로 한다.
 
@@ -56,7 +56,7 @@ subject와 평가표 모두 "서버가 항상 살아 있어야 한다"를 가장
 - 평가표는 실행이 끝나기 전에 heap 할당을 모두 해제하라고 한다 (raw/evaluation-sheet-en.md:25).
 - `SIGINT`의 기본 동작은 비정상 종료라서 (raw/posix-signal-h.md:180-184) 해제 코드가 실행되지 않는다. 누수 검사 도구가 이 경우를 누수로 보고하는지는 **미확인**이다.
 - 판단: 시그널 핸들러에서는 종료 플래그만 세우고, 메인 루프가 플래그를 보고 연결·CGI 자식·메모리를 정리한 뒤 종료한다.
-- CGI 자식은 서버가 끝나도 같이 끝나지 않고 시스템 프로세스에 입양된다 (raw/posix-exit.md:70-72). 그래서 종료할 때 실행 중인 CGI를 `kill`로 끝내고 `waitpid`로 회수해야 한다. 그러지 않으면 무한 루프 스크립트가 서버가 꺼진 뒤에도 계속 돈다. `poll()` 대기 중 시그널이 오면 `poll()`이 -1로 돌아온다 (raw/posix-poll.md:114, raw/posix-poll.md:126-128). 이때도 errno를 보지 않고 플래그만 확인하면 된다 → [[analysis/subject-vs-evaluation]] 1.8절.
+- CGI 자식은 서버가 끝나도 같이 끝나지 않고 시스템 프로세스에 입양된다 (raw/posix-exit.md:70-72). 그래서 종료할 때 실행 중인 CGI를 `kill`로 끝내고 `waitpid`로 회수해야 한다. 그러지 않으면 무한 루프 스크립트가 서버가 꺼진 뒤에도 계속 돈다. `poll()` 대기 중 핸들러를 둔 시그널을 잡으면 `poll()`이 -1로 돌아온다 (raw/posix-poll.md:114, raw/posix-poll.md:126-128). 이때도 errno를 보지 않고 플래그만 확인하면 된다 → [[analysis/subject-vs-evaluation]] 1.8절.
 
 ## 관련
 

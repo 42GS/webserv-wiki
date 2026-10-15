@@ -45,7 +45,7 @@ RFC가 특정 코드를 직접 지정하지 않는 상황은 **판단**으로 �
 | 상황 | 코드 | 근거 | 비고 |
 |---|---|---|---|
 | 요청줄·헤더 문법 오류, 잘못된 framing | 400 | raw/rfc9110.txt:7543-7546, raw/rfc9112.txt:319-324 | 보낸 뒤 연결을 닫음 (SHOULD) |
-| HTTP/1.1 요청에 Host 없음, Host 두 줄 이상, Host 값 오류 | 400 | raw/rfc9112.txt:445-448 | MUST |
+| HTTP/1.1 요청에 Host 없음. 버전과 관계없이 Host 두 줄 이상, Host 값 오류 | 400 | raw/rfc9112.txt:445-448 | MUST |
 | 헤더 이름과 `:` 사이에 공백 | 400 | raw/rfc9112.txt:714-719 | MUST |
 | `Content-Length` 값이 잘못됨 (TE 없음) | 400 | raw/rfc9112.txt:956-965 | MUST, 보낸 뒤 연결 닫음 |
 | `Transfer-Encoding`의 마지막 coding이 chunked가 아님 | 400 | raw/rfc9112.txt:950-954 | MUST, 보낸 뒤 연결 닫음 |
@@ -54,7 +54,7 @@ RFC가 특정 코드를 직접 지정하지 않는 상황은 **판단**으로 �
 | 리스팅 off이고 index 파일도 없는 디렉토리 | 403 | raw/rfc9110.txt:7571-7572 | **판단** (확정). NGINX index·autoindex 모듈 문서에도 이 경우의 코드가 없다 (raw/nginx-index-module.md:12, raw/nginx-autoindex-module.md:12). NGINX와 같은지는 선택 실측 → [[source-wishlist]] |
 | URI의 `..`가 루트 위로 올라감 (`%2e%2e` 포함) | **400** + 연결 닫기 | raw/rfc9110.txt:8563-8570, raw/nginx-observed-directory.md:159-164 | 사용자 결정 (2026-10-15). RFC는 접근을 피하라고만 하고 코드는 지정하지 않는다. NGINX 실측과 같다 → [[sources/nginx-observed-directory]] |
 | 정규화는 통과했지만 최종 파일 경로가 root 밖 (심볼릭 링크 등) | 403 | raw/rfc9110.txt:7571-7572 | **판단**. URI는 올바르므로 400이 아니다. NGINX 미측정 |
-| 라우트에서 허용하지 않은 메서드 (알려진 메서드) | 405 | raw/rfc9110.txt:3802-3804, raw/rfc9110.txt:7603-7607 | `Allow` 헤더 MUST. 평가 "DELETE with and without permission" (raw/evaluation-sheet-en.md:73) |
+| 라우트에서 허용하지 않은 메서드 (알려진 메서드) | 405 | raw/rfc9110.txt:3801-3804, raw/rfc9110.txt:7603-7607 | `Allow` 헤더 MUST. 평가 "DELETE with and without permission" (raw/evaluation-sheet-en.md:73) |
 | 클라이언트가 제한 시간 안에 요청을 다 보내지 않음 | 408 | raw/rfc9110.txt:7641-7643 | 닫기 전에 에러 응답을 보낼 수 있음 (MAY, raw/rfc9112.txt:1253-1255) → [[concepts/connection-management]]  NGINX는 헤더 전체 수신 시간, 본문 read 간격 기준으로 408을 보낸다 (raw/nginx-core-module.md:317, raw/nginx-core-module.md:347) |
 | chunked 요청을 받지 않기로 한 경우 | 411 | raw/rfc9110.txt:7692-7694, raw/rfc9112.txt:999-1000 | MAY. subject가 un-chunk를 요구하므로(raw/subject.md:179) 이 과제에서는 쓰지 않는다. `Content-Length`도 TE도 없는 요청은 본문 길이 0이다 (raw/rfc9112.txt:980-981) |
 | body가 `client_max_body_size` 초과 | 413 | raw/rfc9110.txt:7710-7714 | 평가 body 제한 테스트 (raw/evaluation-sheet-en.md:70). 남은 본문을 읽지 않으면 응답 후 연결을 닫아야 함 (raw/rfc9112.txt:1374-1377) |
@@ -65,7 +65,7 @@ RFC가 특정 코드를 직접 지정하지 않는 상황은 **판단**으로 �
 
 | 상황 | 코드 | 근거 | 비고 |
 |---|---|---|---|
-| 모르는 메서드 (평가의 UNKNOWN 요청) | 501 | raw/rfc9110.txt:3800-3801, raw/rfc9110.txt:7871-7874 | 평가 항목은 크래시하지 않는 것 (raw/evaluation-sheet-en.md:80). 구현한 어떤 메서드보다 긴 메서드도 501 (raw/rfc9112.txt:391-393) |
+| 모르는 메서드 (평가의 UNKNOWN 요청) | 501 | raw/rfc9110.txt:3799-3801, raw/rfc9110.txt:7871-7874 | 평가 항목은 크래시하지 않는 것 (raw/evaluation-sheet-en.md:80). 구현한 어떤 메서드보다 긴 메서드도 501 (raw/rfc9112.txt:391-393) |
 | 모르는 transfer coding | 501 | raw/rfc9112.txt:851-852 | SHOULD |
 | 지원하지 않는 HTTP 메이저 버전 | 505 | raw/rfc9110.txt:7908-7911 | |
 | 예상하지 못한 내부 오류 (파일 열기 실패, `fork` 실패 등) | 500 | raw/rfc9110.txt:7865-7867 | |

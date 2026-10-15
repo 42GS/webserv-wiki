@@ -11,7 +11,7 @@ updated: 2026-10-15
 
 | 도구 | 용도 | 근거 |
 |---|---|---|
-| `tester` | 일반 테스터 (사용 의무 없음) | raw/evaluation-sheet-en.md:30, raw/subject.md:188 |
+| `tester` | 일반 테스터. 브라우저와 자체 테스트로 잘 동작하면 사용 의무 없음 | raw/evaluation-sheet-en.md:30, raw/subject.md:188 |
 | `cgi_tester` | CGI 테스터 | raw/evaluation-sheet-en.md:31 |
 | `siege` | 스트레스 테스트. 평가표는 apt 설치 기준 (`sudo apt-get install siege`). 빈 페이지 GET에 `siege -b`로 availability 99.5% 초과 | raw/evaluation-sheet-en.md:48, raw/evaluation-sheet-en.md:113-114 |
 | `telnet`, `curl` | 기본 요청 시연 | raw/evaluation-sheet-en.md:77, raw/subject.md:123 |
@@ -75,12 +75,12 @@ curl -X POST -H "Content-Type: plain/text" \
 ### 서버 구현에 주는 결론
 
 - 기본 설정의 siege는 요청마다 연결을 새로 맺는다 (raw/siegerc.in:268). 그래서 99.5%를 좌우하는 것은 **`accept` 처리, 응답 후 연결 종료, 연결이 몰릴 때 거부되지 않는지**다.
-- siege가 요청에 `Connection: close` 헤더를 실제로 넣는지는 이 파일에 없다 (**미확인**). 넣는다면 서버는 응답 후 종료를 시작해야 한다 (MUST, raw/rfc9112.txt:1521-1526) → [[concepts/connection-management]].
+- 매뉴얼의 `-g`·`-p` 예시 요청에는 `Connection: close` 헤더가 들어 있다 (raw/siege.pod:92-97, raw/siege.pod:118-123). 부하 테스트 요청에도 넣는지는 매뉴얼에 없다 (**미확인**). 넣는다면 서버는 응답 후 종료를 시작해야 한다 (MUST, raw/rfc9112.txt:1521-1526) → [[concepts/connection-management]].
 
 ## 권장 사항
 
 - 한 프로그램으로만 테스트하지 말고 Python/Go 등으로 테스트를 작성 (raw/subject.md:190).
-- 평가자는 설정 파일 외 파일을 수정할 수 없으므로 (raw/evaluation-sheet-en.md:24), 시연용 설정·파일·CGI 스크립트(정상/에러/무한 루프)를 미리 준비한다 (raw/subject.md:184, raw/evaluation-sheet-en.md:91). Python으로 쓸 때는 `cgi` 모듈을 쓰지 않는다 (Python 3.13에서 제거, raw/pep-0594.md:218) → [[concepts/cgi]] 6절.
+- 평가자는 원칙적으로 설정 파일 외에는 수정하지 않고, 수정하려면 평가받는 사람과 합의해야 하므로 (raw/evaluation-sheet-en.md:24), 시연용 설정·파일·CGI 스크립트(정상/에러/무한 루프)를 미리 준비한다 (raw/subject.md:184, raw/evaluation-sheet-en.md:91). Python으로 쓸 때는 `cgi` 모듈을 쓰지 않는다 (Python 3.13에서 제거, raw/pep-0594.md:188-190, raw/pep-0594.md:218) → [[concepts/cgi]] 6절.
 
 ## 관련
 

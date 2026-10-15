@@ -35,12 +35,12 @@ updated: 2026-10-15
 | DELETE | URI 매핑을 제거하는 연산. UNIX `rm`과 비슷하다 | raw/rfc9110.txt:4199-4204 |
 | DELETE | 성공 시 202(접수만 함), 204(본문 없음), 200(결과 본문 있음) 중 하나 (SHOULD) | raw/rfc9110.txt:4229-4239 |
 | HEAD | GET과 같지만 응답 본문을 보내면 안 됨 (MUST NOT). 헤더는 GET과 같게 (SHOULD) | raw/rfc9110.txt:3987-3988, raw/rfc9110.txt:3993-3994 |
-| 공통 | 모르는 메서드는 501, 알지만 허용되지 않은 메서드는 405 (SHOULD) | raw/rfc9110.txt:3800-3804 |
+| 공통 | 모르는 메서드는 501, 알지만 허용되지 않은 메서드는 405 (SHOULD) | raw/rfc9110.txt:3799-3804 |
 | 공통 | 메서드 토큰은 대소문자를 구분한다. `get`은 `GET`이 아니다 | raw/rfc9110.txt:3748-3751 |
 
 > [!warning] 모순: HEAD
 > RFC는 범용 서버라면 GET과 HEAD를 MUST로 지원하라고 한다 (raw/rfc9110.txt:3794-3795). subject는 GET·POST·DELETE만 요구한다 (raw/subject.md:147).
-> HEAD를 구현하지 않으면 RFC 기준 501이 된다 (raw/rfc9110.txt:3800-3801). 평가 항목은 아니지만, 구현 비용이 작으므로(GET에서 본문만 뺌) 지원을 고려한다. → [[analysis/subject-vs-evaluation]]
+> HEAD를 구현하지 않으면 RFC 기준으로 501을 보내야 한다 (SHOULD, raw/rfc9110.txt:3799-3801). 평가 항목은 아니지만, 구현 비용이 작으므로(GET에서 본문만 뺌) 지원을 고려한다. → [[analysis/subject-vs-evaluation]]
 
 ## 응답 헤더 규칙
 

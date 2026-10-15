@@ -1,7 +1,7 @@
 ---
 title: webserv subject (v24.0)
 type: source
-sources: [raw/subject.md]
+sources: [raw/subject.md, raw/evaluation-sheet-en.md]
 updated: 2026-10-15
 ---
 
@@ -17,7 +17,7 @@ C++98로 브라우저에서 실제로 쓸 수 있는 HTTP 서버를 만드는 �
 
 | 장 | 핵심 | 위키 페이지 |
 |---|---|---|
-| I. Introduction | HTTP와 웹 서버의 역할 설명. 요구사항 없음 (raw/subject.md:26) | — |
+| I. Introduction | HTTP와 웹 서버의 역할 설명. 요구사항 없음 (raw/subject.md:26-40) | — |
 | II. General rules | 어떤 경우에도 크래시 금지, Makefile, `c++ -Wall -Wextra -Werror`, C++98, 외부 라이브러리 금지 (raw/subject.md:46-52) | [[concepts/build-and-submission]], [[concepts/resilience]] |
 | III. AI Instructions | 이해하고 책임질 수 있는 AI 산출물만 사용 (raw/subject.md:68) | [[concepts/build-and-submission]] |
 | IV. Mandatory | 허용 함수 목록, non-blocking + 단일 `poll()` 규칙, 기능 요구사항 (raw/subject.md:100-151) | [[concepts/io-multiplexing]], [[concepts/http-features]] |
@@ -35,6 +35,6 @@ C++98로 브라우저에서 실제로 쓸 수 있는 HTTP 서버를 만드는 �
 ## 눈여겨볼 점
 
 - HTTP/1.0을 기준점으로 제안하지만 강제하지 않음 (raw/subject.md:123).
-- virtual host는 범위 밖이지만 구현해도 됨 (raw/subject.md:151) — 평가표와 충돌, [[analysis/subject-vs-evaluation]] 참고.
+- virtual host는 범위 밖이지만 구현해도 됨 (raw/subject.md:151). 평가표 영어 원문도 선택 사항으로 둔다 (raw/evaluation-sheet-en.md:108) → [[analysis/subject-vs-evaluation]] 1.2절.
 - 일반 디스크 파일은 `poll()`을 거치지 않아도 됨 (raw/subject.md:134).
 - 테스트는 한 프로그램만으로 하지 말고 Python/Go 등으로 작성 권장 (raw/subject.md:190).

@@ -29,7 +29,7 @@ updated: 2026-10-15
 
 - RFC 9110: 범용 서버는 GET과 HEAD를 MUST로 지원 (raw/rfc9110.txt:3794-3795).
 - subject: GET·POST·DELETE만 요구 (raw/subject.md:147). 평가표도 HEAD를 테스트하지 않는다 (raw/evaluation-sheet-en.md:79).
-- 판단: 평가에는 영향이 없다. 구현 비용이 작아서 지원을 고려한다. 지원하지 않는다면 HEAD에 501로 응답한다 (raw/rfc9110.txt:3800-3801). → [[concepts/http-features]]
+- 판단: 평가에는 영향이 없다. 구현 비용이 작아서 지원을 고려한다. 지원하지 않는다면 HEAD에 501로 응답한다 (raw/rfc9110.txt:3799-3801). → [[concepts/http-features]]
 
 ### 1.4 허용 함수 목록의 범위 — `<ctime>`, `exit` (질문)
 

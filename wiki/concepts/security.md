@@ -91,7 +91,7 @@ subject와 평가표에는 보안 항목이 따로 없다. 하지만 아래 문�
 
 ## 6. 세션 (보너스)
 
-- 세션 식별자만 쿠키에 넣고 상태는 서버에 둔다 (raw/rfc6265.txt:1716-1720). session fixation을 피해야 한다 (SHOULD, raw/rfc6265.txt:1730-1731) → [[concepts/bonus]].
+- 세션 식별자만 쿠키에 넣고 상태는 서버에 둔다 (**판단**, RFC 6265가 서버들이 흔히 쓰는 방식으로 설명한다, raw/rfc6265.txt:1716-1720). session fixation을 피해야 한다 (SHOULD, raw/rfc6265.txt:1730-1731) → [[concepts/bonus]].
 - `Path` 속성은 보안 경계로 믿으면 안 된다 (raw/rfc6265.txt:647-649).
 
 ## 관련

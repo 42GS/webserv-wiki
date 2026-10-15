@@ -10,7 +10,7 @@ updated: 2026-10-15
 RFC 9112 기준으로 서버가 요청을 읽는 순서대로 정리했다. 단계마다 실패하면 보낼 코드를 붙였다. 코드 선택 전체는 [[concepts/status-codes]].
 
 > [!note] 비동기 수신과의 관계
-> 스트림 소켓에는 메시지 경계가 없어서 `recv`는 도착한 만큼만 돌려준다 (raw/posix-recv.md:62). 요청은 여러 번의 `recv`에 나뉘어 도착하고, 요청 여러 개가 한 번에 올 수도 있다. 이 과제에서는 readiness 1회에 I/O 1번이 안전하다 → [[concepts/io-multiplexing]]. 따라서 파서는 "아직 덜 왔음"과 "문법 오류"를 구분해서, 받은 데이터를 버퍼에 쌓아 가며 단계별로 진행해야 한다.
+> 스트림 소켓에는 메시지 경계가 없어서 `recv`는 도착한 만큼만 돌려준다 (raw/posix-recv.md:62). 요청은 여러 번의 `recv`에 나뉘어 도착하고, 요청 여러 개가 한 번에 올 수도 있다. 이 과제에서는 readiness 1회에 I/O 1번이 안전하다 (**판단**) → [[concepts/io-multiplexing]]. 따라서 파서는 "아직 덜 왔음"과 "문법 오류"를 구분해서, 받은 데이터를 버퍼에 쌓아 가며 단계별로 진행해야 한다.
 
 ## 0. 기본 원칙
 
@@ -40,7 +40,7 @@ RFC 9112 기준으로 서버가 요청을 읽는 순서대로 정리했다. 단�
 | 요청줄 길이는 최소 8000 octet까지 지원 권장 | — | raw/rfc9112.txt:397-399 |
 | request-target 안에 공백은 허용되지 않음 | 400 또는 올바르게 인코딩한 target으로 301 (SHOULD). 고쳐서 그냥 처리하지 말 것 | raw/rfc9112.txt:425-435 |
 | HTTP-version은 `HTTP/` + 숫자.숫자, 대소문자 구분 | 지원하지 않는 메이저 버전은 505 (raw/rfc9110.txt:7908-7911) | raw/rfc9112.txt:333-337 |
-| 버전이 없는 요청줄(HTTP/0.9 `GET URI` 형식) | **400**. HTTP/0.9는 지원하지 않음 (**판단**). 요청줄 문법에 버전이 필수이고 잘못된 요청줄은 400 (SHOULD). 0.9처럼 보이는 요청은 대부분 잘못 만든 1.x 요청이다 | raw/rfc9112.txt:377, raw/rfc9112.txt:430-431, raw/rfc9112.txt:2215-2221, raw/rfc1945.txt:1190 |
+| 버전이 없는 요청줄(HTTP/0.9 `GET URI` 형식) | **400**. HTTP/0.9는 지원하지 않음 (**판단**). 요청줄 문법에 버전이 필수이고 잘못된 요청줄은 400 (SHOULD). 0.9처럼 보이는 요청은 대부분 잘못 만든 1.x 요청이다 | raw/rfc9112.txt:377, raw/rfc9112.txt:430-432, raw/rfc9112.txt:2215-2221, raw/rfc1945.txt:1190 |
 
 ### request-target 형식
 
@@ -58,11 +58,11 @@ RFC 9112 기준으로 서버가 요청을 읽는 순서대로 정리했다. 단�
 | 값 앞뒤의 OWS는 값에서 제외 | — | raw/rfc9112.txt:722-729 |
 | 시작줄과 첫 헤더 사이의 공백으로 시작하는 줄 | 거부하거나 그 줄들을 무시 (MUST) | raw/rfc9112.txt:308-313 |
 | obs-fold(공백으로 시작하는 이어지는 줄) | 400으로 거부하거나 SP로 치환 (MUST) | raw/rfc9112.txt:746-751 |
-| HTTP/1.1 요청에 Host가 없음, 두 줄 이상, 값이 잘못됨 | **400 (MUST)** | raw/rfc9112.txt:445-448 |
+| HTTP/1.1 요청에 Host가 없음. 버전과 관계없이 Host가 두 줄 이상이거나 값이 잘못됨 | **400 (MUST)** | raw/rfc9112.txt:445-448 |
 
 > [!note] Host가 없을 때
 > - **HTTP/1.1** 요청: 400 (MUST, raw/rfc9112.txt:445-448).
-> - **HTTP/1.0** 요청: RFC 9112의 400 규칙은 HTTP/1.1 요청에만 적용된다 (raw/rfc9112.txt:445-446). NGINX는 Host가 없는 요청을 그 포트의 default server로 보낸다 (raw/nginx-request-processing.md:34). 이 경우 default server로 처리한다.
+> - **HTTP/1.0** 요청: Host가 **없을 때** 400을 보내라는 규칙은 HTTP/1.1 요청에만 적용된다. Host가 두 줄 이상이거나 값이 잘못된 경우는 버전과 관계없이 400이다 (raw/rfc9112.txt:445-448). NGINX는 Host가 없는 요청을 그 포트의 default server로 보낸다 (raw/nginx-request-processing.md:34). 이 경우 default server로 처리한다.
 > - NGINX가 Host 없는 HTTP/1.1 요청에 실제로 400을 보내는지는 문서에 없지만, RFC 9112가 400을 MUST로 정하므로 이 과제는 400으로 확정한다.
 > - server 선택 순서는 [[concepts/configuration-file]] "server 선택" 절.
 
