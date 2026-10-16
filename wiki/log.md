@@ -460,3 +460,7 @@
 ## [2026-10-17] query | 새 engineering 규칙으로 코드 점검
 - 갱신: [[analysis/test-plan]] B-08(`std::char_traits` 삭제), [[analysis/design]] 7절 `matchLocation` 주석
 - 메모: 사용자 전역 규칙 `~/.claude/rules/engineering.md`에 "추상화 경고 신호"(pass-through, 정보 없는 이름, 같은 일을 하는 방법이 둘)와 "군더더기" 자가 검토를 넣고(근거: Beck "Fewest elements", Fowler Inline Function), 그 규칙으로 src·include를 직접 읽었다. `failAt`을 지웠다 (webserv `807c890`). alias 경계 검사를 `matchLocation` 한 곳으로 모으고(결정 14), 두 파일에 있던 `describe(ListenAddr)`를 `formatListenAddr` 하나로 합쳤다. pass-through인 `http_date::format`·`RequestProcessor::statusPage`·`isOneOf`와, 테스트에서만 쓰던 `HeaderMap::clear`를 지웠다 (`2b46594`). 단위 82(valgrind 오류 없음), 통합 52가 macOS·Ubuntu에서 통과했다(느린 테스트와 root라 건너뛰는 것 제외).
+
+## [2026-10-17] query | 가독성 리팩토링
+- 갱신: [[analysis/design]] 1절(상수 위치 규칙), 13절 표(매직 넘버)
+- 메모: 사용자 지적("코드 가독성이 너무 떨어진다", "if 문도 자주 나온다")에 따라 정리했다. (1) `statusPage` 복원, `matchLocation`을 if문으로 (webserv `144bbc0`). (2) parser 단계 함수 14개가 넘겨받던 `Result&`를 없애고, 계속할지만 돌려준다. `feed()`가 멈춘 상태로 결과를 정하고, 헤더와 trailer는 `takeHeaderLine` 하나로 431을 센다 (`973408e`). (3) `isHttpVersion`(RFC 9112 2.3절), `Connection::hasTimedOut`으로 조건을 꺼냈다. P-08에 `HTTP/1x1`·`HTTP/x.1`을 추가했다. 전에는 "." 검사를 빼도 통과했다 (`919f7f5`). (4) 헤더에는 여러 파일이 쓰는 상수만 남기고, 한 파일 상수·표는 그 `.cpp`로 옮기고, 의미가 옆에서 보이는 값은 리터럴로 썼다. 날짜 계산은 Hinnant 알고리즘의 숫자 그대로다. 옮긴 표 행 41개는 그대로다 (`5fbfabd`). (5) 지시어 if 사슬을 표로 바꾸는 것은 요소만 늘어 하지 않았다. (6) 사용자 전역 규칙 `~/.claude/rules/engineering.md`에 반환값 우선, 조건식 꺼내기, 매직 넘버 예외, 상수 위치를 넣었다. macOS·Ubuntu에서 단위 82(valgrind 오류 없음), 통합 52 통과. 느린 테스트도 macOS에서 통과. 본문·전송 시간 초과와 조용히 닫기는 테스트가 없어 5단계에서 다룬다.

@@ -39,7 +39,7 @@ tests/                Python 테스트 스크립트
 - 헤더는 `include/<모듈>/`, 소스는 `src/<모듈>/`에 같은 이름으로 둔다(`-Iinclude`, 2026-10-16 사용자 요청). 단위 테스트는 `tests/unit/`, `make test`로 실행한다. 코드 포맷은 clang-format Google 스타일(`Standard: c++03`)이고 `make format`으로 맞춘다 (2026-10-16 사용자 선택).
 - config 모듈은 단계 1 리팩토링에서 `ConfigLexer` → `ConfigSyntax` → `ConfigBuilder`(서버 목록·listen 충돌) → `ServerBuilder`·`LocationBuilder`(값 해석)로 나눴다. 지시자의 위치·인자 수·블록 여부·반복 가능 여부는 `DirectiveRules`의 표 하나에 있다.
 - 공용 `util/`은 두지 않는다. 문자열 처리 같은 도우미는 그것을 쓰는 모듈 안에 둔다. 두 모듈 이상에서 같은 이유로 쓰게 되면 그때 뺀다. 이 규칙으로 4단계 리뷰 뒤에 파일 종류 확인과 파일 읽기를 `fs/`로, 16진수 해석을 `http/Hex`로 뺐다.
-- 상수와 자료형은 `.cpp`가 아니라 헤더에 둔다 (2026-10-16 사용자 요청). 상태 코드는 `http/StatusCodes.hpp`, 12절의 조정용 값은 `core/Limits.hpp`(본문 상한은 `config/ConfigLimits.hpp`), 나머지는 그것을 쓰는 컴포넌트의 헤더에 컴포넌트 이름의 namespace로 둔다(예: `request_parser::`, `http_date::`).
+- 헤더에는 다른 파일이 쓰는 상수·자료형만 둔다 (2026-10-17 사용자 결정. 2026-10-16의 "상수와 자료형은 모두 헤더에" 규칙을 가독성 때문에 바꿨다). 여러 파일이 쓰는 어휘(상태 코드 `http/StatusCodes.hpp`, 헤더 이름, 메서드 이름)와 12절의 조정용 값(`core/Limits.hpp`, 본문 상한은 `config/ConfigLimits.hpp`)은 헤더에 둔다. 한 `.cpp`에서만 쓰는 상수·표와 그 행 타입은 그 `.cpp`의 이름 없는 namespace 맨 위에 둔다. 의미가 바로 옆 코드나 주석에서 보이는 값(문법상 글자 위치, 진법, `%XX`의 2, fd의 -1, 참고한 알고리즘의 숫자)은 리터럴로 쓴다.
 - 로그 모듈은 필요해질 때 만든다.
 
 ## 2. 모듈과 책임
@@ -530,7 +530,7 @@ private:
 | DIP·낮은 결합도 | `EventLoop`는 `IoHandler`·`LoopObserver`만 안다. `cgi`는 `IoRegistry`·`CgiObserver` 인터페이스만 안다 |
 | 파라미터 4개 이하 | `ListenContext`, `CgiContext`로 묶었다 |
 | 높은 응집도·YAGNI | 공용 `util/`과 로그 모듈을 두지 않는다 |
-| 매직 넘버 금지 | 12절 상수 |
+| 매직 넘버 금지 | 12절 상수. 의미가 바로 옆에서 보이는 값은 리터럴로 쓴다 (1절) |
 
 의도한 예외:
 - **OCP**: `RequestProcessor`는 `RouteResult::Kind`로 분기한다. 처리 방식이 7개로 고정이고 늘어날 계획이 없어, Handler 인터페이스 계층보다 분기 하나가 읽기 쉽다 (KISS, 우선순위상 가독성이 유지보수성보다 앞섬).
