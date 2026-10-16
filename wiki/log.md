@@ -404,3 +404,6 @@
 ## [2026-10-16] query | 구현 단계 0·1 (webserv 저장소)
 - 갱신: analysis/design (3절에 단계 1 구현 세부)
 - 메모: 코드 저장소는 `webserv/`(별도 git, 위키 `.gitignore`에 추가). 단계 0 Makefile·README 틀, 단계 1 설정 파서(lexer → 구문 트리 → builder)와 단위 테스트 16개(`make test`). macOS·Ubuntu 22.04 빌드와 테스트 통과, 테스트 값을 일부러 틀리게 바꾸면 실패를 보고함을 확인.
+
+## [2026-10-16] query | 구현 단계 2 (이벤트 루프와 고정 응답)
+- 메모: webserv `6f48721`. `EventLoop`(poll 하나, 소유하지 않음), `Server`(Listener·Connection 소유), `Clock`(파일 mtime), `Signals`, `Listener`, 고정 200 응답 `Connection`. `ChildReaper`는 CGI 단계에서 만든다(YAGNI). Ubuntu 22.04 컨테이너, valgrind 아래에서 `siege -b -c 25 -t 20S` 92,279건 availability 100%, `-r 200` 5,000건 100%, SIGINT 뒤 "All heap blocks were freed"·열린 fd 3개(표준). macOS에서 두 포트 동시 50건 200, 같은 포트 두 번째 실행은 "Address already in use"로 종료 코드 1.
