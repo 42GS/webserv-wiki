@@ -149,6 +149,12 @@ struct ServerConfig {
 - 검증: 같은 `interface:port` 중복, `0.0.0.0`과 특정 IP의 같은 포트 → [[concepts/configuration-file]] "포트 관련 엣지 케이스", 결정 4.
 - virtual host가 없으므로(결정 4) `ListenAddr` 하나에 `ServerConfig`가 하나 대응한다.
 - 설정 객체는 프로그램이 끝날 때까지 `main`이 갖는다. 다른 객체는 `const` 참조로만 쓴다.
+- 구현에서 정한 세부 (단계 1, 2026-10-16):
+  - `listen` 주소는 점으로 구분한 IPv4만 받는다(`localhost` 같은 이름은 설정 오류).
+  - 따옴표 문자열은 지원하지 않는다(설정 오류).
+  - location `/`가 없고 server에 `root`가 있으면 그 값으로 location `/`를 만든다. server에 `root`도 없으면 만들지 않고, 맞는 location이 없는 요청은 404가 된다.
+  - 구문 트리는 C++98에서 불완전 타입의 `std::vector`를 멤버로 둘 수 없어 노드 인덱스로 연결한다.
+  - 설정 파일이 일반 파일이 아니면(디렉토리 등) 설정 오류다.
 
 ## 4. 이벤트 루프와 객체 소유
 

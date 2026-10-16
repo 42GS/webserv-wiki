@@ -400,3 +400,7 @@
 - 생성: raw/design-checks-observed.md (프로그램 3개, 명령, macOS·Ubuntu 22.04 출력 그대로), sources/design-checks-observed
 - 갱신: analysis/design-decisions (결정 11 본문 상한 100MB, 결정 12 CGI 자식 `std::exit` + `access` 검사), analysis/design (3절 `client_max_body_size`, 7절 `reserve`, 9절 `fork` 전 검사·flush·`std::exit`, 11절 `bad_alloc` 한계, 상수), concepts/cgi, analysis/subject-vs-evaluation (1.4절, 남은 미확인 문구), overview, index
 - 메모: 파일 수정 시각 시계는 두 OS에서 `time()`과 일치 (raw/design-checks-observed.md:60-80) → 결정 10의 **미확인** 해소. 메모리 고갈 시 `bad_alloc` 없이 `Killed` (raw/design-checks-observed.md:119-123). 자식 `std::exit`은 flush 안 된 부모 버퍼를 다시 출력 (raw/design-checks-observed.md:183-194). 사용자 결정: 상한 100MB, CGI 종료는 해석 A(`std::exit`) + `access` 보조 대책.
+
+## [2026-10-16] query | 구현 단계 0·1 (webserv 저장소)
+- 갱신: analysis/design (3절에 단계 1 구현 세부)
+- 메모: 코드 저장소는 `webserv/`(별도 git, 위키 `.gitignore`에 추가). 단계 0 Makefile·README 틀, 단계 1 설정 파서(lexer → 구문 트리 → builder)와 단위 테스트 16개(`make test`). macOS·Ubuntu 22.04 빌드와 테스트 통과, 테스트 값을 일부러 틀리게 바꾸면 실패를 보고함을 확인.
