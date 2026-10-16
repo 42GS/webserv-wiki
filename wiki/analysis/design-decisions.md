@@ -1,7 +1,7 @@
 ---
 title: 설계 결정 목록
 type: analysis
-sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc9110.txt, raw/rfc9112.txt, raw/rfc3875.txt, raw/rfc6265.txt, raw/rfc7578.txt, raw/nginx-core-module.md, raw/nginx-request-processing.md, raw/nginx-index-module.md, raw/nginx-rewrite-module.md]
+sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc9110.txt, raw/rfc9112.txt, raw/rfc3875.txt, raw/rfc6265.txt, raw/rfc7578.txt, raw/nginx-core-module.md, raw/nginx-request-processing.md, raw/nginx-index-module.md, raw/nginx-rewrite-module.md, raw/design-checks-observed.md]
 updated: 2026-10-16
 ---
 
@@ -22,6 +22,8 @@ updated: 2026-10-16
 | 8 | 보너스 쿠키·세션은 CGI 예제로 보여 줌 | 2026-10-15 | [[concepts/bonus]] |
 | 9 | 설정 파일은 NGINX 문법을 따름 | 2026-10-16 | [[concepts/configuration-file]], [[analysis/design]] |
 | 10 | 시각은 허용 함수만으로 얻고 `Date`를 보냄 | 2026-10-16 | [[concepts/http-features]], [[analysis/design]] 4절 |
+| 11 | `client_max_body_size` 상한 100MB | 2026-10-16 | [[analysis/design]] 3절 |
+| 12 | CGI 자식은 `execve` 실패 시 `std::exit`, `fork` 전 `access` 검사 | 2026-10-16 | [[concepts/cgi]], [[analysis/design]] 9절 |
 
 1~3은 앞서 정한 것을 함께 모았다. 근거는 각 관련 페이지에 있다.
 
@@ -80,6 +82,20 @@ updated: 2026-10-16
 - 시계가 있으므로 RFC 9110대로 2xx·3xx·4xx 응답에 `Date`를 보낸다 (MUST, raw/rfc9110.txt:2313-2317). 날짜 문자열 변환도 직접 계산한다.
 - 버린 대안: `time()`은 단순하지만 목록 밖이다. 시간 함수 없이 `poll()` 타임아웃 횟수로 어림하는 방법은 요청이 계속 들어오면 시간이 흐르지 않아 타임아웃이 걸리지 않을 수 있다.
 - 디펜스: 왜 파일로 시각을 얻는지(허용 함수 목록) 설명한다.
+
+## 11. `client_max_body_size` 상한 100MB
+
+- 근거: 본문은 메모리에 모은 뒤 저장한다(업로드 단순 방식). 메모리가 바닥나면 `std::bad_alloc` 대신 프로세스가 강제로 끝났다 (raw/design-checks-observed.md:119-123). 서버가 끝나면 0점이다 (raw/evaluation-sheet-en.md:24).
+- 구현: 설정의 `client_max_body_size`가 100MB를 넘거나 0(NGINX에서는 검사 안 함)이면 설정 오류로 시작하지 않는다. 0의 의미만 NGINX와 다르다. `Content-Length`를 알면 그 크기만큼 `reserve`해 문자열이 두 배로 커지는 것을 피한다. chunked 본문은 해제한 크기로 상한을 검사한다.
+- 남는 위험 (**판단**): 동시 업로드 수 × 상한만큼 메모리가 필요하다. 평가의 업로드 시험은 작은 파일이다.
+
+## 12. CGI 자식 종료: `std::exit` + `fork` 전 `access` 검사
+
+- 쟁점: `execve`가 실패한 자식을 끝낼 `exit`·`_exit`가 허용 목록(raw/subject.md:111-113)에 없다. 한편 subject는 C 함수 사용을 허용하고 C++ 버전을 권한다 (raw/subject.md:51) → [[analysis/subject-vs-evaluation]] 1.4절.
+- 결정: 51줄에 따라 C++98 표준 라이브러리의 `std::exit`(`<cstdlib>`)를 쓴다 (사용자 선택, 2026-10-16). `_exit`은 POSIX 함수라 쓰지 않는다.
+- 보조 대책: `fork` 전에 `access`(허용 함수)로 스크립트와 실행 파일을 확인해, 없으면 404, 권한이 없으면 403으로 자식을 만들기 전에 끝낸다. `execve` 실패를 완전히 없애지는 못하므로 `std::exit(1)`은 남는다.
+- 주의: `std::exit`은 부모에게서 물려받은 출력 버퍼를 다시 내보냈다 (raw/design-checks-observed.md:183-194). 자식의 표준 출력은 CGI pipe이므로 `fork` 직전에 표준 출력·에러를 flush한다. 정적 객체 소멸자에 부작용(파일 삭제, `kill` 등)을 두지 않는다 (**판단**).
+- 디펜스: 51줄과 111줄을 함께 보여 주고 해석을 설명한다.
 
 ## 아직 정하지 않은 것
 

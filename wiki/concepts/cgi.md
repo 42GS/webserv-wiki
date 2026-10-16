@@ -1,8 +1,8 @@
 ---
 title: CGI
 type: concept
-sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc3875.txt, raw/rfc9112.txt, raw/rfc9110.txt, raw/posix-poll.md, raw/posix-signal-h.md, raw/posix-waitpid.md, raw/posix-bind.md, raw/posix-exit.md, raw/php-cgi-force-redirect.md, raw/php-ini-core.md, raw/rfc6265.txt, raw/posix-fcntl.md, raw/pep-0594.md, raw/os-observed-pipe-poll.md, raw/php-src-cgi_main.c, raw/php-cgi-observed-env.md, raw/ubuntu2204-observed-tools.md]
-updated: 2026-10-15
+sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc3875.txt, raw/rfc9112.txt, raw/rfc9110.txt, raw/posix-poll.md, raw/posix-signal-h.md, raw/posix-waitpid.md, raw/posix-bind.md, raw/posix-exit.md, raw/php-cgi-force-redirect.md, raw/php-ini-core.md, raw/rfc6265.txt, raw/posix-fcntl.md, raw/pep-0594.md, raw/os-observed-pipe-poll.md, raw/php-src-cgi_main.c, raw/php-cgi-observed-env.md, raw/ubuntu2204-observed-tools.md, raw/design-checks-observed.md]
+updated: 2026-10-16
 ---
 
 # CGI
@@ -182,7 +182,7 @@ RFC 3875 목록에 없는 비표준 변수다. 이 과제에서 CGI로 `php-cgi`
 - `waitpid`는 직접 만든 자식만 대상으로 한다. 스크립트가 만든 손자 프로세스는 회수할 수 없다 (raw/posix-waitpid.md:329). 스크립트를 `kill`해도 손자 프로세스가 직접 함께 끝나지는 않는다 (raw/posix-exit.md:70).
 - **회수하지 않으면 좀비가 남는다.** 끝난 프로세스는 좀비가 되고, 부모가 `wait`/`waitpid`로 상태를 가져갈 때 수명이 끝난다 (raw/posix-exit.md:58-64). `SIGCHLD`를 `SIG_IGN`으로 두면 좀비 없이 사라지지만 종료 상태를 받을 수 없다 [XSI] (raw/posix-exit.md:50-54). 이 과제는 `SIGCHLD`를 기본 동작으로 두고 `waitpid`로 회수한다.
 - 스크립트가 끝나면 그 프로세스의 fd가 모두 닫힌다 (raw/posix-exit.md:48). 그래서 출력 pipe의 쓰는 쪽이 닫혀 서버에 `POLLHUP`과 EOF가 온다 → 1절 설계 제약.
-- 자식에서 `execve`가 실패하면 자식 프로세스를 끝내야 한다. `exit`·`_exit`가 허용 함수 목록에 없다는 문제는 [[analysis/subject-vs-evaluation]] 1.4절.
+- 자식에서 `execve`가 실패하면 자식 프로세스를 끝내야 한다. `exit`·`_exit`가 허용 함수 목록에 없다는 문제는 [[analysis/subject-vs-evaluation]] 1.4절. 결정: `std::exit(1)`을 쓰고, `fork` 전에 `access`로 확인하며, `fork` 직전에 출력 버퍼를 flush한다(flush하지 않으면 자식의 `std::exit`이 부모 버퍼를 다시 출력했다, raw/design-checks-observed.md:183-194) → [[analysis/design-decisions]] 12.
 
 ## 6. 테스트 스크립트 작성 (Python)
 

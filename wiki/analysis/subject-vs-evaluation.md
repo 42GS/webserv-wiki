@@ -39,7 +39,7 @@ subject는 "허용된 syscall/라이브러리 호출" 목록을 준다 (raw/subj
 - **디렉토리 리스팅의 시간 표시:** NGINX 리스팅은 파일 시간을 보인다 (raw/nginx-autoindex-module.md:88). 시간 형식으로 바꾸려면 시간 함수가 필요하다. subject는 리스팅 내용을 정하지 않으므로 (raw/subject.md:170) 생략할 수 있다. → [[concepts/configuration-file]]
 - **CGI 자식 종료:** `execve`가 실패한 자식은 끝나야 한다. `exit`·`_exit`가 목록에 없다 (raw/subject.md:113). POSIX는 보통 `exit()`을 권하지만 (raw/posix-exit.md:122), `_exit`은 stream을 flush하지 않는다 (raw/posix-exit.md:36). 그래서 fork된 자식이 부모에게서 물려받은 버퍼를 다시 내보내지 않는다 (**판단**). → [[concepts/cgi]]
 - 판단 보류. 확인 방법: 동료·평가자 합의 또는 42 공식 답변.
-- Date·리스팅 시각은 시간 함수 없이 허용 함수로 시각을 얻기로 해 이 질문을 피한다 (2026-10-16 결정) → [[analysis/design-decisions]] 10. CGI 자식 종료(`exit`·`_exit`)는 여전히 남는다.
+- Date·리스팅 시각은 시간 함수 없이 허용 함수로 시각을 얻기로 해 이 질문을 피한다 (2026-10-16 결정) → [[analysis/design-decisions]] 10. CGI 자식 종료는 51줄("C 함수 사용 허용, C++ 버전 권장", raw/subject.md:51)에 따라 `std::exit`을 쓰기로 했다 (2026-10-16 결정) → [[analysis/design-decisions]] 12. 평가자가 111줄 목록만 허용으로 읽을 수 있어, 디펜스에서 설명할 질문으로 남긴다.
 
 ### 1.5 half-close — 허용 함수 목록 vs RFC 9112
 
@@ -151,7 +151,7 @@ subject는 "허용된 syscall/라이브러리 호출" 목록을 준다 (raw/subj
 subject·평가표 해석에 관한 질문만 모았다. 동작 확인이 필요한 항목(NGINX·OS 실측, siege 소스)은 [[source-wishlist]] 4-1·5-1·6절.
 
 - 42 EvalHub 원문이 intra의 현재 평가표와 같은지 → [[sources/evaluation-sheet-en]]
-- 허용 함수 목록이 `exit` 등 표준 라이브러리에도 적용되는지 (CGI 자식 종료, 1.4절). 시각은 허용 함수로 얻기로 해 `<ctime>`은 쓰지 않는다
+- 허용 함수 목록이 `exit` 등 표준 라이브러리에도 적용되는지 (CGI 자식 종료, 1.4절). `std::exit`을 쓰기로 했다(결정 12, 51줄 근거). 시각은 허용 함수로 얻어 `<ctime>`은 쓰지 않는다
 - read/write 외 함수(`poll`, `bind`)의 실패 원인을 errno로 봐도 되는지 (1.8절)
 - `waitpid` 상태 매크로를 써도 되는지 (1.9절)
 - 세션 식별자용 `/dev/urandom` 읽기가 `poll()` 예외에 들어가는지 (1.10절). 보너스를 CGI 예제로 하기로 해 서버 구현에는 필요 없다

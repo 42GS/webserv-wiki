@@ -395,3 +395,8 @@
 ## [2026-10-16] query | 업로드 저장·상수·시각과 Date 결정
 - 갱신: analysis/design (4절 `Clock`, `IoHandler::onFailure` 누락 보완, `EventLoop`가 바퀴마다 시계 갱신, 7절 업로드 한 번에 저장, 8절 `Date` 보냄, 상수 `kClockFile`, 14절 정리), analysis/design-decisions (결정 10), concepts/http-features (Date 콜아웃에 결정), analysis/subject-vs-evaluation (1.4절, 남은 미확인 문구), overview (열린 질문 문구)
 - 메모: 사용자 결정 — 업로드는 단순한 쪽(본문을 모은 뒤 한 번에 저장), 상수는 평가 통과 수준이면 됨, Date는 평가자가 문제 삼을 수 없는 보수적 방향. 타임아웃에 쓰던 `time()`이 허용 함수 목록 밖임을 이때 발견해, 시계용 파일의 `stat` 수정 시각으로 시각을 얻고 RFC 9110 MUST대로 `Date`를 보내기로 했다. `write`가 수정 시각을 갱신하는지는 **미확인**(단계 2에서 두 OS 확인).
+
+## [2026-10-16] ingest | 설계 확인 실측 3건 (파일 시계, 큰 본문 메모리, 자식 std::exit)
+- 생성: raw/design-checks-observed.md (프로그램 3개, 명령, macOS·Ubuntu 22.04 출력 그대로), sources/design-checks-observed
+- 갱신: analysis/design-decisions (결정 11 본문 상한 100MB, 결정 12 CGI 자식 `std::exit` + `access` 검사), analysis/design (3절 `client_max_body_size`, 7절 `reserve`, 9절 `fork` 전 검사·flush·`std::exit`, 11절 `bad_alloc` 한계, 상수), concepts/cgi, analysis/subject-vs-evaluation (1.4절, 남은 미확인 문구), overview, index
+- 메모: 파일 수정 시각 시계는 두 OS에서 `time()`과 일치 (raw/design-checks-observed.md:60-80) → 결정 10의 **미확인** 해소. 메모리 고갈 시 `bad_alloc` 없이 `Killed` (raw/design-checks-observed.md:119-123). 자식 `std::exit`은 flush 안 된 부모 버퍼를 다시 출력 (raw/design-checks-observed.md:183-194). 사용자 결정: 상한 100MB, CGI 종료는 해석 A(`std::exit`) + `access` 보조 대책.

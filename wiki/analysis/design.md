@@ -1,7 +1,7 @@
 ---
 title: webserv 설계 (클래스·인터페이스)
 type: analysis
-sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/nginx-core-module.md]
+sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/nginx-core-module.md, raw/design-checks-observed.md]
 updated: 2026-10-16
 ---
 
@@ -70,7 +70,7 @@ EventLoop → IoHandler, LoopObserver 인터페이스만
 |---|---|---|---|
 | `listen` | server | `listen 127.0.0.1:8080;`, `listen 8080;` | 같은 이름. 주소를 생략하면 `0.0.0.0` |
 | `error_page` | server | `error_page 404 /errors/404.html;` (코드 여러 개 가능) | 같은 이름. 내부 리다이렉트 대신 그 파일을 읽어 보낸다 |
-| `client_max_body_size` | server, location | `client_max_body_size 10m;` | 같음. 0이면 검사 안 함 |
+| `client_max_body_size` | server, location | `client_max_body_size 10m;` | 같은 이름. **0과 100MB 초과는 설정 오류** (NGINX는 0이면 검사 안 함, 결정 11) |
 | `root` | server, location | `root /var/www;` | 같음. URI 전체를 root 뒤에 붙인다: `location /i/ { root /data/w3; }`에서 `/i/top.gif` → `/data/w3/i/top.gif` (raw/nginx-core-module.md:1504-1512, raw/nginx-core-module.md:1516) |
 | `alias` | location | `alias /tmp/www/;` | 같음. location 부분을 바꿔 끼운다: `location /i/ { alias /data/w3/images/; }`에서 `/i/top.gif` → `/data/w3/images/top.gif` (raw/nginx-core-module.md:132-140). subject 예시(raw/subject.md:169)는 이 방식이다 |
 | `index` | server, location | `index index.html index.php;` | 같음 |
@@ -375,7 +375,7 @@ public:
 - `RequestProcessor::process`: `Router::route` → `RouteResult::Kind`에 따라 Handler 하나를 부른다. CGI면 `CgiProcess`를 만들어 `start`한 뒤 넘긴다. HEAD는 결과 `Response`의 본문 전송만 끈다 (결정 5).
 - `Router::route` 순서: 경로 정규화(`PathResolver`) → location 선택 → 파일 경로 매핑(`root`면 URI 전체를 붙이고, `alias`면 location prefix를 바꿔 끼운다) → `return` → `limit_except` 검사 → CGI 확장자 → 업로드 POST → DELETE → 파일·디렉토리 → [[concepts/security]] "경로 정규화 절차", [[concepts/configuration-file]] "디렉토리 요청 처리 순서".
 - index 파일을 찾으면 그 경로로 `route`를 다시 부른다(CGI 확장자면 CGI가 된다). 다시 부르는 횟수는 `kMaxInternalRedirects`까지, 넘으면 500 (결정 6).
-- 업로드는 본문 전체가 메모리에 모인 뒤(`client_max_body_size`로 상한) 파일 하나를 `open` → `write`(다 쓸 때까지 반복) → `close`로 한 번에 저장한다. 일반 파일이라 `poll()`이 필요 없다 (raw/subject.md:134). 구현이 단순한 쪽으로 정했다 (사용자 결정, 2026-10-16).
+- 업로드는 본문 전체가 메모리에 모인 뒤(`client_max_body_size`로 상한, `Content-Length`를 알면 그만큼 `reserve`) 파일 하나를 `open` → `write`(다 쓸 때까지 반복) → `close`로 한 번에 저장한다. 일반 파일이라 `poll()`이 필요 없다 (raw/subject.md:134). 구현이 단순한 쪽으로 정했다 (사용자 결정, 2026-10-16).
 - Handler는 상태가 없는 함수다: `Response StaticHandler::serve(const RouteResult&)`, `UploadHandler::store(const RouteResult&, const Request&)` 등. 인자는 2개 이하.
 - `ErrorPageBuilder::build(status, server)`: 설정된 에러 페이지 파일이 있으면 그 파일, 없거나 읽지 못하면 내장 기본 페이지 (raw/subject.md:143).
 
@@ -434,7 +434,8 @@ private:
 ```
 
 - `CgiEnv`가 메타변수 배열을 만든다. php-cgi용 `REDIRECT_STATUS`·`SCRIPT_FILENAME`을 넣고 `REDIRECT_URL`은 넣지 않는다 → [[concepts/cgi]] "메타변수".
-- 자식: `dup2`로 표준 입출력 연결 → 필요 없는 fd 모두 `close` → 스크립트 디렉토리로 `chdir` → `execve`. `execve` 실패 시 자식 종료 방법은 [[analysis/subject-vs-evaluation]] 1.4절.
+- `fork` 전: `access`로 스크립트와 실행 파일을 확인한다(없으면 404, 권한이 없으면 403). 표준 출력·에러를 flush한다 (결정 12).
+- 자식: `dup2`로 표준 입출력 연결 → 필요 없는 fd 모두 `close` → 스크립트 디렉토리로 `chdir` → `execve`. 실패하면 `std::exit(1)` (결정 12). 부모는 출력 없이 EOF를 받으므로 502가 된다.
 - 출력 pipe는 `POLLHUP`만 와도 `read`해서 0(EOF)을 확인한다. 입력 pipe는 본문을 다 쓰면 닫는다 → [[concepts/cgi]] "1. 호출 절차".
 - 판정은 종료 코드가 아니라 출력으로 한다: 형식이 맞으면 그 응답, 아니면 502, 타임아웃이면 504 → [[concepts/cgi]] "5. 실패 처리".
 - `CgiProcess`는 `waitpid`를 하지 않는다. 출력이 끝났거나 `kill`한 자식의 pid를 `ChildReaper`에 넘기고, 회수는 `ChildReaper`가 바퀴마다 `WNOHANG`으로 한다. `Connection`이 먼저 닫혀도 같은 경로로 회수된다.
@@ -452,7 +453,7 @@ private:
 | 설정 오류, listen 실패 (`bind` 등) | 원인 메시지를 stderr에 쓰고 종료 코드 1로 끝낸다 |
 | 요청 오류 (파싱, 라우팅) | 해당 4xx 응답. 연결 유지 여부는 [[concepts/connection-management]] |
 | 처리 중 서버 문제 (`fork`·`pipe` 실패, 파일을 읽지 못함) | 500. 파일이 없으면 404, 권한이 없으면 403 |
-| handler 안의 예외 (`std::bad_alloc` 등) | `EventLoop`가 잡아 `onFailure()` → 그 연결만 닫는다 |
+| handler 안의 예외 (`std::bad_alloc` 등) | `EventLoop`가 잡아 `onFailure()` → 그 연결만 닫는다. 단 메모리가 바닥나면 예외 없이 프로세스가 끝날 수 있어 이것만으로는 방어가 안 된다 ([[sources/design-checks-observed]]). 본문 크기 상한(결정 11)이 실제 방어다 |
 | 소켓 I/O -1·0 | 그 연결만 닫는다 |
 
 - 예외는 설정 파싱과 요청 처리 내부에서만 던진다. 서버 프로세스는 어떤 요청에도 끝나지 않아야 한다 (raw/evaluation-sheet-en.md:24).
@@ -473,6 +474,7 @@ private:
 | `kDrainIdle` / `kDrainTotal` | 1초 / 5초 | 413 실측에서 쓴 값 |
 | `kMaxInternalRedirects` | 10 | NGINX와 같음 |
 | `kDefaultMaxBodySize` | 1MB | NGINX 기본값 `1m`과 같음 |
+| `kMaxBodySizeCeiling` | 100MB | 설정 허용 상한 (결정 11) |
 | `kInMemoryFileLimit` | 1MB | 넘으면 나눠 읽음 |
 | `kFileChunkSize` | 65536 | |
 | `kClockFile` | `.webserv_clock` | 실행 디렉토리 기준 |
