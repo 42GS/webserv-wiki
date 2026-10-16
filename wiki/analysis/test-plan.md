@@ -80,6 +80,7 @@ updated: 2026-10-16
 | C-24 | location은 server 값을 물려받고, 자기 값이 있으면 그것을 쓴다 | 설계 3절 | U | 상속과 덮어쓰기 | `locationInheritsServerSettings` (상속), `locationOverridesServerSettings` (덮어쓰기) | 있음 |
 | C-25 | location `/`가 없고 server에 `root`가 있으면 `/`를 만든다. `root`도 없으면 만들지 않는다 | 설계 3절 | U | 있음/없음 | `serverRootCreatesImplicitRootLocation`, `noImplicitRootLocationWithoutServerRoot` | 있음 |
 | C-26 | location은 긴 경로부터 정렬 (4단계 가장 긴 prefix 매칭의 준비) | 설계 7절 `matchLocation` | U | 경로 길이 내림차순 | `locationsAreSortedLongestFirst` | 있음. 매칭 자체는 4단계에서 시험 |
+| C-28 | 비정상적으로 깊게 중첩된 설정 파일에도 크래시하지 않는다. 유효한 중첩은 server > location > limit_except 3단계 | raw/subject.md:46, 설계 3절 | U, I | 깊이 4부터 설정 오류, 10만 단계도 종료 코드 1 | `rejectsBlocksNestedTooDeeply`, `test_startup.py` `test_c28_deeply_nested_config_does_not_crash` (10만 단계) | 있음. 고치기 전 10만 단계에서 종료 코드 139 |
 | C-27 | 평가 시연용 설정 파일과 기본 파일을 저장소에 둔다 | raw/subject.md:184 | M | 기능별 설정으로 시연 가능 | 9단계 | 나중 |
 
 ## 2. 이벤트 루프와 연결
@@ -101,13 +102,14 @@ updated: 2026-10-16
 | N-13 | 시계: 시계 파일의 수정 시각을 현재 시각으로 쓴다. 시작 때 실패하면 시작하지 않는다 | [[analysis/design-decisions]] 10, 설계 4절 "시계" | U, I | 갱신 성공 시 값이 0보다 크고 줄지 않는다. 쓸 수 없는 경로면 `refresh()`가 false | `clock_test.cpp` 2개, `test_startup.py` `test_n13_unusable_clock_file_stops_startup` | 있음 |
 | N-14 | 이벤트 루프: 처리 중 `unwatch`는 그 바퀴 끝에 반영. `onEvent` 예외는 그 handler의 `onFailure()`로 | 설계 4절 | U | pipe fd와 가짜 handler로 확인 | `event_loop_test.cpp` 3개 | 있음 |
 | N-15 | IPv4 주소 변환 (listen 주소 → `sockaddr_in`, 접속한 주소 → 문자열) | 설계 (구현 세부) | U | 네트워크 바이트 순서 | `convertsIpv4BothWays`, `buildsSockaddrInNetworkOrder` (`tests/unit/socket_address_test.cpp`) | 있음 |
-| N-16 | 모든 소켓은 non-blocking | raw/subject.md:129 | R | listen 소켓과 accept한 소켓 모두 `O_NONBLOCK` | 코드 읽기 2026-10-16: `src/core/Listener.cpp:44`(listen), `:67`(accept한 소켓, 실패하면 닫음) | 확인 |
+| N-16 | 모든 소켓은 non-blocking | raw/subject.md:129 | R | listen 소켓과 accept한 소켓 모두 `O_NONBLOCK` | 코드 읽기 2026-10-16: `src/core/Listener.cpp:48`(listen, `bind`·`listen` 뒤에 켬), `:69`(accept한 소켓, 실패하면 닫음) | 확인 |
 | N-17 | `fcntl`은 `F_SETFL`, `O_NONBLOCK`, `FD_CLOEXEC`만 | raw/subject.md:155-157 | R | 다른 플래그 없음 | 코드 읽기 2026-10-16: `fcntl` 호출은 위 두 곳, 둘 다 `F_SETFL, O_NONBLOCK` | 확인 |
 | N-18 | `poll()`이 메인 루프 안에 있다 | raw/evaluation-sheet-en.md:53 | R | `main` → `EventLoop::run` → `poll` | 코드 읽기 2026-10-16: `src/main.cpp:49` `loop.run(server)`, `run`이 매 바퀴 `poll` | 확인 |
 | N-19 | `POLLOUT`은 보낼 데이터가 있을 때만 켠다 (안 그러면 busy waiting) | raw/posix-poll.md:175, [[concepts/io-multiplexing]] "POLLOUT은 보낼 데이터가 있을 때만" (**판단**) | R, I | 연결이 대기 중이어도 서버가 CPU를 거의 쓰지 않는다 | 코드 읽기: `src/http/Connection.cpp:33` `wantedEvents`는 `WRITE` 상태에서만 `POLLOUT`. `test_connections.py` `test_n19_idle_connections_do_not_spin` (Linux `/proc`에서 CPU 시간 확인: 대기 연결 10개, 2초 동안 0.2초 미만) | 있음 |
 | N-20 | `POLLERR`·`POLLNVAL`이면 클라이언트를 제거 | raw/evaluation-sheet-en.md:55, [[concepts/io-multiplexing]] "revents 처리" | R | 연결을 닫는다 | 코드 읽기 2026-10-16: `src/http/Connection.cpp:40` | 확인 |
 | N-21 | 디스크 파일의 동기 I/O가 루프를 멈추지 않는다 | raw/evaluation-sheet-en.md:59 | R | 설정 파일은 시작 때만, 시계 파일은 바퀴마다 1바이트 | 코드 읽기 2026-10-16: `src/main.cpp:34` 시작 때 설정 읽기. 시계는 `Clock::refresh` | 확인. 4단계 정적 파일에서 다시 본다 |
 | N-22 | 메모리가 부족해도 크래시하지 않는다 | raw/subject.md:46 | R, M | 할당 실패가 예외로 오면 그 연결만 정리 | 코드 읽기: `Server::adopt`가 생성 실패를 잡고, `onEvent` 예외는 `onFailure`로 간다 (N-14). 다만 Ubuntu 컨테이너에서 메모리가 바닥나면 `bad_alloc` 없이 프로세스가 강제 종료됐다 (raw/design-checks-observed.md:119-123) | 부족: 예외가 오지 않는 경우는 본문 상한(결정 11)으로만 막는다 |
+| N-24 | 헤더 수신 타임아웃은 받기 시작한 때부터 잰다. 바이트를 조금씩 계속 보내도 연장되지 않는다 (본문·전송은 무입력·무진행 기준) | raw/subject.md:139, 설계 12절 | I | 5초마다 1바이트씩 보내도 약 30초 뒤 408 | `test_connections.py` `test_n24_trickled_head_still_times_out` (느린 테스트, 5초마다 1바이트) | 있음 |
 | N-23 | 평가자가 `valgrind`·`leaks`·`e_fence`로 돌려도 오류·누수가 없다. `e_fence`에서는 heap 경계 오류가 곧 크래시 | raw/evaluation-sheet-en.md:25, [[concepts/resilience]] "SIGINT·SIGTERM과 누수 검사" | M | valgrind 오류 0, "All heap blocks were freed" | 단계 2에서 valgrind만 손으로 확인 | 나중 (8단계 절차) |
 
 - N-01~N-03은 0점 조건이다 (raw/evaluation-sheet-en.md:53, raw/subject.md:136, raw/evaluation-sheet-en.md:57). 테스트가 통과해도 지켰다는 증거가 되지 않으므로, 단계마다 코드 경로를 읽어 확인하고 결과를 이 페이지에 적는다.
@@ -138,6 +140,7 @@ updated: 2026-10-16
 | P-17 | chunked 해제. 16진수 크기 오버플로를 막고(MUST), 모르는 확장은 무시(MUST)하되 길이를 제한, trailer는 버린다(MAY). 해제한 크기가 상한을 넘으면 413 | raw/rfc9112.txt:1078-1081, raw/rfc9112.txt:1108-1113, raw/rfc9112.txt:1126-1134, [[analysis/design-decisions]] 11 | U, I | 본문이 이어 붙여진다. 깨진 chunk는 400. 넘으면 413 | `request_parser_test.cpp` `p17_chunkedBodies`, `test_requests.py` `test_p17_chunked_body_limit` | 있음 |
 | P-18 | CL만큼 오기 전에 끊기거나 타임아웃이면 불완전한 요청. 머리·본문 수신 타임아웃이면 408 후 닫기(MAY). 첫 바이트 전이면 그냥 닫기 | raw/rfc9112.txt:973-978, raw/rfc9112.txt:1253-1255, raw/rfc9110.txt:7641-7643, 설계 5절 | I | 408 후 닫힘 (느린 테스트) | `test_requests.py` `test_p18_*` 2개 (본문 도중 408, 아무것도 안 보낸 연결은 응답 없이 닫힘), `test_connections.py` `test_n08_unfinished_head_gets_408` (모두 느린 테스트) | 있음 |
 | P-19 | 오류 응답의 상태줄 `HTTP-version SP status-code SP reason-phrase`, 문법 오류 뒤에는 연결을 닫는다(SHOULD) | raw/rfc9112.txt:652, raw/rfc9112.txt:690-693, raw/rfc9112.txt:319-324 | I | 상태줄과 `Connection: close`, 그 뒤 닫힘 | `test_requests.py` `test_p19_error_response_format_and_close` | 있음. 오류 응답 본문은 임시(코드와 reason phrase). 에러 페이지는 4단계 |
+| P-21 | 파서 비용이 입력 길이에 비례한다. 작은 chunk가 많아도 recv 1번 처리가 루프를 오래 붙잡지 않는다 | raw/subject.md:148 (항상 가용). 파서 비용과 잇는 것은 **판단** | M | 1바이트 chunk 6MB 처리 CPU 시간 | 측정 (scratch 벤치마크, 최적화 없는 빌드): 1바이트 chunk 6MB가 1.6초 → 0.2초 (2026-10-16) | 확인. 테스트로 남기지 않음(시간 측정은 기계마다 다르다) |
 | P-20 | telnet·curl로 시연할 수 있다 | raw/evaluation-sheet-en.md:77 | M | 시연 절차 | 없음 | 나중 (9단계) |
 
 ## 4단계 이후 (단계를 시작할 때 채운다)

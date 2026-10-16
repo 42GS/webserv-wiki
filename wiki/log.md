@@ -428,3 +428,7 @@
 ## [2026-10-16] query | 구현 단계 3 (요청 파서)
 - 갱신: [[analysis/test-plan]] (3절 P-01~P-20 신설, N-08·N-09 기대값 408·431), [[analysis/design]] 6절 구현 세부(RFC가 여러 처리를 허용하는 곳의 선택, 본문 상한용 location 찾기, 임시 오류 본문), 12절 `kMaxChunkLine`
 - 메모: 읽은 위키: `implementation-plan` 3단계, `design` 5·6·11·12절, `concepts/request-parsing`, `concepts/status-codes`, `concepts/security` 1·3·5절. webserv `98cb1e2`(HeaderMap·Request·RequestParser), `7c3a966`(Connection 연결, StatusText, Router::matchLocation). 단위 53개, 통합 32개 Ubuntu 22.04에서 모두 통과(느린 테스트 포함). 계획 줄마다 일부러 틀린 코드로 실패 확인. 다른 검사와 겹쳐 테스트로 구분할 수 없는 검사 두 개(요청줄 세 번째 공백, 공백으로 시작하는 헤더 줄)는 뺐다. valgrind 아래 `siege -b -c 25 -t 10S` 7,676건 availability 100%, SIGINT 뒤 "All heap blocks were freed". 주석의 RFC 절 번호 두 곳(9110 2.5→6.2, 9112 9.6→8)을 원문 대조로 바로잡았다.
+
+## [2026-10-16] query | 3단계까지 코드 리뷰
+- 갱신: [[analysis/test-plan]] (C-28·N-24·P-21 추가, N-16 줄 번호)
+- 메모: 사용자 요청으로 webserv 코드 약 2,600줄을 직접 읽어 리뷰. 고친 것: (1) 헤더 타임아웃이 마지막 수신 기준이라 1바이트씩 보내면 연장됐다. 설계 12절대로 받기 시작한 때부터 잰다 (`8790b61`). (2) 재귀 설정 파서가 10만 단계 중첩에서 segfault(실측 종료 코드 139). 깊이 3 제한 (`e58067d`). (3) 파서가 줄마다 버퍼 앞을 지워 1바이트 chunk 6MB에 CPU 1.6초. 커서 방식으로 0.2초 (`24fd810`). (4) 구현 메서드 목록이 파서와 설정 두 곳에 있었다. `http/Methods`로 하나로 (`cc873ae`). (5) listen 소켓 `O_NONBLOCK`을 `bind`·`listen` 뒤로 (`9854f52`, `concepts/configuration-file` 권고). 남긴 것: `EventLoop`가 `std::exception`만 잡음(코드가 다른 예외를 던지지 않음), 단위 테스트 둘이 실행 위치 의존, 오류 응답 뒤 바로 닫을 때의 리셋은 5단계 DRAIN. 실험 중 커밋 전 수정을 `git checkout`으로 지운 실수가 있어 다시 넣었다. 단위 54, 통합 34 Ubuntu 22.04 통과.
