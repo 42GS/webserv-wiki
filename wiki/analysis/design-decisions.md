@@ -21,6 +21,7 @@ updated: 2026-10-16
 | 7 | 업로드는 서버가 `multipart/form-data`만 받아 저장 | 2026-10-15 | [[concepts/file-upload]] |
 | 8 | 보너스 쿠키·세션은 CGI 예제로 보여 줌 | 2026-10-15 | [[concepts/bonus]] |
 | 9 | 설정 파일은 NGINX 문법을 따름 | 2026-10-16 | [[concepts/configuration-file]], [[analysis/design]] |
+| 10 | 시각은 허용 함수만으로 얻고 `Date`를 보냄 | 2026-10-16 | [[concepts/http-features]], [[analysis/design]] 4절 |
 
 1~3은 앞서 정한 것을 함께 모았다. 근거는 각 관련 페이지에 있다.
 
@@ -71,6 +72,14 @@ updated: 2026-10-16
 - NGINX에 없는 기능(업로드 저장 위치, 확장자별 CGI 실행)은 새 지시자를 만든다 (**판단**).
 - 허용 메서드는 NGINX `limit_except METHOD ... { deny all; }` 형식으로 받고, 블록 안에는 `deny all;`만 허용한다 (2026-10-16 사용자 선택).
 - `root`와 `alias`를 둘 다 지원한다 (2026-10-16 사용자 선택). `root`는 NGINX처럼 URI 전체를 붙이고 (raw/nginx-core-module.md:1516), subject 예시의 매핑(raw/subject.md:169)은 `alias`로 쓴다 (raw/nginx-core-module.md:132-140) → [[concepts/configuration-file]] "subject 예시는 NGINX alias 방식".
+
+## 10. 시각은 허용 함수만으로, `Date`는 보냄
+
+- 근거: 타임아웃이 없으면 요청이 무한히 멈출 수 있어 시각이 필요하다 (raw/subject.md:139). 허용 함수 목록에 시간 함수가 없다 (raw/subject.md:113). 사용자는 평가자가 문제 삼을 수 없는 보수적인 쪽을 원했다.
+- 구현: 시계용 파일에 `open`·`write`·`close` 후 `stat`의 수정 시각을 현재 시각으로 쓴다 (모두 목록 안의 함수) → [[analysis/design]] 4절 "시계".
+- 시계가 있으므로 RFC 9110대로 2xx·3xx·4xx 응답에 `Date`를 보낸다 (MUST, raw/rfc9110.txt:2313-2317). 날짜 문자열 변환도 직접 계산한다.
+- 버린 대안: `time()`은 단순하지만 목록 밖이다. 시간 함수 없이 `poll()` 타임아웃 횟수로 어림하는 방법은 요청이 계속 들어오면 시간이 흐르지 않아 타임아웃이 걸리지 않을 수 있다.
+- 디펜스: 왜 파일로 시각을 얻는지(허용 함수 목록) 설명한다.
 
 ## 아직 정하지 않은 것
 

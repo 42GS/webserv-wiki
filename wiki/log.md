@@ -391,3 +391,7 @@
 ## [2026-10-16] query | root·alias 결정
 - 갱신: analysis/design (3절 `root`·`alias` 행, `LocationConfig.alias`, 예시, 설정 오류 규칙, 7절 매핑 단계, 14절 항목 삭제), analysis/design-decisions (결정 9에 `limit_except`·`root`/`alias`), concepts/configuration-file (alias 콜아웃에 결정), overview
 - 메모: 사용자 선택 (a) — NGINX 문법을 따르므로 `root`는 NGINX대로 URI 전체를 붙이고, subject 예시 매핑은 `alias`로 쓴다. 한 location에 둘 다 있으면 설정 오류(판단).
+
+## [2026-10-16] query | 업로드 저장·상수·시각과 Date 결정
+- 갱신: analysis/design (4절 `Clock`, `IoHandler::onFailure` 누락 보완, `EventLoop`가 바퀴마다 시계 갱신, 7절 업로드 한 번에 저장, 8절 `Date` 보냄, 상수 `kClockFile`, 14절 정리), analysis/design-decisions (결정 10), concepts/http-features (Date 콜아웃에 결정), analysis/subject-vs-evaluation (1.4절, 남은 미확인 문구), overview (열린 질문 문구)
+- 메모: 사용자 결정 — 업로드는 단순한 쪽(본문을 모은 뒤 한 번에 저장), 상수는 평가 통과 수준이면 됨, Date는 평가자가 문제 삼을 수 없는 보수적 방향. 타임아웃에 쓰던 `time()`이 허용 함수 목록 밖임을 이때 발견해, 시계용 파일의 `stat` 수정 시각으로 시각을 얻고 RFC 9110 MUST대로 `Date`를 보내기로 했다. `write`가 수정 시각을 갱신하는지는 **미확인**(단계 2에서 두 OS 확인).

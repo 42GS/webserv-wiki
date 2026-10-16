@@ -2,7 +2,7 @@
 title: HTTP 기능 요구사항
 type: concept
 sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc9110.txt]
-updated: 2026-10-15
+updated: 2026-10-16
 ---
 
 # HTTP 기능 요구사항
@@ -56,6 +56,7 @@ updated: 2026-10-15
 
 > [!warning] 질문: Date 헤더와 허용 함수
 > subject의 허용 함수 목록(raw/subject.md:113)에는 시간 함수가 없다. 그 목록이 `<ctime>` 같은 C++ 표준 라이브러리에도 적용되는지는 subject 문구만으로 알 수 없다 (**미확인**). 시간을 얻을 수 없는 서버라면 "clock 없는 서버"로서 Date를 보내지 않는 것이 RFC에 맞는다 (raw/rfc9110.txt:2319-2320). → [[analysis/subject-vs-evaluation]]
+> 결정 (2026-10-16): 시간 함수 대신 허용 함수(`open`·`write`·`close`·`stat`)로 시각을 얻고 `Date`를 보낸다 → [[analysis/design-decisions]] 10.
 
 ## 기준 프로토콜
 

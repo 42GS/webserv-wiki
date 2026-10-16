@@ -23,7 +23,7 @@ www/                  시연용 정적 사이트, 에러 페이지, CGI 스크�
 src/
   main.cpp
   config/   ConfigLexer  ConfigParser  ServerConfig  LocationConfig  SizeParser
-  core/     EventLoop  IoHandler  IoRegistry  LoopObserver  Server  Listener  ChildReaper  Signals
+  core/     EventLoop  IoHandler  IoRegistry  LoopObserver  Server  Listener  ChildReaper  Signals  Clock  HttpDate
   http/     Connection  Request  RequestParser  HeaderMap  Response  ResponseStream  StatusCodes  MimeTypes
   app/      RequestProcessor  ProcessOutcome
   route/    Router  RouteResult  PathResolver
@@ -161,6 +161,7 @@ public:
     virtual int   fd() const = 0;
     virtual short wantedEvents() const = 0;   // 매 바퀴 다시 묻는다
     virtual void  onEvent(short revents) = 0; // I/O는 최대 1번
+    virtual void  onFailure() = 0;            // onEvent에서 예외가 나왔을 때
 };
 
 class IoRegistry {                         // 등록·해제만. 소유하지 않는다
@@ -179,18 +180,36 @@ public:
 
 class EventLoop : public IoRegistry {
 public:
-    explicit EventLoop(LoopObserver& observer);
+    EventLoop(LoopObserver& observer, Clock& clock);
     void watch(IoHandler* handler);
     void unwatch(IoHandler* handler);       // 순회 중이면 표시만 하고 바퀴 끝에 뺀다
     void run();
 };
 ```
 
-- `EventLoop`는 아무것도 소유하지 않고 `delete`하지 않는다. 한 바퀴: poll 목록 구성 → `poll(kPollTimeoutMs)` → 각 handler의 `onEvent` → `unwatch`된 것 정리 → `observer.afterIteration(now)`.
+- `EventLoop`는 아무것도 소유하지 않고 `delete`하지 않는다. 한 바퀴: poll 목록 구성 → `poll(kPollTimeoutMs)` → 각 handler의 `onEvent` → `unwatch`된 것 정리 → `clock.refresh()` → `observer.afterIteration(clock.now())`.
 - `wantedEvents()`를 매번 묻기 때문에 `POLLOUT`은 보낼 데이터가 있을 때만 켜진다 → [[concepts/io-multiplexing]] "POLLOUT은 보낼 데이터가 있을 때만".
 - `poll()`이 -1이면 errno를 보지 않고 다음 바퀴로 간다. 시그널로 깬 경우 `shouldStop()`이 참이 된다.
 - `revents`에 `POLLHUP`·`POLLERR`·`POLLNVAL`이 있으면 `POLLIN`이 없어도 `onEvent`에 넘긴다.
 - `onEvent`에서 나온 예외는 `EventLoop`가 잡아 그 handler에 `onFailure()`를 알린다 (11절).
+
+### 시계 (`Clock`)
+
+허용 함수 목록(raw/subject.md:113)에 시간 함수가 없다. 그래서 목록 안의 함수만으로 현재 시각을 얻는다 (사용자 결정, 2026-10-16).
+
+```cpp
+class Clock {
+public:
+    explicit Clock(const std::string& path);  // 시계용 파일 경로
+    bool   refresh();    // open(O_WRONLY|O_CREAT|O_TRUNC) → write 1바이트 → close → stat. 실패하면 false
+    time_t now() const;  // 마지막 refresh의 st_mtime (초 단위, UTC 기준 epoch)
+};
+```
+
+- 파일에 쓰면 수정 시각이 갱신되고, `stat`으로 그 시각을 읽는다. 바퀴마다 한 번만 갱신해 그 바퀴의 모든 타임아웃 판단에 같은 값을 쓴다.
+- 시작할 때 `refresh()`가 실패하면 원인을 출력하고 시작하지 않는다. 실행 중 실패하면 이전 값을 유지한다(그 동안 타임아웃이 늦어진다).
+- 이 시각으로 `Date` 헤더와 리스팅의 파일 시각을 만든다. 날짜 변환(epoch 초 → `Sun, 06 Nov 1994 08:49:37 GMT`)도 직접 계산한다 (`gmtime` 등을 쓰지 않음).
+- `write`가 수정 시각을 갱신하는지, `stat`의 초 값이 실제 시각과 맞는지는 **미확인**이다. 단계 2에서 macOS와 Ubuntu 22.04에서 먼저 확인한다.
 
 ### 소유 관계
 
@@ -356,6 +375,7 @@ public:
 - `RequestProcessor::process`: `Router::route` → `RouteResult::Kind`에 따라 Handler 하나를 부른다. CGI면 `CgiProcess`를 만들어 `start`한 뒤 넘긴다. HEAD는 결과 `Response`의 본문 전송만 끈다 (결정 5).
 - `Router::route` 순서: 경로 정규화(`PathResolver`) → location 선택 → 파일 경로 매핑(`root`면 URI 전체를 붙이고, `alias`면 location prefix를 바꿔 끼운다) → `return` → `limit_except` 검사 → CGI 확장자 → 업로드 POST → DELETE → 파일·디렉토리 → [[concepts/security]] "경로 정규화 절차", [[concepts/configuration-file]] "디렉토리 요청 처리 순서".
 - index 파일을 찾으면 그 경로로 `route`를 다시 부른다(CGI 확장자면 CGI가 된다). 다시 부르는 횟수는 `kMaxInternalRedirects`까지, 넘으면 500 (결정 6).
+- 업로드는 본문 전체가 메모리에 모인 뒤(`client_max_body_size`로 상한) 파일 하나를 `open` → `write`(다 쓸 때까지 반복) → `close`로 한 번에 저장한다. 일반 파일이라 `poll()`이 필요 없다 (raw/subject.md:134). 구현이 단순한 쪽으로 정했다 (사용자 결정, 2026-10-16).
 - Handler는 상태가 없는 함수다: `Response StaticHandler::serve(const RouteResult&)`, `UploadHandler::store(const RouteResult&, const Request&)` 등. 인자는 2개 이하.
 - `ErrorPageBuilder::build(status, server)`: 설정된 에러 페이지 파일이 있으면 그 파일, 없거나 읽지 못하면 내장 기본 페이지 (raw/subject.md:143).
 
@@ -382,7 +402,7 @@ public:
 ```
 
 - `Content-Length`는 204를 빼고 항상 넣는다 → [[concepts/http-features]] "응답 헤더 규칙". 응답에 chunked는 쓰지 않는다: 정적 파일은 `stat` 크기, CGI 출력은 EOF까지 모은 뒤의 길이를 쓴다.
-- `Date` 헤더는 시간 함수 허용 여부가 정해지지 않아 보류한다 → [[concepts/http-features]] "Date 헤더와 허용 함수".
+- `Date` 헤더를 2xx·3xx·4xx 응답에 보낸다. 시계가 있는 origin server의 MUST다 (raw/rfc9110.txt:2313-2317). 값은 `Clock::now()`를 IMF-fixdate 형식으로 바꾼 것이다 (raw/rfc9110.txt:1855-1858). 5xx에도 보낸다(MAY, 같은 문장).
 - 일반 파일은 `poll()` 없이 읽어도 되지만 루프를 멈추게 하면 안 된다 (raw/subject.md:134, raw/evaluation-sheet-en.md:59). 그래서 `kInMemoryFileLimit`보다 큰 파일은 `ResponseStream`이 `kFileChunkSize`씩 나눠 읽는다.
 
 ## 9. CGI
@@ -455,6 +475,7 @@ private:
 | `kDefaultMaxBodySize` | 1MB | NGINX 기본값 `1m`과 같음 |
 | `kInMemoryFileLimit` | 1MB | 넘으면 나눠 읽음 |
 | `kFileChunkSize` | 65536 | |
+| `kClockFile` | `.webserv_clock` | 실행 디렉토리 기준 |
 
 ## 13. 설계 원칙 대조
 
@@ -476,8 +497,4 @@ private:
 
 ## 14. 정해야 할 것
 
-
-
-- 업로드 저장을 한 번에 쓸지 나눠 쓸지 (단계 6에서).
-- 위 상수 값.
-- `Date` 헤더를 보낼지 (`<ctime>` 사용을 평가자와 합의할지).
+- 없음. 상수 값은 평가를 통과하는 범위에서 시험하며 조정한다 (사용자 결정, 2026-10-16).
