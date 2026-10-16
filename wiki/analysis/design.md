@@ -32,6 +32,8 @@ src/
 tests/                Python 테스트 스크립트
 ```
 
+- 헤더는 `include/<모듈>/`, 소스는 `src/<모듈>/`에 같은 이름으로 둔다(`-Iinclude`, 2026-10-16 사용자 요청). 단위 테스트는 `tests/unit/`, `make test`로 실행한다.
+- config 모듈은 단계 1 리팩토링에서 `ConfigLexer` → `ConfigSyntax` → `ConfigBuilder`(서버 목록·listen 충돌) → `ServerBuilder`·`LocationBuilder`(값 해석)로 나눴다. 지시자의 위치·인자 수·블록 여부·반복 가능 여부는 `DirectiveRules`의 표 하나에 있다.
 - 공용 `util/`은 두지 않는다. 문자열 처리 같은 도우미는 그것을 쓰는 모듈 안에 둔다. 두 모듈 이상에서 같은 이유로 쓰게 되면 그때 뺀다.
 - 로그 모듈은 필요해질 때 만든다.
 
