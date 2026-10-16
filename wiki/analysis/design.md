@@ -71,7 +71,8 @@ EventLoop → IoHandler, LoopObserver 인터페이스만
 | `listen` | server | `listen 127.0.0.1:8080;`, `listen 8080;` | 같은 이름. 주소를 생략하면 `0.0.0.0` |
 | `error_page` | server | `error_page 404 /errors/404.html;` (코드 여러 개 가능) | 같은 이름. 내부 리다이렉트 대신 그 파일을 읽어 보낸다 |
 | `client_max_body_size` | server, location | `client_max_body_size 10m;` | 같음. 0이면 검사 안 함 |
-| `root` | server, location | `root /var/www;` | 같은 이름. **매핑 방식은 미정** (14절) |
+| `root` | server, location | `root /var/www;` | 같음. URI 전체를 root 뒤에 붙인다: `location /i/ { root /data/w3; }`에서 `/i/top.gif` → `/data/w3/i/top.gif` (raw/nginx-core-module.md:1504-1512, raw/nginx-core-module.md:1516) |
+| `alias` | location | `alias /tmp/www/;` | 같음. location 부분을 바꿔 끼운다: `location /i/ { alias /data/w3/images/; }`에서 `/i/top.gif` → `/data/w3/images/top.gif` (raw/nginx-core-module.md:132-140). subject 예시(raw/subject.md:169)는 이 방식이다 |
 | `index` | server, location | `index index.html index.php;` | 같음 |
 | `autoindex` | server, location | `autoindex on;` | 같음. 기본 off |
 | `return` | location | `return 301 /new/;` | 같음. 코드와 URL을 함께 받는다 |
@@ -81,6 +82,8 @@ EventLoop → IoHandler, LoopObserver 인터페이스만
 
 - `limit_except`가 없는 location은 서버가 아는 메서드(GET, HEAD, POST, DELETE)를 모두 허용한다. 막힌 메서드는 405 + `Allow`, 모르는 메서드는 501 → [[concepts/configuration-file]] "라우트 규칙을 응답으로 옮길 때".
 - 알 수 없는 지시자, 잘못된 위치의 지시자, 인자 개수가 틀린 지시자는 설정 오류다.
+- 한 location에 `root`와 `alias`가 함께 있으면 설정 오류로 한다. location에 둘 다 없으면 server의 `root`를 물려받는다. `return`이 없는 location이 물려받은 것까지 포함해 `root`·`alias`가 모두 없으면 파일 경로를 만들 수 없으므로 설정 오류다.
+- 정규식 location은 지원하지 않으므로 (raw/subject.md:166) NGINX `alias`의 정규식 관련 규칙은 해당하지 않는다.
 
 ### 예시
 
@@ -104,6 +107,9 @@ server {
         cgi .php /usr/bin/php-cgi;
         cgi .py /usr/bin/python3;
     }
+    location /kapouet/ {
+        alias /tmp/www/;          # /kapouet/pouic → /tmp/www/pouic (subject 예시)
+    }
     location /old/ {
         return 301 /new/;
     }
@@ -120,7 +126,8 @@ struct ListenAddr {            // interface:port 하나
 
 struct LocationConfig {
     std::string                        path;          // prefix
-    std::string                        root;
+    std::string                        root;          // root 또는 alias 중 하나만 값이 있음
+    std::string                        alias;
     std::vector<std::string>           indexFiles;
     bool                               autoindex;
     std::set<std::string>              allowedMethods;  // limit_except. 비면 전부 허용
@@ -347,7 +354,7 @@ public:
 ```
 
 - `RequestProcessor::process`: `Router::route` → `RouteResult::Kind`에 따라 Handler 하나를 부른다. CGI면 `CgiProcess`를 만들어 `start`한 뒤 넘긴다. HEAD는 결과 `Response`의 본문 전송만 끈다 (결정 5).
-- `Router::route` 순서: 경로 정규화(`PathResolver`) → location 선택 → `return` → `limit_except` 검사 → CGI 확장자 → 업로드 POST → DELETE → 파일·디렉토리 → [[concepts/security]] "경로 정규화 절차", [[concepts/configuration-file]] "디렉토리 요청 처리 순서".
+- `Router::route` 순서: 경로 정규화(`PathResolver`) → location 선택 → 파일 경로 매핑(`root`면 URI 전체를 붙이고, `alias`면 location prefix를 바꿔 끼운다) → `return` → `limit_except` 검사 → CGI 확장자 → 업로드 POST → DELETE → 파일·디렉토리 → [[concepts/security]] "경로 정규화 절차", [[concepts/configuration-file]] "디렉토리 요청 처리 순서".
 - index 파일을 찾으면 그 경로로 `route`를 다시 부른다(CGI 확장자면 CGI가 된다). 다시 부르는 횟수는 `kMaxInternalRedirects`까지, 넘으면 500 (결정 6).
 - Handler는 상태가 없는 함수다: `Response StaticHandler::serve(const RouteResult&)`, `UploadHandler::store(const RouteResult&, const Request&)` 등. 인자는 2개 이하.
 - `ErrorPageBuilder::build(status, server)`: 설정된 에러 페이지 파일이 있으면 그 파일, 없거나 읽지 못하면 내장 기본 페이지 (raw/subject.md:143).
@@ -469,7 +476,7 @@ private:
 
 ## 14. 정해야 할 것
 
-- **`root` 매핑 방식.** subject 예시는 location prefix를 떼고 root에 붙이는데 (raw/subject.md:169), 이것은 NGINX `alias` 방식이고 NGINX `root`는 URI 전체를 붙인다 → [[concepts/configuration-file]] "subject 예시는 NGINX alias 방식". NGINX 문법을 따르기로 했으므로 (a) `root`는 NGINX대로, subject 방식은 `alias`로 둘 다 지원하거나, (b) `root` 하나만 두고 subject 방식으로 동작시키는 것 중 하나를 정해야 한다.
+
 
 - 업로드 저장을 한 번에 쓸지 나눠 쓸지 (단계 6에서).
 - 위 상수 값.

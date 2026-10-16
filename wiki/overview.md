@@ -37,7 +37,7 @@ C++98로 HTTP 서버를 만드는 42 과제. 실행은 `./webserv [configuration
 - 응답은 `HTTP/1.1`로 보낸다(RFC 9110 SHOULD). HTTP/1.0만으로는 과제가 설명되지 않는다(DELETE는 RFC 1945 부록, 405·413 없음). HTTP/0.9는 지원하지 않고 400, HTTP/1.0 POST에 `Content-Length`가 없으면 400 (판단) → [[sources/rfc1945]], [[concepts/request-parsing]].
 - 연결은 HTTP/1.1 기준 persistent가 기본이다. 본문을 다 읽지 않고 응답(413 등)하면 연결을 닫는다. 이때 바로 `close()`하지 않고 읽기만 하며 버리다가 상한(무입력 시간·총 시간)에 닿으면 닫는다. 바로 닫으면 macOS에서 reset으로 curl이 응답을 못 받은 경우가 있었고, 읽고 버리면 `shutdown` 없이도 두 OS에서 모두 받았다(실측) → [[concepts/connection-management]].
 - CGI에서 서버는 application gateway다. 본문 un-chunk, 메타변수 구성, EOF까지 출력 수집, CGI 응답을 HTTP 응답으로 변환하는 일이 서버 책임이다. 타임아웃은 504, 형식 오류는 502(판단, RFC 3875는 코드를 정하지 않음) → [[concepts/cgi]].
-- subject의 root 예시는 NGINX `alias` 방식에 가깝다(판단). 이 과제는 정규식 없이 정규화된 URI(query 제외)의 가장 긴 prefix로 location을 고른다(NGINX는 그 뒤 정규식 location을 검사한다) → [[concepts/configuration-file]].
+- subject의 root 예시는 NGINX `alias` 방식에 가깝다(판단). 설정은 NGINX 문법으로 하고 `root`(NGINX 방식)와 `alias`(subject 예시 방식)를 둘 다 지원한다(결정 9). 이 과제는 정규식 없이 정규화된 URI(query 제외)의 가장 긴 prefix로 location을 고른다(NGINX는 그 뒤 정규식 location을 검사한다) → [[concepts/configuration-file]].
 - server 선택은 `address:port` → Host 순서다. 맞는 이름이 없으면 그 포트의 default server(기본은 첫 server)가 처리한다. virtual host를 구현하면 정확한 이름만, 포트를 떼고 대소문자 무시로 비교한다(판단). 요청줄 이전에 쓰는 헤더 크기 상한은 포트 단위로 둔다 → [[concepts/configuration-file]].
 - POSIX상 `poll()`은 `POLLHUP`·`POLLERR`를 요청하지 않아도 알려 준다(macOS는 `events=0`인 pipe에 `POLLHUP`을 보고하지 않았다, 실측). `POLLOUT`은 보낼 데이터가 있을 때만 켜야 busy waiting을 피한다. CGI 출력은 `POLLHUP` 뒤에도 EOF까지 읽는다 → [[concepts/io-multiplexing]].
 - `SIGPIPE`의 기본 동작은 프로세스 종료이고, 끊긴 소켓에 `send`해도 발생한다. `signal(SIGPIPE, SIG_IGN)`으로 막아야 크래시 0점을 피한다 → [[concepts/resilience]].

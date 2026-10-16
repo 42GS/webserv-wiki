@@ -2,7 +2,7 @@
 title: 설정 파일
 type: concept
 sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc9110.txt, raw/nginx-core-module.md, raw/nginx-request-processing.md, raw/posix-bind.md, raw/nginx-index-module.md, raw/nginx-autoindex-module.md, raw/evaluation-sheet.md, raw/rfc3986.txt, raw/nginx-rewrite-module.md, raw/nginx-server-names.md, raw/os-observed-bind.md, raw/nginx-observed-directory.md]
-updated: 2026-10-15
+updated: 2026-10-16
 ---
 
 # 설정 파일
@@ -36,6 +36,7 @@ updated: 2026-10-15
 > NGINX `root`는 경로를 만들 때 URI 전체를 root 값 뒤에 붙인다. `location /i/ { root /data/w3; }`에서 `/i/top.gif` → `/data/w3/i/top.gif` (raw/nginx-core-module.md:1507-1512, raw/nginx-core-module.md:1516).
 > NGINX `alias`는 location 부분을 바꿔 끼운다. `location /i/ { alias /data/w3/images/; }`에서 `/i/top.gif` → `/data/w3/images/top.gif` (raw/nginx-core-module.md:132-140).
 > subject 예시는 `/kapouet`를 떼고 `/tmp/www`에 붙이므로 **`alias` 방식**이다 (raw/subject.md:169, **판단**). 설정 지시자 이름을 `root`로 하더라도 동작은 이 방식으로 구현하고, 디펜스에서 NGINX `root`와 다르다는 점을 설명할 수 있어야 한다.
+> 결정 (2026-10-16): 설정은 NGINX 문법을 따르고 `root`(NGINX 방식)와 `alias`(subject 예시 방식)를 둘 다 지원한다 → [[analysis/design-decisions]] 9, [[analysis/design]] 3절.
 
 ## location 매칭 (NGINX 기준)
 

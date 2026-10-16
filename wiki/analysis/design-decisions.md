@@ -2,7 +2,7 @@
 title: 설계 결정 목록
 type: analysis
 sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc9110.txt, raw/rfc9112.txt, raw/rfc3875.txt, raw/rfc6265.txt, raw/rfc7578.txt, raw/nginx-core-module.md, raw/nginx-request-processing.md, raw/nginx-index-module.md, raw/nginx-rewrite-module.md]
-updated: 2026-10-15
+updated: 2026-10-16
 ---
 
 # 설계 결정 목록
@@ -69,6 +69,8 @@ updated: 2026-10-15
 - 근거: subject는 NGINX 설정의 `server` 섹션을 참고해도 된다고 한다 (raw/subject.md:161). 평가자가 NGINX와 비교하며 볼 수 있다 (raw/subject.md:186).
 - 구현: `server { ... }`, `location 경로 { ... }` 블록, `지시자 인자 ...;` 형식, `#` 주석. NGINX에 같은 기능의 지시자가 있으면 그 이름과 인자 형식을 쓴다 (`listen`, `root`, `index`, `autoindex`, `error_page`, `client_max_body_size`, `return`). 크기는 NGINX처럼 `1m` 같은 단위를 받는다 (기본값 표기 `client_max_body_size 1m;`, raw/nginx-core-module.md:355). 지시자 목록과 세부는 [[analysis/design]] 3절.
 - NGINX에 없는 기능(업로드 저장 위치, 확장자별 CGI 실행)은 새 지시자를 만든다 (**판단**).
+- 허용 메서드는 NGINX `limit_except METHOD ... { deny all; }` 형식으로 받고, 블록 안에는 `deny all;`만 허용한다 (2026-10-16 사용자 선택).
+- `root`와 `alias`를 둘 다 지원한다 (2026-10-16 사용자 선택). `root`는 NGINX처럼 URI 전체를 붙이고 (raw/nginx-core-module.md:1516), subject 예시의 매핑(raw/subject.md:169)은 `alias`로 쓴다 (raw/nginx-core-module.md:132-140) → [[concepts/configuration-file]] "subject 예시는 NGINX alias 방식".
 
 ## 아직 정하지 않은 것
 

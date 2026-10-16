@@ -387,3 +387,7 @@
 ## [2026-10-16] query | 설계 수정 (설계 원칙 대조, NGINX 설정 문법)
 - 갱신: analysis/design (원칙 대조 후 재작성: `RequestProcessor`·`ResponseStream`·`ChildReaper` 분리, 소유자 하나 원칙과 소유 관계 표, `IoRegistry`·`LoopObserver`·`CgiObserver` 인터페이스, `ListenContext`·`CgiContext`로 파라미터 묶음, `util/`·로그 모듈 제거, 3절 NGINX 문법·지시자 표·예시, 13절 원칙 대조와 의도한 예외), analysis/design-decisions (결정 9 NGINX 문법)
 - 메모: 사용자 결정 — 설정은 NGINX 문법, 허용 메서드는 `limit_except METHOD ... { deny all; }` 형식(A). 첫 설계가 SRP(`Connection` 과다 책임), 소유권(같은 객체를 두 곳이 포인터로 보유), DIP(`EventLoop` 구체 의존), 파라미터 수에서 원칙을 어겼음을 사용자 질문으로 대조해 찾고 고쳤다. `root` 매핑 방식(NGINX `root` vs subject 예시의 `alias` 방식)은 사용자 결정 대기.
+
+## [2026-10-16] query | root·alias 결정
+- 갱신: analysis/design (3절 `root`·`alias` 행, `LocationConfig.alias`, 예시, 설정 오류 규칙, 7절 매핑 단계, 14절 항목 삭제), analysis/design-decisions (결정 9에 `limit_except`·`root`/`alias`), concepts/configuration-file (alias 콜아웃에 결정), overview
+- 메모: 사용자 선택 (a) — NGINX 문법을 따르므로 `root`는 NGINX대로 URI 전체를 붙이고, subject 예시 매핑은 `alias`로 쓴다. 한 location에 둘 다 있으면 설정 오류(판단).
