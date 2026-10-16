@@ -1,0 +1,111 @@
+---
+title: 테스트 계획
+type: analysis
+sources: [raw/subject.md, raw/evaluation-sheet-en.md]
+updated: 2026-10-16
+---
+
+# 테스트 계획
+
+요구사항을 한 줄에 하나씩 적고, 무엇으로 어떻게 확인하는지 정한다. 테스트는 이 표에서 나온다. 표에 없는 테스트는 왜 있는지 설명할 수 있어야 하고, 테스트가 없는 줄은 빈칸으로 드러난다.
+구현 단계는 [[analysis/implementation-plan]], 설계는 [[analysis/design]], 사용자 결정은 [[analysis/design-decisions]]에 있다.
+
+## 진행 방식
+
+- 단계를 시작할 때 그 단계의 줄을 먼저 채우고, 테스트를 쓴 뒤 구현한다. 지금은 0~2단계를 자세히 적었고, 3단계 이후는 항목만 있다.
+- 테스트를 새로 쓰거나 대응시키면, 코드를 일부러 틀리게 바꿔 그 테스트가 실패하는지 한 번 확인한다. 실패하지 않는 테스트는 아무것도 보장하지 않는다.
+- 평가표는 채점에 쓰는 스크립트(테스트·자동화)를 평가자와 함께 검토하라고 한다 (raw/evaluation-sheet-en.md:21). 시연에 스크립트를 쓸 수 있으므로 읽기 쉽게 쓴다 (**판단**).
+
+## 테스트 수준
+
+| 수준 | 무엇 | 실행 |
+|---|---|---|
+| U | 단위 테스트 (`tests/unit/`, C++98) | `make test` |
+| I | 통합 테스트: 서버를 띄우고 소켓으로 요청 (`tests/integration/`, Python). subject는 한 프로그램으로만 시험하지 말고 Python 등으로 테스트를 쓰라고 한다 (raw/subject.md:190) | macOS와 Ubuntu 22.04 컨테이너 |
+| R | 코드 읽기 점검. 테스트로 증명할 수 없는 규칙(호출 순서, 금지 사항) | 해당 코드 경로를 직접 읽는다 |
+| M | 수동·도구 점검 (valgrind, siege, 브라우저) | Ubuntu 22.04 컨테이너 |
+
+근거 칸의 "설계"는 사용자와 정한 구현 규칙이다. 원문 요구가 아니라 우리 선택이므로, 바꾸면 테스트도 바꾼다.
+
+상태 칸: **있음** = 테스트가 있고, 그 줄의 규칙을 코드에서 일부러 하나 이상 틀리게 바꿨을 때 테스트가 실패하는 것을 확인했다(2026-10-16). 줄 안의 세부 규칙마다 다 바꿔 본 것은 아니다. **확인** = 코드 읽기로 확인했다(날짜). **부족**·**없음** = 할 일. **나중** = 그 단계에서 채운다.
+코드 위치(`src/...`, `tests/...`)는 `webserv/` 저장소 기준이다.
+
+## 실행
+
+- 단위: `make test`
+- 통합: `make integration`. `WEBSERV_SLOW_TESTS=1`이면 30초 타임아웃 시험과 빌드 규칙 시험(소스 사본에서 전체 빌드)을 더한다. fd 수를 세는 N-04는 `/proc`이 있는 Linux에서만 돈다. 평가 환경과 같은 Ubuntu 22.04 컨테이너에서 모두 돌린다.
+- 일부러 틀리게 바꿔 실패를 확인할 때는 바꾼 소스의 오브젝트와 실행 파일을 지운 뒤 빌드한다. macOS의 GNU Make 3.81에서 같은 초 안에 소스를 바꾸고 되돌리면 다시 컴파일·링크하지 않아, 바꾸기 전 결과로 시험한 일이 있었다 (2026-10-16 관찰. 초 단위 시각 비교 때문으로 본다, **판단**).
+
+## 0. 빌드
+
+| ID | 요구사항 | 근거 | 수준 | 기대 결과 | 현재 테스트 | 상태 |
+|---|---|---|---|---|---|---|
+| B-01 | Makefile 규칙 `$(NAME)`, `all`, `clean`, `fclean`, `re` | raw/subject.md:48 | I | 각 규칙이 성공하고 `fclean` 뒤 산출물이 없다 | `test_build.py` `test_b01_b03_rules_build_and_clean` (느린 테스트) | 있음 |
+| B-02 | 다시 링크하지 않는다 | raw/subject.md:47, raw/evaluation-sheet-en.md:60 | I | 두 번째 `make`가 아무것도 하지 않는다 | `test_build.py` `test_b02_second_make_does_not_relink` (느린 테스트) | 있음 |
+| B-03 | `c++ -Wall -Wextra -Werror`로 컴파일되고, `-std=c++98`을 더해도 컴파일된다 | raw/subject.md:49-50 | I | macOS·Ubuntu 모두 `make re` 성공 | `test_build.py` `test_b01_b03_rules_build_and_clean`이 컴파일 명령의 플래그를 확인 (느린 테스트) | 있음. Ubuntu 빌드는 컨테이너에서 돌린다 |
+
+## 1. 설정 파일
+
+"설계 3절"은 [[analysis/design]] 3절 "설정 파일"이다. 현재 테스트 이름은 `tests/unit/config_test.cpp`의 `TEST_CASE`다.
+
+| ID | 요구사항 | 근거 | 수준 | 기대 결과 | 현재 테스트 | 상태 |
+|---|---|---|---|---|---|---|
+| C-01 | 명령줄 인자로 받은 설정 파일을 쓰고, 없으면 기본 경로의 파일을 쓴다 | raw/subject.md:127 | I | 인자 없이 실행하면 `conf/default.conf`로 시작한다 | `test_startup.py` `test_c01_*` 2개 | 있음 |
+| C-02 | 인자가 2개 이상이면 사용법을 출력하고 끝낸다 | 설계 (인자는 설정 파일 하나, raw/subject.md:107) | I | 종료 코드 1, 크래시 없음 | `test_startup.py` `test_c02_rejects_two_arguments` | 있음 |
+| C-03 | 설정 파일이 없거나 일반 파일이 아니면 원인을 출력하고 시작하지 않는다 | 설계 3절 | U, I | 메시지에 원인. 프로세스는 종료 코드 1 | `reportsMissingFile`, `rejectsDirectoryAsFile`, `test_startup.py` `test_c03_*` 2개 | 있음 |
+| C-04 | NGINX 문법: `server`·`location` 블록, `이름 인자;`, `#` 주석 | 설계 3절, [[analysis/design-decisions]] 9 | U | 설계 3절 예시가 그대로 읽힌다 | `parsesDesignExample` (주석 포함) | 있음 |
+| C-05 | 문법 오류(`;` 누락, 닫히지 않은 블록, 남는 `}`, 따옴표, 빈 파일)는 거부 | 설계 3절 | U | `ConfigError` | `rejectsSyntaxErrors` | 있음 |
+| C-06 | 오류 메시지에 파일 이름과 줄 번호 | 설계 3절 | U | `test.conf:3:` | `reportsLineNumbers` | 있음 |
+| C-07 | 알 수 없는 지시자, 잘못된 위치, 인자 개수 오류, 블록 여부 오류는 거부 | 설계 3절 | U | `ConfigError` | `rejectsUnknownOrMisplacedDirectives` | 있음 |
+| C-08 | 한 값만 받는 지시자가 두 번 나오면 거부 | 설계 (구현 세부) | U | `duplicate "root"` | `rejectsLocationProblems` (`root`만) | 있음 |
+| C-09 | 서버가 listen할 `interface:port`를 여러 개 정의 | raw/subject.md:163 | U | server 하나에 `listen` 여러 줄, server 여러 개 | `acceptsSeparateServersOnDifferentPorts`, `acceptsSeveralListensInOneServer` | 있음 |
+| C-10 | `listen 8080;`처럼 주소를 생략하면 `0.0.0.0` | 설계 3절 | U | host `0.0.0.0` | `defaultsWhenNotConfigured` | 있음 |
+| C-11 | 잘못된 `listen` 값(포트 0·65536 이상, 잘못된 IPv4, 호스트 이름) 거부 | 설계 3절 | U | `invalid listen` | `rejectsListenProblems`, `acceptsPortBoundaries` | 있음 |
+| C-12 | 같은 `interface:port`가 두 번 나오면 에러로 시작하지 않는다 (virtual host 미구현) | raw/evaluation-sheet-en.md:108, [[analysis/design-decisions]] 4 | U, I | `duplicate listen`. 프로세스는 종료 코드 1 | `rejectsListenProblems`, `rejectsDuplicateListenInOneServer`, `test_startup.py` `test_c12_duplicate_listen_stops_startup` | 있음 |
+| C-13 | `0.0.0.0:P`와 특정 IP의 `:P`는 겹침으로 거부 | 설계 ([[concepts/configuration-file]] "포트 관련 엣지 케이스") | U | `conflicts with` | `rejectsListenProblems`, `rejectsWildcardAfterSpecificAddress` | 있음 |
+| C-14 | 기본 에러 페이지 설정 (`error_page 코드... 경로`) | raw/subject.md:164, raw/evaluation-sheet-en.md:69 | U | 코드별 경로. 300~599 밖 코드, `/`로 시작하지 않는 경로, 같은 코드 중복은 거부 | `parsesDesignExample`, `rejectsBadErrorPages` | 있음 |
+| C-15 | 요청 본문 최대 크기 설정. 숫자·`k`·`m` 단위, 1 이상 100MB 이하 | raw/subject.md:165, [[analysis/design-decisions]] 11 | U | 범위 밖·잘못된 단위·넘침은 거부 | `rejectsBodySizeOutsideRange`, `acceptsBodySizeWithoutUnitAndLowerBound`, `locationInheritsServerSettings` (`2k`), `parsesDesignExample` (`10m`) | 있음 |
+| C-16 | 라우트는 prefix로 지정하고 정규식은 받지 않는다. 경로는 `/`로 시작. 같은 경로 중복은 거부 | raw/subject.md:166 | U | 수식어(`=`, `~`) 거부 | `rejectsUnknownOrMisplacedDirectives`, `rejectsLocationProblems` | 있음 |
+| C-17 | 라우트별 허용 메서드 (`limit_except ... { deny all; }`). GET을 허용하면 HEAD도. 없으면 전부 허용 | raw/subject.md:167, raw/evaluation-sheet-en.md:73, 설계 3절 | U | 허용 집합. 블록 안 다른 내용·모르는 메서드는 거부 | `parsesDesignExample`, `rejectsBadLocationDirectives` | 있음 |
+| C-18 | HTTP 리다이렉트 (`return 코드 URL`) | raw/subject.md:168 | U | 코드와 URL. 301·302·303·307·308이 아니면 거부 (설계) | `parsesDesignExample`, `rejectsBadLocationDirectives` | 있음 |
+| C-19 | 파일을 찾을 디렉토리 (`root`, subject 예시는 `alias`). 한 location에 둘 다 있으면 거부. 둘 다 없고 `return`도 없으면 거부 | raw/subject.md:169, 설계 3절 | U | 값 저장과 거부 | `parsesDesignExample`, `rejectsLocationProblems` | 있음 |
+| C-20 | 디렉토리 리스팅 켜기·끄기 (`autoindex`), 기본 off | raw/subject.md:170 | U | `on`/`off`만 받는다 | `defaultsWhenNotConfigured`, `locationInheritsServerSettings`, `rejectsBadLocationDirectives` | 있음 |
+| C-21 | 디렉토리 요청 때 줄 기본 파일 (`index`), 기본 `index.html` | raw/subject.md:171, raw/evaluation-sheet-en.md:72 | U | 파일 목록 | `defaultsWhenNotConfigured`, `locationInheritsServerSettings` | 있음 |
+| C-22 | 업로드 허용과 저장 위치 (`upload_store`) | raw/subject.md:172 | U | 경로 저장 | `parsesDesignExample` | 있음 |
+| C-23 | 확장자별 CGI (`cgi .확장자 실행파일`) | raw/subject.md:173 | U | 확장자→실행 파일. `.` 없는 확장자, 중복은 거부 | `parsesDesignExample`, `rejectsBadLocationDirectives` | 있음 |
+| C-24 | location은 server 값을 물려받고, 자기 값이 있으면 그것을 쓴다 | 설계 3절 | U | 상속과 덮어쓰기 | `locationInheritsServerSettings` (상속), `locationOverridesServerSettings` (덮어쓰기) | 있음 |
+| C-25 | location `/`가 없고 server에 `root`가 있으면 `/`를 만든다. `root`도 없으면 만들지 않는다 | 설계 3절 | U | 있음/없음 | `serverRootCreatesImplicitRootLocation`, `noImplicitRootLocationWithoutServerRoot` | 있음 |
+| C-26 | location은 긴 경로부터 정렬 (4단계 가장 긴 prefix 매칭의 준비) | 설계 7절 `matchLocation` | U | 경로 길이 내림차순 | `locationsAreSortedLongestFirst` | 있음. 매칭 자체는 4단계에서 시험 |
+| C-27 | 평가 시연용 설정 파일과 기본 파일을 저장소에 둔다 | raw/subject.md:184 | M | 기능별 설정으로 시연 가능 | 9단계 | 나중 |
+
+## 2. 이벤트 루프와 연결
+
+| ID | 요구사항 | 근거 | 수준 | 기대 결과 | 현재 테스트 | 상태 |
+|---|---|---|---|---|---|---|
+| N-01 | 모든 I/O를 `poll()` 하나로 처리하고, 읽기·쓰기를 함께 감시한다 | raw/subject.md:130-131, raw/evaluation-sheet-en.md:53 | R | `poll` 호출이 `EventLoop::run` 한 곳뿐 | 코드 읽기 2026-10-16: `poll`은 `src/core/EventLoop.cpp:42` 한 곳. 감시할 이벤트는 handler마다 `wantedEvents()`로 정해 한 배열에 읽기·쓰기가 함께 들어간다 | 확인 |
+| N-02 | 준비 알림 없이 소켓을 읽거나 쓰지 않는다. 준비 1회에 I/O 1번은 설계(원문은 EAGAIN까지 반복도 허용) | raw/subject.md:132, raw/subject.md:136, raw/evaluation-sheet-en.md:54 | R | `recv`·`send`·`accept`가 `onEvent` 경로에서만 불린다 | 코드 읽기 2026-10-16: `recv`는 `src/http/Connection.cpp:68`, `send`는 `:84`, 각각 `onEvent`의 `POLLIN`·`POLLHUP`(`:46`)·`POLLOUT`(`:48`) 확인 뒤에만 불린다. `accept`는 `src/core/Listener.cpp:63`, `POLLIN` 확인(`:59`) 뒤. 시계 파일 `write`는 일반 파일이라 예외 (raw/subject.md:134) | 확인 |
+| N-03 | 읽기·쓰기 뒤 errno로 동작을 바꾸지 않는다 | raw/subject.md:133, raw/evaluation-sheet-en.md:57 | R | `recv`·`send` 뒤에 errno를 읽는 곳이 없다 | 코드 읽기 2026-10-16: `recv`·`send` 뒤에 errno를 읽지 않는다. errno는 `src/core/Listener.cpp:50`에서 시작 때 listen 소켓 준비(`socket`~`listen`) 실패 메시지에만 쓴다 | 확인 |
+| N-04 | `recv`·`send` 반환값 0과 -1을 모두 처리하고, 에러면 클라이언트를 제거한다 | raw/evaluation-sheet-en.md:55-56 | R, I | 코드에 두 경우가 있고, 클라이언트가 끊으면 연결이 정리된다 | 코드 읽기: `src/http/Connection.cpp:70`, `:85`가 0과 -1을 모두 닫기로 처리. `test_connections.py` `test_n04_peer_close_releases_the_socket` (Linux `/proc`에서 서버의 fd 수 확인, macOS에서는 건너뜀) | 있음 |
+| N-05 | 여러 포트에서 서로 다른 server로 응답한다 | raw/subject.md:149, raw/evaluation-sheet-en.md:107 | I | 두 포트에 동시에 요청해 모두 응답 | `test_connections.py` `test_n05_concurrent_clients_on_two_ports` (50개) | 있음. 포트별로 다른 내용은 4단계에서 시험 |
+| N-06 | 다른 프로세스가 이미 쓰는 `interface:port`면 메시지를 내고 끝낸다. 크래시하지 않는다 | raw/evaluation-sheet-en.md:109 | I | 두 번째 프로세스가 `Address already in use`, 종료 코드 1. 첫 프로세스는 계속 응답 | `test_startup.py` `test_n06_second_instance_on_same_port_fails_cleanly` | 있음 |
+| N-07 | 클라이언트가 요청 도중·응답 도중 끊어도 서버는 계속 동작한다 (`SIGPIPE`로 죽지 않음) | raw/subject.md:46, raw/subject.md:129 | I | 끊은 뒤 새 요청에 응답 | `test_connections.py` `test_n07_*` 2개 (요청 도중 끊김, 응답 전 RST) | 부족: `SIGPIPE` 무시를 지워도 테스트가 실패하지 않았다. 고정 응답은 `send` 1번에 끝나기 때문으로 본다 (**판단**). 4단계에서 큰 응답으로 다시 시험 |
+| N-08 | 요청이 무한히 매달리지 않는다: 머리가 끝나지 않은 연결은 헤더 타임아웃 뒤 닫힌다 | raw/subject.md:139 | I | 30초 뒤 연결이 닫힌다 (3단계부터는 408) | `test_connections.py` `test_n08_unfinished_head_times_out` (느린 테스트, 약 30초) | 있음 |
+| N-09 | 머리가 상한을 넘으면 연결을 닫는다 (3단계부터는 431) | 설계 12절 `kMaxHeaderBytes` | I | 16384바이트를 넘게 보내면 닫힌다 | `test_connections.py` `test_n09_oversized_head_is_closed` | 있음 |
+| N-10 | `SIGINT`·`SIGTERM`이면 모든 fd와 메모리를 정리하고 정상 종료한다 | 설계 10절. 누수 검사 raw/evaluation-sheet-en.md:25 | I, M | 종료 코드 0. valgrind "All heap blocks were freed" | `test_startup.py` `test_n10_*` 2개 (종료 코드). valgrind는 단계 2에서 손으로 확인 | 부족: valgrind 확인 기록이 커밋 메시지뿐. 8단계에서 절차로 남긴다 |
+| N-11 | `siege -b`로 빈 페이지 GET availability 99.5% 초과 | raw/evaluation-sheet-en.md:114 | M | 99.5% 초과 | 없음 (단계 2에서 100% 확인, 기록은 커밋 메시지·대화뿐) | 부족: 8단계에서 절차로 남긴다 |
+| N-12 | 계속 돌려도 메모리가 끝없이 늘지 않고 매달린 연결이 없다 | raw/evaluation-sheet-en.md:115-117 | M | 장시간 siege 동안 메모리 일정 | 8단계 | 나중 |
+| N-13 | 시계: 시계 파일의 수정 시각을 현재 시각으로 쓴다. 시작 때 실패하면 시작하지 않는다 | [[analysis/design-decisions]] 10, 설계 4절 "시계" | U, I | 갱신 성공 시 값이 0보다 크고 줄지 않는다. 쓸 수 없는 경로면 `refresh()`가 false | `clock_test.cpp` 2개, `test_startup.py` `test_n13_unusable_clock_file_stops_startup` | 있음 |
+| N-14 | 이벤트 루프: 처리 중 `unwatch`는 그 바퀴 끝에 반영. `onEvent` 예외는 그 handler의 `onFailure()`로 | 설계 4절 | U | pipe fd와 가짜 handler로 확인 | `event_loop_test.cpp` 3개 | 있음 |
+| N-15 | IPv4 주소 변환 (listen 주소 → `sockaddr_in`, 접속한 주소 → 문자열) | 설계 (구현 세부) | U | 네트워크 바이트 순서 | `convertsIpv4BothWays`, `buildsSockaddrInNetworkOrder` (`tests/unit/socket_address_test.cpp`) | 있음 |
+
+- N-01~N-03은 0점 조건이다 (raw/evaluation-sheet-en.md:53, raw/subject.md:136, raw/evaluation-sheet-en.md:57). 테스트가 통과해도 지켰다는 증거가 되지 않으므로, 단계마다 코드 경로를 읽어 확인하고 결과를 이 페이지에 적는다.
+
+## 3단계 이후 (단계를 시작할 때 채운다)
+
+- 3. 요청 파서: 요청줄·헤더·본문(`Content-Length`, chunked), 크기 상한(414·431·413), 형식 오류(400), 모르는 메서드(501), 버전(505) → [[concepts/request-parsing]], [[concepts/status-codes]]
+- 4. 라우팅·정적 파일·응답: 가장 긴 prefix 매칭, `root`·`alias` 경로, index, autoindex, 리다이렉트, 기본 에러 페이지, `Date`, HEAD
+- 5. keep-alive·pipelining·DRAIN
+- 6. 업로드(`multipart/form-data`, 415)와 DELETE
+- 7. CGI: GET·POST, chunked 본문, 실행 디렉토리, 무한 루프(504), 에러 스크립트(502)
+- 8. 안정성: [[concepts/resilience]] "요구 목록"
+- 9. README·시연 설정
