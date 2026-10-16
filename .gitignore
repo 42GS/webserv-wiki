@@ -224,3 +224,6 @@ xcuserdata/
 ### Obsidian ###
 .obsidian/workspace*.json
 .obsidian/graph*.json
+
+### webserv code repository (separate git repo)
+/webserv/
