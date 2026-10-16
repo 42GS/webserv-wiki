@@ -1,7 +1,7 @@
 ---
 title: 테스트 계획
 type: analysis
-sources: [raw/subject.md, raw/evaluation-sheet-en.md]
+sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/nginx-core-module.md, raw/macos-observed-sigpipe-leaks.md, raw/posix-poll.md, raw/design-checks-observed.md]
 updated: 2026-10-16
 ---
 
@@ -33,7 +33,7 @@ updated: 2026-10-16
 ## 실행
 
 - 단위: `make test`
-- 통합: `make integration`. `WEBSERV_SLOW_TESTS=1`이면 30초 타임아웃 시험과 빌드 규칙 시험(소스 사본에서 전체 빌드)을 더한다. fd 수를 세는 N-04는 `/proc`이 있는 Linux에서만 돈다. 평가 환경과 같은 Ubuntu 22.04 컨테이너에서 모두 돌린다.
+- 통합: `make integration`. `WEBSERV_SLOW_TESTS=1`이면 30초 타임아웃 시험과 빌드 규칙 시험(소스 사본에서 전체 빌드)을 더한다. fd 수를 세는 N-04와 CPU 시간을 재는 N-19는 `/proc`이 있는 Linux에서만 돈다. 평가 환경과 같은 Ubuntu 22.04 컨테이너에서 모두 돌린다.
 - 일부러 틀리게 바꿔 실패를 확인할 때는 바꾼 소스의 오브젝트와 실행 파일을 지운 뒤 빌드한다. macOS의 GNU Make 3.81에서 같은 초 안에 소스를 바꾸고 되돌리면 다시 컴파일·링크하지 않아, 바꾸기 전 결과로 시험한 일이 있었다 (2026-10-16 관찰. 초 단위 시각 비교 때문으로 본다, **판단**).
 
 ## 0. 빌드
@@ -43,6 +43,10 @@ updated: 2026-10-16
 | B-01 | Makefile 규칙 `$(NAME)`, `all`, `clean`, `fclean`, `re` | raw/subject.md:48 | I | 각 규칙이 성공하고 `fclean` 뒤 산출물이 없다 | `test_build.py` `test_b01_b03_rules_build_and_clean` (느린 테스트) | 있음 |
 | B-02 | 다시 링크하지 않는다 | raw/subject.md:47, raw/evaluation-sheet-en.md:60 | I | 두 번째 `make`가 아무것도 하지 않는다 | `test_build.py` `test_b02_second_make_does_not_relink` (느린 테스트) | 있음 |
 | B-03 | `c++ -Wall -Wextra -Werror`로 컴파일되고, `-std=c++98`을 더해도 컴파일된다 | raw/subject.md:49-50 | I | macOS·Ubuntu 모두 `make re` 성공 | `test_build.py` `test_b01_b03_rules_build_and_clean`이 컴파일 명령의 플래그를 확인 (느린 테스트) | 있음. Ubuntu 빌드는 컨테이너에서 돌린다 |
+| B-04 | C++ 버전이 있으면 C 헤더 대신 쓴다. 외부 라이브러리·Boost 금지 | raw/subject.md:51-52 | R | `.h` 헤더는 C++ 버전이 없는 POSIX 헤더뿐. 링크에 `-l` 없음 | 코드 읽기 2026-10-16: `.h`는 `arpa/inet.h`, `fcntl.h`, `netinet/in.h`, `poll.h`, `sys/socket.h`, `sys/stat.h`, `unistd.h`뿐 | 확인. 단계마다 다시 본다 |
+| B-05 | 다른 웹 서버를 `execve`하지 않는다 | raw/subject.md:128 | R | `execve`는 CGI 실행에만 | 아직 `execve` 없음 | 나중 (7단계) |
+| B-06 | README: 저장소 루트, 영어, 첫 줄 이탤릭 정해진 문구, Description·Instructions·Resources(AI 사용 포함). 하나라도 없으면 0점 | raw/subject.md:196-207, raw/evaluation-sheet-en.md:35-44 | I, M | 형식은 테스트, 내용은 9단계에 읽어서 확인 | `test_readme.py` 2개 (첫 줄 형식, 세 절) | 있음(형식). 내용은 9단계. 첫 줄의 login(`yoshin`, git 설정에서 가져옴)은 **미확인** — 사용자 확인 |
+| B-07 | 제출 파일 종류: `Makefile`, `*.{h, hpp}`, `*.cpp`, `*.tpp`, `*.ipp`, 설정 파일 | raw/subject.md:105 | M | 저장소의 다른 파일(Python 테스트, `.clang-format` 등)을 둬도 되는지 | — | **미확인**. 테스트를 Python 등으로 쓰라는 문구(raw/subject.md:190)와 함께 사용자가 정한다 |
 
 ## 1. 설정 파일
 
@@ -60,7 +64,7 @@ updated: 2026-10-16
 | C-08 | 한 값만 받는 지시자가 두 번 나오면 거부 | 설계 (구현 세부) | U | `duplicate "root"` | `rejectsLocationProblems` (`root`만) | 있음 |
 | C-09 | 서버가 listen할 `interface:port`를 여러 개 정의 | raw/subject.md:163 | U | server 하나에 `listen` 여러 줄, server 여러 개 | `acceptsSeparateServersOnDifferentPorts`, `acceptsSeveralListensInOneServer` | 있음 |
 | C-10 | `listen 8080;`처럼 주소를 생략하면 `0.0.0.0` | 설계 3절 | U | host `0.0.0.0` | `defaultsWhenNotConfigured` | 있음 |
-| C-11 | 잘못된 `listen` 값(포트 0·65536 이상, 잘못된 IPv4, 호스트 이름) 거부 | 설계 3절 | U | `invalid listen` | `rejectsListenProblems`, `acceptsPortBoundaries` | 있음 |
+| C-11 | 잘못된 `listen` 값(포트 0·65536 이상, 잘못된 IPv4, 호스트 이름) 거부 | 설계 3절 | U | `invalid listen` | `rejectsListenProblems`, `acceptsPortBoundaries` | 있음. 주소만(`listen 127.0.0.1;`, NGINX는 포트 80)과 `*:8000`도 지금은 거부한다. NGINX는 둘 다 받는다 (raw/nginx-core-module.md:936-943, raw/nginx-core-module.md:959). 설계 표에 없는 형식이라 받을지 사용자가 정한다 |
 | C-12 | 같은 `interface:port`가 두 번 나오면 에러로 시작하지 않는다 (virtual host 미구현) | raw/evaluation-sheet-en.md:108, [[analysis/design-decisions]] 4 | U, I | `duplicate listen`. 프로세스는 종료 코드 1 | `rejectsListenProblems`, `rejectsDuplicateListenInOneServer`, `test_startup.py` `test_c12_duplicate_listen_stops_startup` | 있음 |
 | C-13 | `0.0.0.0:P`와 특정 IP의 `:P`는 겹침으로 거부 | 설계 ([[concepts/configuration-file]] "포트 관련 엣지 케이스") | U | `conflicts with` | `rejectsListenProblems`, `rejectsWildcardAfterSpecificAddress` | 있음 |
 | C-14 | 기본 에러 페이지 설정 (`error_page 코드... 경로`) | raw/subject.md:164, raw/evaluation-sheet-en.md:69 | U | 코드별 경로. 300~599 밖 코드, `/`로 시작하지 않는 경로, 같은 코드 중복은 거부 | `parsesDesignExample`, `rejectsBadErrorPages` | 있음 |
@@ -88,7 +92,7 @@ updated: 2026-10-16
 | N-04 | `recv`·`send` 반환값 0과 -1을 모두 처리하고, 에러면 클라이언트를 제거한다 | raw/evaluation-sheet-en.md:55-56 | R, I | 코드에 두 경우가 있고, 클라이언트가 끊으면 연결이 정리된다 | 코드 읽기: `src/http/Connection.cpp:70`, `:85`가 0과 -1을 모두 닫기로 처리. `test_connections.py` `test_n04_peer_close_releases_the_socket` (Linux `/proc`에서 서버의 fd 수 확인, macOS에서는 건너뜀) | 있음 |
 | N-05 | 여러 포트에서 서로 다른 server로 응답한다 | raw/subject.md:149, raw/evaluation-sheet-en.md:107 | I | 두 포트에 동시에 요청해 모두 응답 | `test_connections.py` `test_n05_concurrent_clients_on_two_ports` (50개) | 있음. 포트별로 다른 내용은 4단계에서 시험 |
 | N-06 | 다른 프로세스가 이미 쓰는 `interface:port`면 메시지를 내고 끝낸다. 크래시하지 않는다 | raw/evaluation-sheet-en.md:109 | I | 두 번째 프로세스가 `Address already in use`, 종료 코드 1. 첫 프로세스는 계속 응답 | `test_startup.py` `test_n06_second_instance_on_same_port_fails_cleanly` | 있음 |
-| N-07 | 클라이언트가 요청 도중·응답 도중 끊어도 서버는 계속 동작한다 (`SIGPIPE`로 죽지 않음) | raw/subject.md:46, raw/subject.md:129 | I | 끊은 뒤 새 요청에 응답 | `test_connections.py` `test_n07_*` 2개 (요청 도중 끊김, 응답 전 RST) | 부족: `SIGPIPE` 무시를 지워도 테스트가 실패하지 않았다. 고정 응답은 `send` 1번에 끝나기 때문으로 본다 (**판단**). 4단계에서 큰 응답으로 다시 시험 |
+| N-07 | 클라이언트가 요청 도중·응답 도중 끊어도 서버는 계속 동작한다 (`SIGPIPE`로 죽지 않음) | raw/subject.md:46, raw/subject.md:129 | I | 끊은 뒤 새 요청에 응답 | `test_connections.py` `test_n07_*` 2개 (요청 도중 끊김, 응답 전 RST) | 부족: `SIGPIPE` 무시를 지워도 테스트가 실패하지 않았다. 상대가 닫은 TCP 연결에 `send`하면 1회차는 성공하고 2회차에 프로세스가 끝났다는 실측이 있다 (raw/macos-observed-sigpipe-leaks.md:114-117, [[sources/macos-observed-sigpipe-leaks]]). 고정 응답은 `send` 1번에 끝나므로 2회차가 없다. 4단계에서 끊긴 연결에 여러 번 보내는 큰 응답으로 시험 |
 | N-08 | 요청이 무한히 매달리지 않는다: 머리가 끝나지 않은 연결은 헤더 타임아웃 뒤 닫힌다 | raw/subject.md:139 | I | 30초 뒤 연결이 닫힌다 (3단계부터는 408) | `test_connections.py` `test_n08_unfinished_head_times_out` (느린 테스트, 약 30초) | 있음 |
 | N-09 | 머리가 상한을 넘으면 연결을 닫는다 (3단계부터는 431) | 설계 12절 `kMaxHeaderBytes` | I | 16384바이트를 넘게 보내면 닫힌다 | `test_connections.py` `test_n09_oversized_head_is_closed` | 있음 |
 | N-10 | `SIGINT`·`SIGTERM`이면 모든 fd와 메모리를 정리하고 정상 종료한다 | 설계 10절. 누수 검사 raw/evaluation-sheet-en.md:25 | I, M | 종료 코드 0. valgrind "All heap blocks were freed" | `test_startup.py` `test_n10_*` 2개 (종료 코드). valgrind는 단계 2에서 손으로 확인 | 부족: valgrind 확인 기록이 커밋 메시지뿐. 8단계에서 절차로 남긴다 |
@@ -97,6 +101,14 @@ updated: 2026-10-16
 | N-13 | 시계: 시계 파일의 수정 시각을 현재 시각으로 쓴다. 시작 때 실패하면 시작하지 않는다 | [[analysis/design-decisions]] 10, 설계 4절 "시계" | U, I | 갱신 성공 시 값이 0보다 크고 줄지 않는다. 쓸 수 없는 경로면 `refresh()`가 false | `clock_test.cpp` 2개, `test_startup.py` `test_n13_unusable_clock_file_stops_startup` | 있음 |
 | N-14 | 이벤트 루프: 처리 중 `unwatch`는 그 바퀴 끝에 반영. `onEvent` 예외는 그 handler의 `onFailure()`로 | 설계 4절 | U | pipe fd와 가짜 handler로 확인 | `event_loop_test.cpp` 3개 | 있음 |
 | N-15 | IPv4 주소 변환 (listen 주소 → `sockaddr_in`, 접속한 주소 → 문자열) | 설계 (구현 세부) | U | 네트워크 바이트 순서 | `convertsIpv4BothWays`, `buildsSockaddrInNetworkOrder` (`tests/unit/socket_address_test.cpp`) | 있음 |
+| N-16 | 모든 소켓은 non-blocking | raw/subject.md:129 | R | listen 소켓과 accept한 소켓 모두 `O_NONBLOCK` | 코드 읽기 2026-10-16: `src/core/Listener.cpp:44`(listen), `:67`(accept한 소켓, 실패하면 닫음) | 확인 |
+| N-17 | `fcntl`은 `F_SETFL`, `O_NONBLOCK`, `FD_CLOEXEC`만 | raw/subject.md:155-157 | R | 다른 플래그 없음 | 코드 읽기 2026-10-16: `fcntl` 호출은 위 두 곳, 둘 다 `F_SETFL, O_NONBLOCK` | 확인 |
+| N-18 | `poll()`이 메인 루프 안에 있다 | raw/evaluation-sheet-en.md:53 | R | `main` → `EventLoop::run` → `poll` | 코드 읽기 2026-10-16: `src/main.cpp:49` `loop.run(server)`, `run`이 매 바퀴 `poll` | 확인 |
+| N-19 | `POLLOUT`은 보낼 데이터가 있을 때만 켠다 (안 그러면 busy waiting) | raw/posix-poll.md:175, [[concepts/io-multiplexing]] "POLLOUT은 보낼 데이터가 있을 때만" (**판단**) | R, I | 연결이 대기 중이어도 서버가 CPU를 거의 쓰지 않는다 | 코드 읽기: `src/http/Connection.cpp:33` `wantedEvents`는 `WRITE` 상태에서만 `POLLOUT`. `test_connections.py` `test_n19_idle_connections_do_not_spin` (Linux `/proc`에서 CPU 시간 확인: 대기 연결 10개, 2초 동안 0.2초 미만) | 있음 |
+| N-20 | `POLLERR`·`POLLNVAL`이면 클라이언트를 제거 | raw/evaluation-sheet-en.md:55, [[concepts/io-multiplexing]] "revents 처리" | R | 연결을 닫는다 | 코드 읽기 2026-10-16: `src/http/Connection.cpp:40` | 확인 |
+| N-21 | 디스크 파일의 동기 I/O가 루프를 멈추지 않는다 | raw/evaluation-sheet-en.md:59 | R | 설정 파일은 시작 때만, 시계 파일은 바퀴마다 1바이트 | 코드 읽기 2026-10-16: `src/main.cpp:34` 시작 때 설정 읽기. 시계는 `Clock::refresh` | 확인. 4단계 정적 파일에서 다시 본다 |
+| N-22 | 메모리가 부족해도 크래시하지 않는다 | raw/subject.md:46 | R, M | 할당 실패가 예외로 오면 그 연결만 정리 | 코드 읽기: `Server::adopt`가 생성 실패를 잡고, `onEvent` 예외는 `onFailure`로 간다 (N-14). 다만 Ubuntu 컨테이너에서 메모리가 바닥나면 `bad_alloc` 없이 프로세스가 강제 종료됐다 (raw/design-checks-observed.md:119-123) | 부족: 예외가 오지 않는 경우는 본문 상한(결정 11)으로만 막는다 |
+| N-23 | 평가자가 `valgrind`·`leaks`·`e_fence`로 돌려도 오류·누수가 없다. `e_fence`에서는 heap 경계 오류가 곧 크래시 | raw/evaluation-sheet-en.md:25, [[concepts/resilience]] "SIGINT·SIGTERM과 누수 검사" | M | valgrind 오류 0, "All heap blocks were freed" | 단계 2에서 valgrind만 손으로 확인 | 나중 (8단계 절차) |
 
 - N-01~N-03은 0점 조건이다 (raw/evaluation-sheet-en.md:53, raw/subject.md:136, raw/evaluation-sheet-en.md:57). 테스트가 통과해도 지켰다는 증거가 되지 않으므로, 단계마다 코드 경로를 읽어 확인하고 결과를 이 페이지에 적는다.
 

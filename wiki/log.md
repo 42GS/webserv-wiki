@@ -416,3 +416,7 @@
 ## [2026-10-16] schema | 구현 작업 때 위키 참고 규칙
 - 갱신: `CLAUDE.md` 작업 흐름에 "구현 (`webserv/` 코드·테스트)" 절 추가
 - 메모: 테스트 계획을 쓰면서 `concepts/io-multiplexing`·`concepts/resilience`·`sources/macos-observed-sigpipe-leaks`를 읽지 않아, 위키에 실측이 있는 SIGPIPE 동작을 판단으로 적고 2단계의 "`POLLOUT`은 보낼 데이터가 있을 때만" 요구를 계획에서 빠뜨렸다. 사용자 요청으로 작업 전 해당 범위 위키를 읽는 규칙을 추가했다.
+
+## [2026-10-16] query | 테스트 계획 0~2단계 위키 대조 보완
+- 갱신: [[analysis/test-plan]] (B-04~B-07, N-16~N-23 추가. C-11에 NGINX `listen` 형식 차이, N-07에 SIGPIPE 실측 인용), [[overview]] (열린 질문: 제출 파일 목록 밖 파일)
+- 메모: 새 구현 규칙에 따라 `concepts/build-and-submission`, `concepts/configuration-file`, `concepts/io-multiplexing`, `concepts/resilience`, `concepts/connection-management`(타임아웃·종료), `sources/macos-observed-sigpipe-leaks`를 읽고 대조했다. webserv `2ba78ea`: README 형식 테스트, idle CPU(busy waiting) 테스트. 둘 다 일부러 틀린 변경으로 실패 확인. 사용자 결정 필요: README login, `listen` 주소만·`*:port` 형식, 제출 파일 목록 밖 파일.
