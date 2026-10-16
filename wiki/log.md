@@ -363,3 +363,8 @@
 - 생성: raw/nginx-src-ngx_http_request.c, raw/nginx-src-ngx_socket.h (`release-1.30.6` 태그 원본 그대로), sources/nginx-src-lingering-close
 - 갱신: concepts/connection-management (NGINX `shutdown` **미확인** 해소), analysis/subject-vs-evaluation (1.5절, 남은 미확인 문구), overview (근거 소스, 열린 질문 문구), index
 - 메모: NGINX는 lingering close에 들어갈 때 `shutdown(fd, SHUT_WR)`을 호출하고 (raw/nginx-src-ngx_http_request.c:3693-3698, raw/nginx-src-ngx_socket.h:15, raw/nginx-src-ngx_socket.h:66), 상대가 닫거나 시간이 다 될 때까지 읽어 버린다 (raw/nginx-src-ngx_http_request.c:3727-3752). 요청 종료 후 keep-alive가 가능하면 keep-alive가 먼저다 (raw/nginx-src-ngx_http_request.c:2960-2987). 과제는 `shutdown`을 쓸 수 없어 "읽고 버리다가 `close()`"만 따른다. 이것으로 충분한지는 **미확인**으로 남겼다.
+
+## [2026-10-16] ingest | Electric Fence 실측 (Ubuntu 22.04)
+- 생성: raw/efence-observed-ubuntu2204.md (패키지 문서 발췌, 테스트 프로그램 3개, 명령, 출력, `ldd` 그대로), sources/efence-observed-ubuntu2204
+- 갱신: concepts/resilience (`e_fence` **미확인** 해소), concepts/testing (도구 표), sources/valgrind-observed-sigint·macos-observed-sigpipe-leaks (측정 범위 노트), overview, index
+- 메모: electric-fence 2.2.6은 누수를 보고하지 않았다. 포인터를 잃은 대조군도 보고 없음 (raw/efence-observed-ubuntu2204.md:351-361). 문서상 대상은 heap 경계 초과와 해제 후 접근이고 (raw/efence-observed-ubuntu2204.md:71-74), 1바이트 초과 쓰기가 segfault가 됐다 (raw/efence-observed-ubuntu2204.md:369-375). g++ `-lefence` 바이너리에는 libefence가 링크되지 않아 효과가 없었다 (raw/efence-observed-ubuntu2204.md:389-395). 원인은 **미확인**.

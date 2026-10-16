@@ -51,4 +51,4 @@ updated: 2026-10-16
 - 평가표는 "컴퓨터에 있는 도구"를 쓰라고 하고 leaks, valgrind, e_fence를 예로 든다 (raw/evaluation-sheet-en.md:25). 평가 PC가 Ubuntu 22.04이므로 macOS 도구인 `leaks`보다 valgrind가 쓰일 가능성이 높다 (Ubuntu에 `leaks`가 없는지는 확인하지 않았다). 결론은 바뀌지 않는다: 핸들러는 플래그만 세우고, 메인 루프가 모두 해제한 뒤 종료한다.
 
 > [!note] 측정 범위
-> macOS 한 대에서 `leaks -atExit`만 측정했다. 실행 중인 프로세스에 `leaks <pid>`를 거는 방식과 `e_fence`는 측정하지 않았다. SIGINT는 `pkill`로 보냈고 터미널 Ctrl-C와 같은지는 확인하지 않았다.
+> macOS 한 대에서 `leaks -atExit`만 측정했다. 실행 중인 프로세스에 `leaks <pid>`를 거는 방식은 측정하지 않았다. `e_fence`는 [[sources/efence-observed-ubuntu2204]]. SIGINT는 `pkill`로 보냈고 터미널 Ctrl-C와 같은지는 확인하지 않았다.

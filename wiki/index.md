@@ -39,6 +39,7 @@ updated: 2026-10-16
 | [[sources/os-observed-pipe-poll]] | OS 실측(macOS·Ubuntu) — 한쪽이 닫힌 pipe의 `poll()` 비트 차이 | `raw/os-observed-pipe-poll.md` |
 | [[sources/valgrind-observed-sigint]] | valgrind 실측(Ubuntu 24.04) — SIGINT 기본 종료는 still reachable, 해제 없이 return은 definitely lost, 정리 후 종료만 깨끗함 | `raw/valgrind-observed-sigint.md` |
 | [[sources/macos-observed-sigpipe-leaks]] | macOS 실측 — `MSG_NOSIGNAL`·`SO_NOSIGPIPE` 지원, `leaks -atExit`는 SIGINT 종료에 출력 없이 exit 0, 해제 없는 return도 0 leaks | `raw/macos-observed-sigpipe-leaks.md` |
+| [[sources/efence-observed-ubuntu2204]] | Electric Fence 2.2.6 실측(Ubuntu 22.04) — 누수 보고 없음, heap 1바이트 초과가 segfault, `-lefence` 링크는 효과 없고 `LD_PRELOAD`만 동작 | `raw/efence-observed-ubuntu2204.md` |
 | [[sources/ubuntu2204-observed-tools]] | Ubuntu 22.04(평가 PC) 실측 — php 8.1·valgrind 3.18·Python 3.10·siege 4.0.7, `siege -C` 값, php-cgi·valgrind 결과 동일, siege 4.0.7과 master 차이 | `raw/ubuntu2204-observed-tools.md` |
 | [[sources/posix-exit]] | POSIX `_Exit()` — 프로세스 종료의 결과(좀비, fd 닫힘, 자식 입양) | `raw/posix-exit.md` |
 | [[sources/nginx-index-module]] | NGINX index 모듈 — `/`로 끝나는 요청, 파일 목록 순서, 내부 리다이렉트 | `raw/nginx-index-module.md` |

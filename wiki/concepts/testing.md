@@ -17,7 +17,7 @@ updated: 2026-10-16
 | `telnet`, `curl` | 기본 요청 시연 | raw/evaluation-sheet-en.md:77, raw/subject.md:123 |
 | 브라우저 네트워크 탭 | 헤더 확인 | raw/evaluation-sheet-en.md:97-98 |
 | NGINX | 동작·헤더 비교 기준 | raw/subject.md:141, raw/subject.md:186 |
-| `leaks`, `valgrind`, `e_fence` | 누수 검사. SIGINT 종료 시 valgrind 보고는 [[sources/valgrind-observed-sigint]], macOS `leaks` 보고는 [[sources/macos-observed-sigpipe-leaks]] | raw/evaluation-sheet-en.md:25 |
+| `leaks`, `valgrind`, `e_fence` | 누수 검사. SIGINT 종료 시 valgrind 보고는 [[sources/valgrind-observed-sigint]], macOS `leaks` 보고는 [[sources/macos-observed-sigpipe-leaks]]. `e_fence`는 누수를 보고하지 않고 heap 경계 초과를 segfault로 만든다 → [[sources/efence-observed-ubuntu2204]] | raw/evaluation-sheet-en.md:25 |
 
 ## 평가표에 나온 명령
 

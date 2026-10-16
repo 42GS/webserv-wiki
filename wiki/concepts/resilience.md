@@ -1,7 +1,7 @@
 ---
 title: 안정성 (크래시·hang·누수)
 type: concept
-sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/siege.pod, raw/siegerc.in, raw/posix-signal-h.md, raw/posix-send.md, raw/posix-waitpid.md, raw/posix-bind.md, raw/posix-exit.md, raw/posix-poll.md, raw/nginx-rewrite-module.md, raw/nginx-index-module.md, raw/nginx-core-module.md, raw/rfc3875.txt, raw/siege-sock.c, raw/valgrind-observed-sigint.md, raw/ubuntu2204-observed-tools.md, raw/siege-observed-ubuntu2204.md, raw/macos-observed-sigpipe-leaks.md]
+sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/siege.pod, raw/siegerc.in, raw/posix-signal-h.md, raw/posix-send.md, raw/posix-waitpid.md, raw/posix-bind.md, raw/posix-exit.md, raw/posix-poll.md, raw/nginx-rewrite-module.md, raw/nginx-index-module.md, raw/nginx-core-module.md, raw/rfc3875.txt, raw/siege-sock.c, raw/valgrind-observed-sigint.md, raw/ubuntu2204-observed-tools.md, raw/siege-observed-ubuntu2204.md, raw/macos-observed-sigpipe-leaks.md, raw/efence-observed-ubuntu2204.md]
 updated: 2026-10-16
 ---
 
@@ -64,7 +64,7 @@ subject와 평가표 모두 "서버가 항상 살아 있어야 한다"를 가장
 - macOS `leaks -atExit`로 같은 프로그램을 실측했다 → [[sources/macos-observed-sigpipe-leaks]]:
   - SIGINT 기본 동작으로 끝나면 아무것도 출력하지 않고 종료 코드 0이다 (raw/macos-observed-sigpipe-leaks.md:224-226). 검사가 실행되지 않은 것으로 보인다 (**판단**).
   - 해제 없이 `main`에서 반환한 경우도 `0 leaks`였다 (raw/macos-observed-sigpipe-leaks.md:254-256). valgrind가 definitely lost로 보고한 경우다. leaks가 0이어도 valgrind에서 깨끗하다는 보장은 없다 (**판단**).
-  - `e_fence`의 보고 방식은 **미확인**이다 (확인: Ubuntu 22.04에서 electric-fence 패키지 문서를 읽고 같은 프로그램 실행).
+- Electric Fence(`e_fence`)는 Ubuntu 22.04에서 누수를 보고하지 않았다. 포인터를 잃은 대조 프로그램에서도 보고가 없었다 (raw/efence-observed-ubuntu2204.md:351-361). 문서상 이 도구가 찾는 것은 heap 경계 초과와 해제 후 접근이고 (raw/efence-observed-ubuntu2204.md:71-74), 1바이트 초과 쓰기가 segmentation fault가 됐다 (raw/efence-observed-ubuntu2204.md:369-375) → [[sources/efence-observed-ubuntu2204]]. 평가자가 이 도구로 실행하면 경계 버그가 곧 크래시(0점)가 된다 (**판단**).
 - 판단: 시그널 핸들러에서는 종료 플래그만 세우고, 메인 루프가 플래그를 보고 연결·CGI 자식·메모리를 정리한 뒤 종료한다.
 - CGI 자식은 서버가 끝나도 직접 끝나지는 않고(일부 경우 `SIGHUP`으로 간접 종료) 시스템 프로세스에 입양된다 (raw/posix-exit.md:70-72). 그래서 종료할 때 실행 중인 CGI를 `kill`로 끝내고 `waitpid`로 회수해야 한다. 그러지 않으면 무한 루프 스크립트가 서버가 꺼진 뒤에도 계속 돌 수 있다. `poll()` 대기 중 핸들러를 둔 시그널을 잡으면 `poll()`이 -1로 돌아온다 (raw/posix-poll.md:114, raw/posix-poll.md:126-128). 이때도 errno를 보지 않고 플래그만 확인하면 된다 → [[analysis/subject-vs-evaluation]] 1.8절.
 
