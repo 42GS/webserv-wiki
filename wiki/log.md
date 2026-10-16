@@ -468,3 +468,8 @@
 ## [2026-10-17] query | Doxygen 주석
 - 갱신: [[analysis/design]] 1절(주석 규칙)
 - 메모: 사용자 요청으로 `include`·`src` 전체에 Doxygen 주석을 달았다. 영어 다음 줄에 한국어를 둔다 (언어·범위·작성자 표기는 사용자가 골랐다). 코드가 바뀌지 않았는지는 주석을 지운 소스를 커밋 전후로 비교해 확인했다. 처음 만든 비교 스크립트는 macOS clang이 `-fpreprocessed`를 지원하지 않아 항상 "같음"으로 나왔다. 일부러 값을 바꿔 보고 발견했고, 문자열 리터럴을 인식하는 주석 제거기로 바꿔 config부터 다시 확인했다. 이 과정에서 `HeaderMap::Field` typedef의 위치가 바뀐 것을 잡아 되돌렸다. doxygen 1.9.1(Ubuntu 컨테이너)로 확인한 결과 남은 경고는 매개변수 없는 조회 함수 18개의 `@return` 누락뿐이다 (docs-agent 규칙상 `@brief`만 쓴다). 새로 쓴 사실 주장은 원문으로 확인했다: NGINX limit_except의 GET→HEAD (raw/nginx-core-module.md:795), RFC 9112 2.3절 HTTP-version (raw/rfc9112.txt:336-337), RFC 3986 2.1절 대문자 권장 (raw/rfc3986.txt:652-654). 확인하지 못한 "std::ifstream이 디렉토리를 연다"는 주석에서 뺐다. webserv `4abee87`, `5fe0485`, `43de742`, `2cfe431`. 단위 82, 통합 52가 통과했고, Ubuntu 단위 테스트도 통과했다. 테스트 코드에는 아직 주석을 달지 않았다.
+
+## [2026-10-17] ingest | C++ Core Guidelines, Google C++ Style Guide
+- 생성: [[sources/cpp-core-guidelines]], [[sources/google-cpp-style-guide]]
+- 갱신: [[analysis/design]] 1절(보조 클래스·함수 위치와 근거), 6절 `RequestParser` 생성자, [[index]]
+- 메모: 사용자 질문("모든 타입과 상수를 헤더에 두는 게 깔끔하지 않나, C++ 관례인가")에 답하며 근거로 쓴 두 원문을 넣었다. 둘 다 커밋을 고정해 받았다 (Core Guidelines 33bcd01, markdown 그대로. Google 가이드 0acdb47, pandoc 3.10). 위키에서는 SF.21·SF.22와 Internal Linkage 절만 읽고 썼다. 설계 1절 규칙은 유지한다. 같은 날 `SyntaxParser`를 `ConfigSyntax.cpp`의 이름 없는 namespace로 옮기고 (webserv `6770e26`), 생성하는 곳이 `defaultParserLimits()` 하나뿐이던 `ParserLimits`를 없앴다. 파서는 `core/Limits.hpp` 상수를 직접 쓴다 (`3633eca`). 단위 82(Ubuntu valgrind 오류 없음), 통합 52 통과.
