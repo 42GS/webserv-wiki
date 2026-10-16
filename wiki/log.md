@@ -378,3 +378,8 @@
 - 생성: analysis/implementation-plan (모듈 구조, 단계 0~9, 단계별 완료 기준, 관련 concept 링크)
 - 갱신: index, overview
 - 메모: 사용자 요청 — 위키 조사가 구현 목적에 비해 깊어져 조사를 멈추고 구현 순서로 정리했다. 남은 미확인 중 코드에 영향 없는 것(x86_64 `O_NDELAY`, siege 나머지 소스)은 진행하지 않는다.
+
+## [2026-10-16] query | 설계 (클래스·인터페이스)
+- 생성: analysis/design (파일 배치, 모듈 책임·의존 방향, 설정 구조체, `IoHandler`/`EventLoop`, Connection 상태기계, `HeaderMap`/`RequestParser`/`Router`/`Response`/`CgiProcess` 인터페이스, 정적 파일 나눠 읽기, 에러 처리, 시그널, 상수)
+- 갱신: analysis/implementation-plan (설계 링크), index, overview
+- 메모: 사용자 선택 — 위키 analysis/에 클래스·인터페이스 수준까지. 모든 구조·값은 판단이다. 정할 것: 설정 문법 세부, 업로드 쓰기 방식, 상수 값, `Date` 헤더.
