@@ -24,6 +24,7 @@ updated: 2026-10-16
 | 10 | 시각은 허용 함수만으로 얻고 `Date`를 보냄 | 2026-10-16 | [[concepts/http-features]], [[analysis/design]] 4절 |
 | 11 | `client_max_body_size` 상한 100MB | 2026-10-16 | [[analysis/design]] 3절 |
 | 12 | CGI 자식은 `execve` 실패 시 `std::exit`, `fork` 전 `access` 검사 | 2026-10-16 | [[concepts/cgi]], [[analysis/design]] 9절 |
+| 13 | `listen`은 `IPv4:port`와 `port`만 받음 | 2026-10-16 | [[concepts/configuration-file]], [[analysis/design]] 3절 |
 
 1~3은 앞서 정한 것을 함께 모았다. 근거는 각 관련 페이지에 있다.
 
@@ -96,6 +97,18 @@ updated: 2026-10-16
 - 보조 대책: `fork` 전에 `access`(허용 함수)로 스크립트와 실행 파일을 확인해, 없으면 404, 권한이 없으면 403으로 자식을 만들기 전에 끝낸다. `execve` 실패를 완전히 없애지는 못하므로 `std::exit(1)`은 남는다.
 - 주의: `std::exit`은 부모에게서 물려받은 출력 버퍼를 다시 내보냈다 (raw/design-checks-observed.md:183-194). 자식의 표준 출력은 CGI pipe이므로 `fork` 직전에 표준 출력·에러를 flush한다. 정적 객체 소멸자에 부작용(파일 삭제, `kill` 등)을 두지 않는다 (**판단**).
 - 디펜스: 51줄과 111줄을 함께 보여 주고 해석을 설명한다.
+
+## 13. `listen`은 `IPv4:port`와 `port`만
+
+- 쟁점: NGINX `listen`은 주소만(`listen 127.0.0.1;`), `*:8000`, 호스트 이름도 받고, 주소만 쓰면 포트 80을 쓴다 (raw/nginx-core-module.md:936-943, raw/nginx-core-module.md:959). 설계 3절은 `listen 127.0.0.1:8080;`, `listen 8080;` 두 형식만 정했다.
+- 기준: 사용자는 "프로젝트 요구사항에 부합하고 안전한 쪽"을 골라 달라고 했다 (2026-10-16).
+- 결정: 두 형식만 받고, 나머지는 받을 수 있는 형식을 알려 주는 오류 메시지와 함께 시작하지 않는다.
+- 이유 (**판단**):
+  - subject가 요구하는 것은 `interface:port` 쌍을 정하는 것이다 (raw/subject.md:163). `IPv4:port`가 그대로 이 형식이다.
+  - 주소만 쓰는 형식은 설정 파일에 보이지 않는 포트 80을 쓰게 된다. 포트가 늘 파일에 적혀 있으면 평가자가 설정만 보고 어디에 붙을지 안다.
+  - `*:8000`은 `8000`(= `0.0.0.0:8000`)과 같은 뜻의 다른 표기일 뿐이라 받을 이유가 없다.
+  - 거부해도 원인 메시지와 종료 코드 1로 끝나므로 크래시가 아니다. 평가자는 설정 파일을 고칠 수 있다 (raw/evaluation-sheet-en.md:24).
+- 시험: [[analysis/test-plan]] C-11 (`rejectsListenWithoutPortOrWithWildcard`).
 
 ## 아직 정하지 않은 것
 

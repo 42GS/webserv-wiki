@@ -420,3 +420,7 @@
 ## [2026-10-16] query | 테스트 계획 0~2단계 위키 대조 보완
 - 갱신: [[analysis/test-plan]] (B-04~B-07, N-16~N-23 추가. C-11에 NGINX `listen` 형식 차이, N-07에 SIGPIPE 실측 인용), [[overview]] (열린 질문: 제출 파일 목록 밖 파일)
 - 메모: 새 구현 규칙에 따라 `concepts/build-and-submission`, `concepts/configuration-file`, `concepts/io-multiplexing`, `concepts/resilience`, `concepts/connection-management`(타임아웃·종료), `sources/macos-observed-sigpipe-leaks`를 읽고 대조했다. webserv `2ba78ea`: README 형식 테스트, idle CPU(busy waiting) 테스트. 둘 다 일부러 틀린 변경으로 실패 확인. 사용자 결정 필요: README login, `listen` 주소만·`*:port` 형식, 제출 파일 목록 밖 파일.
+
+## [2026-10-16] query | README 저자, listen 형식, 제출 파일
+- 갱신: [[analysis/design-decisions]] 13 (`listen`은 `IPv4:port`와 `port`만), [[analysis/design]] 3절 구현 세부, [[analysis/test-plan]] B-06·B-07·C-11, [[overview]] (열린 질문에서 제출 파일 항목 제거)
+- 메모: 사용자 답: README 저자는 yoshin, jyoo. `listen`은 "요구사항에 부합하고 안전한 쪽" → 거부 유지, 오류 메시지에 받는 형식을 적음. 제출 파일은 제출 때 따로 추리므로 지금은 다루지 않음. webserv `394ce95`.

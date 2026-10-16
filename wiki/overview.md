@@ -63,4 +63,4 @@ C++98로 HTTP 서버를 만드는 42 과제. 실행은 `./webserv [configuration
 - Ubuntu 평가에서 `fcntl()`(subject상 "For macOS only" 절) 사용이 인정되는지 → [[concepts/io-multiplexing]]
 - read/write 외 함수(`poll`, `bind`)의 errno를 봐도 되는지, `waitpid` 매크로를 써도 되는지, `/dev/urandom` 읽기가 `poll()` 예외인지, `FD_CLOEXEC`를 위해 `F_SETFD`를 써도 되는지 → [[analysis/subject-vs-evaluation]]
 - 쿠키·세션 보너스를 CGI 예제로 보여 주는 것을 평가자가 "웹 서버의 세션 시스템"으로 인정할지 → [[analysis/design-decisions]] 8
-- 제출 파일 목록(raw/subject.md:105)에 없는 파일(Python 테스트 스크립트 등)을 저장소에 둬도 되는지. subject는 테스트를 Python 등으로 쓰라고 한다 (raw/subject.md:190) → [[analysis/test-plan]] B-07
+

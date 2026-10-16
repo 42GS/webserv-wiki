@@ -45,8 +45,8 @@ updated: 2026-10-16
 | B-03 | `c++ -Wall -Wextra -Werror`로 컴파일되고, `-std=c++98`을 더해도 컴파일된다 | raw/subject.md:49-50 | I | macOS·Ubuntu 모두 `make re` 성공 | `test_build.py` `test_b01_b03_rules_build_and_clean`이 컴파일 명령의 플래그를 확인 (느린 테스트) | 있음. Ubuntu 빌드는 컨테이너에서 돌린다 |
 | B-04 | C++ 버전이 있으면 C 헤더 대신 쓴다. 외부 라이브러리·Boost 금지 | raw/subject.md:51-52 | R | `.h` 헤더는 C++ 버전이 없는 POSIX 헤더뿐. 링크에 `-l` 없음 | 코드 읽기 2026-10-16: `.h`는 `arpa/inet.h`, `fcntl.h`, `netinet/in.h`, `poll.h`, `sys/socket.h`, `sys/stat.h`, `unistd.h`뿐 | 확인. 단계마다 다시 본다 |
 | B-05 | 다른 웹 서버를 `execve`하지 않는다 | raw/subject.md:128 | R | `execve`는 CGI 실행에만 | 아직 `execve` 없음 | 나중 (7단계) |
-| B-06 | README: 저장소 루트, 영어, 첫 줄 이탤릭 정해진 문구, Description·Instructions·Resources(AI 사용 포함). 하나라도 없으면 0점 | raw/subject.md:196-207, raw/evaluation-sheet-en.md:35-44 | I, M | 형식은 테스트, 내용은 9단계에 읽어서 확인 | `test_readme.py` 2개 (첫 줄 형식, 세 절) | 있음(형식). 내용은 9단계. 첫 줄의 login(`yoshin`, git 설정에서 가져옴)은 **미확인** — 사용자 확인 |
-| B-07 | 제출 파일 종류: `Makefile`, `*.{h, hpp}`, `*.cpp`, `*.tpp`, `*.ipp`, 설정 파일 | raw/subject.md:105 | M | 저장소의 다른 파일(Python 테스트, `.clang-format` 등)을 둬도 되는지 | — | **미확인**. 테스트를 Python 등으로 쓰라는 문구(raw/subject.md:190)와 함께 사용자가 정한다 |
+| B-06 | README: 저장소 루트, 영어, 첫 줄 이탤릭 정해진 문구, Description·Instructions·Resources(AI 사용 포함). 하나라도 없으면 0점 | raw/subject.md:196-207, raw/evaluation-sheet-en.md:35-44 | I, M | 형식은 테스트, 내용은 9단계에 읽어서 확인 | `test_readme.py` 2개 (첫 줄 형식, 세 절) | 있음(형식). 내용은 9단계. 첫 줄 login은 `yoshin, jyoo` (사용자 확인, 2026-10-16) |
+| B-07 | 제출 파일 종류: `Makefile`, `*.{h, hpp}`, `*.cpp`, `*.tpp`, `*.ipp`, 설정 파일 | raw/subject.md:105 | M | 제출할 파일을 고른다 | — | 나중. 제출 때 파일을 따로 추린다(사용자, 2026-10-16). 그 전까지 저장소에 테스트·도구 파일을 둔다 |
 
 ## 1. 설정 파일
 
@@ -64,7 +64,7 @@ updated: 2026-10-16
 | C-08 | 한 값만 받는 지시자가 두 번 나오면 거부 | 설계 (구현 세부) | U | `duplicate "root"` | `rejectsLocationProblems` (`root`만) | 있음 |
 | C-09 | 서버가 listen할 `interface:port`를 여러 개 정의 | raw/subject.md:163 | U | server 하나에 `listen` 여러 줄, server 여러 개 | `acceptsSeparateServersOnDifferentPorts`, `acceptsSeveralListensInOneServer` | 있음 |
 | C-10 | `listen 8080;`처럼 주소를 생략하면 `0.0.0.0` | 설계 3절 | U | host `0.0.0.0` | `defaultsWhenNotConfigured` | 있음 |
-| C-11 | 잘못된 `listen` 값(포트 0·65536 이상, 잘못된 IPv4, 호스트 이름) 거부 | 설계 3절 | U | `invalid listen` | `rejectsListenProblems`, `acceptsPortBoundaries` | 있음. 주소만(`listen 127.0.0.1;`, NGINX는 포트 80)과 `*:8000`도 지금은 거부한다. NGINX는 둘 다 받는다 (raw/nginx-core-module.md:936-943, raw/nginx-core-module.md:959). 설계 표에 없는 형식이라 받을지 사용자가 정한다 |
+| C-11 | 잘못된 `listen` 값(포트 0·65536 이상, 잘못된 IPv4, 호스트 이름) 거부 | 설계 3절 | U | `invalid listen` | `rejectsListenProblems`, `acceptsPortBoundaries` | 있음. 주소만(`listen 127.0.0.1;`)과 `*:8000`도 거부한다 (`rejectsListenWithoutPortOrWithWildcard`). NGINX는 둘 다 받지만 거부하기로 했다 ([[analysis/design-decisions]] 13) |
 | C-12 | 같은 `interface:port`가 두 번 나오면 에러로 시작하지 않는다 (virtual host 미구현) | raw/evaluation-sheet-en.md:108, [[analysis/design-decisions]] 4 | U, I | `duplicate listen`. 프로세스는 종료 코드 1 | `rejectsListenProblems`, `rejectsDuplicateListenInOneServer`, `test_startup.py` `test_c12_duplicate_listen_stops_startup` | 있음 |
 | C-13 | `0.0.0.0:P`와 특정 IP의 `:P`는 겹침으로 거부 | 설계 ([[concepts/configuration-file]] "포트 관련 엣지 케이스") | U | `conflicts with` | `rejectsListenProblems`, `rejectsWildcardAfterSpecificAddress` | 있음 |
 | C-14 | 기본 에러 페이지 설정 (`error_page 코드... 경로`) | raw/subject.md:164, raw/evaluation-sheet-en.md:69 | U | 코드별 경로. 300~599 밖 코드, `/`로 시작하지 않는 경로, 같은 코드 중복은 거부 | `parsesDesignExample`, `rejectsBadErrorPages` | 있음 |
