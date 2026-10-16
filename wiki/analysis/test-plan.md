@@ -1,7 +1,7 @@
 ---
 title: 테스트 계획
 type: analysis
-sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/nginx-core-module.md, raw/macos-observed-sigpipe-leaks.md, raw/posix-poll.md, raw/design-checks-observed.md]
+sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/nginx-core-module.md, raw/macos-observed-sigpipe-leaks.md, raw/posix-poll.md, raw/design-checks-observed.md, raw/posix-recv.md, raw/rfc9112.txt, raw/rfc9110.txt, raw/rfc6585.txt, raw/rfc1945.txt, raw/rfc3986.txt]
 updated: 2026-10-16
 ---
 
@@ -93,8 +93,8 @@ updated: 2026-10-16
 | N-05 | 여러 포트에서 서로 다른 server로 응답한다 | raw/subject.md:149, raw/evaluation-sheet-en.md:107 | I | 두 포트에 동시에 요청해 모두 응답 | `test_connections.py` `test_n05_concurrent_clients_on_two_ports` (50개) | 있음. 포트별로 다른 내용은 4단계에서 시험 |
 | N-06 | 다른 프로세스가 이미 쓰는 `interface:port`면 메시지를 내고 끝낸다. 크래시하지 않는다 | raw/evaluation-sheet-en.md:109 | I | 두 번째 프로세스가 `Address already in use`, 종료 코드 1. 첫 프로세스는 계속 응답 | `test_startup.py` `test_n06_second_instance_on_same_port_fails_cleanly` | 있음 |
 | N-07 | 클라이언트가 요청 도중·응답 도중 끊어도 서버는 계속 동작한다 (`SIGPIPE`로 죽지 않음) | raw/subject.md:46, raw/subject.md:129 | I | 끊은 뒤 새 요청에 응답 | `test_connections.py` `test_n07_*` 2개 (요청 도중 끊김, 응답 전 RST) | 부족: `SIGPIPE` 무시를 지워도 테스트가 실패하지 않았다. 상대가 닫은 TCP 연결에 `send`하면 1회차는 성공하고 2회차에 프로세스가 끝났다는 실측이 있다 (raw/macos-observed-sigpipe-leaks.md:114-117, [[sources/macos-observed-sigpipe-leaks]]). 고정 응답은 `send` 1번에 끝나므로 2회차가 없다. 4단계에서 끊긴 연결에 여러 번 보내는 큰 응답으로 시험 |
-| N-08 | 요청이 무한히 매달리지 않는다: 머리가 끝나지 않은 연결은 헤더 타임아웃 뒤 닫힌다 | raw/subject.md:139 | I | 30초 뒤 연결이 닫힌다 (3단계부터는 408) | `test_connections.py` `test_n08_unfinished_head_times_out` (느린 테스트, 약 30초) | 있음 |
-| N-09 | 머리가 상한을 넘으면 연결을 닫는다 (3단계부터는 431) | 설계 12절 `kMaxHeaderBytes` | I | 16384바이트를 넘게 보내면 닫힌다 | `test_connections.py` `test_n09_oversized_head_is_closed` | 있음 |
+| N-08 | 요청이 무한히 매달리지 않는다: 머리가 끝나지 않은 연결은 헤더 타임아웃 뒤 닫힌다 | raw/subject.md:139 | I | 30초 뒤 연결이 닫힌다 (3단계부터는 408) | `test_connections.py` `test_n08_unfinished_head_gets_408` (느린 테스트, 약 30초) | 있음. 3단계부터 408 |
+| N-09 | 머리가 상한을 넘으면 연결을 닫는다 (3단계부터는 431) | 설계 12절 `kMaxHeaderBytes` | I | 16384바이트를 넘게 보내면 닫힌다 | `test_connections.py` `test_n09_oversized_head_gets_431` | 있음. 3단계부터 431 |
 | N-10 | `SIGINT`·`SIGTERM`이면 모든 fd와 메모리를 정리하고 정상 종료한다 | 설계 10절. 누수 검사 raw/evaluation-sheet-en.md:25 | I, M | 종료 코드 0. valgrind "All heap blocks were freed" | `test_startup.py` `test_n10_*` 2개 (종료 코드). valgrind는 단계 2에서 손으로 확인 | 부족: valgrind 확인 기록이 커밋 메시지뿐. 8단계에서 절차로 남긴다 |
 | N-11 | `siege -b`로 빈 페이지 GET availability 99.5% 초과 | raw/evaluation-sheet-en.md:114 | M | 99.5% 초과 | 없음 (단계 2에서 100% 확인, 기록은 커밋 메시지·대화뿐) | 부족: 8단계에서 절차로 남긴다 |
 | N-12 | 계속 돌려도 메모리가 끝없이 늘지 않고 매달린 연결이 없다 | raw/evaluation-sheet-en.md:115-117 | M | 장시간 siege 동안 메모리 일정 | 8단계 | 나중 |
@@ -112,9 +112,36 @@ updated: 2026-10-16
 
 - N-01~N-03은 0점 조건이다 (raw/evaluation-sheet-en.md:53, raw/subject.md:136, raw/evaluation-sheet-en.md:57). 테스트가 통과해도 지켰다는 증거가 되지 않으므로, 단계마다 코드 경로를 읽어 확인하고 결과를 이 페이지에 적는다.
 
-## 3단계 이후 (단계를 시작할 때 채운다)
+## 3. 요청 파서
 
-- 3. 요청 파서: 요청줄·헤더·본문(`Content-Length`, chunked), 크기 상한(414·431·413), 형식 오류(400), 모르는 메서드(501), 버전(505) → [[concepts/request-parsing]], [[concepts/status-codes]]
+읽은 위키: [[analysis/implementation-plan]] 3단계, [[analysis/design]] 5·6·11·12절, [[concepts/request-parsing]], [[concepts/status-codes]], [[concepts/security]] 3·5절. 경로 디코딩·`..` 처리([[concepts/security]] 1절)는 설계상 Router의 일이라 4단계다.
+"설계 6절"의 선택 중 위키에 없던 것은 [[analysis/design]] 6절 "구현 세부"에 적는다. 단위 테스트는 `RequestParser`에 바이트를 넣어 결과와 상태 코드를 본다. 통합 테스트는 서버에 소켓으로 보내 응답 코드를 본다.
+
+| ID | 요구사항 | 근거 | 수준 | 기대 결과 | 현재 테스트 | 상태 |
+|---|---|---|---|---|---|---|
+| P-01 | 요청이 몇 번에 나뉘어 와도 같은 결과. 덜 온 것과 문법 오류를 구분 | raw/posix-recv.md:62 | U | 어느 위치에서 나눠 넣어도 결과가 같다. 덜 왔으면 `NEED_MORE` | `request_parser_test.cpp` `p01_*` 2개 (모든 위치에서 나눠 넣기) | 있음 |
+| P-02 | 한 번에 요청 둘이 와도 첫 요청만 소비하고 나머지는 남긴다 | 설계 5절 pipelining (5단계에서 사용) | U | 남은 바이트가 그대로 버퍼에 있다 | `request_parser_test.cpp` `p02_leavesTheNextRequestInTheBuffer` | 있음 |
+| P-03 | 줄 끝은 CRLF. LF 하나도 받는다(MAY). LF가 뒤따르지 않는 CR은 400 | raw/rfc9112.txt:283-291 | U | LF만 쓴 요청 성공. bare CR은 400 | `request_parser_test.cpp` `p03_lineEndings` (chunk 확장 안의 CR 포함), `test_requests.py` `test_p03_lf_only_request_is_accepted` | 있음 |
+| P-04 | 요청줄 앞의 빈 줄은 무시 (SHOULD) | raw/rfc9112.txt:301-303 | U | 앞에 CRLF가 있어도 성공 | `request_parser_test.cpp` `p04_ignoresEmptyLinesBeforeTheRequestLine` | 있음 |
+| P-05 | 요청줄은 `method SP request-target SP HTTP-version`. 구분자는 SP 하나만 받는다(설계: 관대한 파싱은 smuggling 위험). target 안 공백 포함 잘못된 요청줄은 400 | raw/rfc9112.txt:377-388, raw/rfc9112.txt:425-435 | U | SP 두 개, 탭, 요소 누락은 400 | `request_parser_test.cpp` `p05_requestLineNeedsSingleSpaces` | 있음 |
+| P-06 | 메서드는 대소문자 구분. 모르는 메서드는 501. 구현한 어떤 메서드보다 긴 메서드도 501. token 문자가 아니면 400 | raw/rfc9110.txt:3799-3801, raw/rfc9112.txt:391-393 | U, I | `get`·`PUT`·`UNKNOWN`은 501, 크래시 없음 (raw/evaluation-sheet-en.md:80) | `request_parser_test.cpp` `p06_methods`, `test_requests.py` `test_p06_unknown_method_is_501` | 있음 |
+| P-07 | request-target이 상한보다 길면 414 (MUST). 요청줄 상한 `kMaxRequestLine` 8192 (8000 이상 권장) | raw/rfc9112.txt:393-399, 설계 12절 | U, I | 8192 이하 성공, 넘으면 414 | `request_parser_test.cpp` `p07_longTargetIs414` (8192 경계), `test_requests.py` `test_p07_long_target_is_414` | 있음 |
+| P-08 | 버전은 `HTTP/숫자.숫자`, 대소문자 구분. 메이저가 1이 아니면 505. 1.x의 높은 마이너는 1.1로 처리(SHOULD). 버전이 없으면 400 | raw/rfc9112.txt:333-337, raw/rfc9110.txt:7908-7910, raw/rfc9110.txt:2061-2065, [[concepts/request-parsing]] 2절 | U | `HTTP/2.0` 505, `HTTP/1.2`는 1.1, `http/1.1`·`HTTP/1`·버전 없음은 400 | `request_parser_test.cpp` `p08_versions`, `test_requests.py` `test_p08_unsupported_major_version_is_505` | 있음 |
+| P-09 | target은 origin-form과 absolute-form(MUST)을 받는다. 첫 `?`에서 path와 query를 나눈다. 둘 다 아니면 400 | raw/rfc9112.txt:454, raw/rfc9112.txt:508-516, raw/rfc3986.txt:1204-1206 | U | `/a?b=1` → path `/a`, query `b=1`. `http://h:8080/a?q` → path `/a`, query `q`. `*`·`a/b`는 400 | `request_parser_test.cpp` `p09_targets` | 있음 |
+| P-10 | 헤더는 `name ":" OWS value OWS`. 이름은 대소문자 무시. 이름과 `:` 사이 공백은 400 (MUST). 값 앞뒤 공백 제외 | raw/rfc9112.txt:697-701, raw/rfc9112.txt:714-729 | U | `Host : x`는 400. `host:  x  `의 값은 `x` | `request_parser_test.cpp` `p10_headerFieldSyntax` | 있음 |
+| P-11 | 요청줄과 첫 헤더 사이의 공백 줄, obs-fold는 400 (둘 다 MUST 중 거부 쪽을 고름) | raw/rfc9112.txt:308-313, raw/rfc9112.txt:746-751 | U | 400 | `request_parser_test.cpp` `p11_linesStartingWithWhitespace` | 있음. 공백으로 시작하는 줄은 헤더 이름 검사(token)가 거부한다. 따로 두었던 검사는 테스트로 구분할 수 없어 뺐다 |
+| P-12 | HTTP/1.1에 Host가 없으면 400. 버전과 관계없이 Host가 두 줄 이상이거나 값이 잘못되면 400 (MUST) | raw/rfc9112.txt:445-448 | U, I | 400. HTTP/1.0에 Host가 없으면 성공 | `request_parser_test.cpp` `p12_hostRules`, `test_requests.py` `test_p12_missing_host_is_400` | 있음 |
+| P-13 | 헤더가 상한(`kMaxHeaderBytes` 16384)을 넘으면 431 (MUST 4xx, 431은 **판단**) | raw/rfc9110.txt:1568-1572, raw/rfc6585.txt:177-184 | U, I | 431 | `request_parser_test.cpp` `p13_largeHeaderSectionIs431`, `test_requests.py` `test_p13_large_header_section_is_431`, `test_connections.py` `test_n09_oversized_head_gets_431` | 있음 |
+| P-14 | 본문 길이: TE와 CL이 함께 오면 400 후 닫기(MAY 거부를 고름, 닫기는 MUST). 마지막 coding이 chunked가 아니면 400. 모르는 coding은 501. CL이 잘못되면 400(같은 값 목록 `42, 42`는 예외). 둘 다 없으면 0. HTTP/1.0에 TE가 있으면 400 후 닫기. HTTP/1.0 POST에 CL이 없으면 400 | raw/rfc9112.txt:880-889, raw/rfc9112.txt:930-934, raw/rfc9112.txt:950-965, raw/rfc9112.txt:980-981, raw/rfc9112.txt:851-852, raw/rfc1945.txt:1763-1765 | U | 각 경우의 코드 | `request_parser_test.cpp` `p14_bodyLengthRules` | 있음 |
+| P-15 | CL 숫자 변환 오버플로를 막는다 (MUST) | raw/rfc9110.txt:3251-3254 | U | 아주 긴 숫자는 400 | `request_parser_test.cpp` `p15_hugeContentLengthDoesNotOverflow` | 있음 |
+| P-16 | CL이 본문 상한을 넘으면 본문을 읽기 전에 413 | raw/rfc9110.txt:7710-7714, 설계 6절 | U, I | `HEAD_DONE` 뒤 상한 설정, 413 | `request_parser_test.cpp` `p16_contentLengthOverTheLimitIs413`, `test_requests.py` `test_p16_body_limit_follows_the_location`, `router_test.cpp` 2개 | 있음 |
+| P-17 | chunked 해제. 16진수 크기 오버플로를 막고(MUST), 모르는 확장은 무시(MUST)하되 길이를 제한, trailer는 버린다(MAY). 해제한 크기가 상한을 넘으면 413 | raw/rfc9112.txt:1078-1081, raw/rfc9112.txt:1108-1113, raw/rfc9112.txt:1126-1134, [[analysis/design-decisions]] 11 | U, I | 본문이 이어 붙여진다. 깨진 chunk는 400. 넘으면 413 | `request_parser_test.cpp` `p17_chunkedBodies`, `test_requests.py` `test_p17_chunked_body_limit` | 있음 |
+| P-18 | CL만큼 오기 전에 끊기거나 타임아웃이면 불완전한 요청. 머리·본문 수신 타임아웃이면 408 후 닫기(MAY). 첫 바이트 전이면 그냥 닫기 | raw/rfc9112.txt:973-978, raw/rfc9112.txt:1253-1255, raw/rfc9110.txt:7641-7643, 설계 5절 | I | 408 후 닫힘 (느린 테스트) | `test_requests.py` `test_p18_*` 2개 (본문 도중 408, 아무것도 안 보낸 연결은 응답 없이 닫힘), `test_connections.py` `test_n08_unfinished_head_gets_408` (모두 느린 테스트) | 있음 |
+| P-19 | 오류 응답의 상태줄 `HTTP-version SP status-code SP reason-phrase`, 문법 오류 뒤에는 연결을 닫는다(SHOULD) | raw/rfc9112.txt:652, raw/rfc9112.txt:690-693, raw/rfc9112.txt:319-324 | I | 상태줄과 `Connection: close`, 그 뒤 닫힘 | `test_requests.py` `test_p19_error_response_format_and_close` | 있음. 오류 응답 본문은 임시(코드와 reason phrase). 에러 페이지는 4단계 |
+| P-20 | telnet·curl로 시연할 수 있다 | raw/evaluation-sheet-en.md:77 | M | 시연 절차 | 없음 | 나중 (9단계) |
+
+## 4단계 이후 (단계를 시작할 때 채운다)
+
 - 4. 라우팅·정적 파일·응답: 가장 긴 prefix 매칭, `root`·`alias` 경로, index, autoindex, 리다이렉트, 기본 에러 페이지, `Date`, HEAD
 - 5. keep-alive·pipelining·DRAIN
 - 6. 업로드(`multipart/form-data`, 415)와 DELETE

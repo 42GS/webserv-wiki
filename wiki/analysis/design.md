@@ -343,6 +343,17 @@ public:
 
 - 순서: 요청줄 → 헤더 → 본문 길이 결정 → 본문 → [[concepts/request-parsing]]. 코드는 [[concepts/status-codes]].
 - 머리가 끝나면 `HEAD_DONE`을 돌려준다. `Connection`이 `RequestProcessor::bodyLimitFor(request)`로 location의 상한을 받아 `setMaxBodySize`를 부른 뒤 계속 넣는다. 그래서 `Content-Length`가 상한을 넘으면 본문을 읽기 전에 413을 낸다.
+- 구현 세부 (단계 3, 2026-10-16). RFC가 여러 처리를 허용하는 곳에서 고른 것이다 (**판단**). 기준은 결정 13 때 사용자가 정한 "요구사항에 부합하고 안전한 쪽"이다. 근거 줄은 [[analysis/test-plan]] 3절.
+  - LF 하나만 쓴 줄 끝은 받는다(MAY). 유일하게 관대한 쪽을 고른 것이다. 서버 앞에 다른 수신자(프록시)가 없어 해석이 갈릴 상대가 없고, nc로 시험할 때 줄 끝이 LF라서 받는 편이 시연에 안전하다. LF가 뒤따르지 않는 CR은 400.
+  - 요청줄 구분자는 SP 하나만 받는다. 관대한 파싱(MAY)은 smuggling 위험이 있어 쓰지 않는다.
+  - 요청줄과 첫 헤더 사이의 공백 줄, obs-fold는 무시·치환하지 않고 400으로 거부한다.
+  - `Transfer-Encoding`과 `Content-Length`가 함께 오면 400으로 거부하고 닫는다(TE로 처리하는 MAY 대신).
+  - `HTTP/1.x`에서 x가 2 이상이면 1.1로 처리한다(SHOULD). 메이저가 1이 아니면 505.
+  - absolute-form(`http://host[:port]/path`)은 path와 query만 쓴다. virtual host가 없으므로 host 부분은 server 선택에 쓰지 않는다(결정 4). `*`(asterisk-form)와 authority-form은 400. 메서드가 OPTIONS·CONNECT면 그 전에 501이다.
+  - chunk 확장은 무시하고, chunk 크기 줄 하나의 길이에 상한(`kMaxChunkLine` 4096)을 두어 넘으면 400. trailer는 버리되 헤더 상한 안에서만 받는다.
+  - 3단계에서는 오류 응답 뒤 항상 연결을 닫는다. keep-alive와 본문 버리기(DRAIN)는 5단계.
+  - 본문 상한을 고르는 location은 `Router::matchLocation`(가장 긴 prefix)으로 찾는다. 3단계에서는 디코딩 전 경로로 찾고, 4단계에서 정규화한 경로로 바꾼다. 맞는 location이 없으면(그 요청은 404가 된다) NGINX 기본값 1MB를 쓴다.
+  - 3단계의 오류 응답 본문은 "코드 reason-phrase" 한 줄이다. 에러 페이지(`ErrorPageBuilder`)와 `Date`는 4단계.
 
 ## 7. 요청 처리 (app, route, handler)
 
@@ -474,6 +485,7 @@ private:
 | `kRecvBufferSize` | 65536 | `recv` 1번 크기 |
 | `kMaxRequestLine` | 8192 | 넘으면 414 |
 | `kMaxHeaderBytes` | 16384 | 넘으면 431 |
+| `kMaxChunkLine` | 4096 | chunk 크기 줄(확장 포함) 상한. 넘으면 400 |
 | `kHeaderTimeout` | 30초 | |
 | `kBodyTimeout` | 30초 (무입력 기준) | |
 | `kSendTimeout` | 30초 (무진행 기준) | |

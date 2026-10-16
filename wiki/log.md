@@ -424,3 +424,7 @@
 ## [2026-10-16] query | README 저자, listen 형식, 제출 파일
 - 갱신: [[analysis/design-decisions]] 13 (`listen`은 `IPv4:port`와 `port`만), [[analysis/design]] 3절 구현 세부, [[analysis/test-plan]] B-06·B-07·C-11, [[overview]] (열린 질문에서 제출 파일 항목 제거)
 - 메모: 사용자 답: README 저자는 yoshin, jyoo. `listen`은 "요구사항에 부합하고 안전한 쪽" → 거부 유지, 오류 메시지에 받는 형식을 적음. 제출 파일은 제출 때 따로 추리므로 지금은 다루지 않음. webserv `394ce95`.
+
+## [2026-10-16] query | 구현 단계 3 (요청 파서)
+- 갱신: [[analysis/test-plan]] (3절 P-01~P-20 신설, N-08·N-09 기대값 408·431), [[analysis/design]] 6절 구현 세부(RFC가 여러 처리를 허용하는 곳의 선택, 본문 상한용 location 찾기, 임시 오류 본문), 12절 `kMaxChunkLine`
+- 메모: 읽은 위키: `implementation-plan` 3단계, `design` 5·6·11·12절, `concepts/request-parsing`, `concepts/status-codes`, `concepts/security` 1·3·5절. webserv `98cb1e2`(HeaderMap·Request·RequestParser), `7c3a966`(Connection 연결, StatusText, Router::matchLocation). 단위 53개, 통합 32개 Ubuntu 22.04에서 모두 통과(느린 테스트 포함). 계획 줄마다 일부러 틀린 코드로 실패 확인. 다른 검사와 겹쳐 테스트로 구분할 수 없는 검사 두 개(요청줄 세 번째 공백, 공백으로 시작하는 헤더 줄)는 뺐다. valgrind 아래 `siege -b -c 25 -t 10S` 7,676건 availability 100%, SIGINT 뒤 "All heap blocks were freed". 주석의 RFC 절 번호 두 곳(9110 2.5→6.2, 9112 9.6→8)을 원문 대조로 바로잡았다.
