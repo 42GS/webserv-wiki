@@ -452,3 +452,7 @@
 ## [2026-10-17] query | 4차 코드 리뷰 수정
 - 갱신: [[analysis/test-plan]] (B-08 신설, N-15), [[analysis/design]] 5절(`ListenContext`), [[analysis/subject-vs-evaluation]] 1.4(코드는 엄격한 쪽을 따름)
 - 메모: 목록 밖 C 함수 `memset`·`strchr`·`strlen`·`<cctype>`를 `http/Ascii`·`std::string`·값 초기화로 바꿨다 (webserv `3dbbcb3`). `isOneOf`는 NUL과 맞지 않는다(전에 `strchr`가 맞춰서 버그가 났다). 읽지 않던 `ListenContext`의 로컬·원격 주소와 `formatIpv4`를 뺐다 (`41fc4b8`, 7단계에서 다시). 단위 81, 통합 52(Ubuntu에서 root라 1개 건너뜀) 통과.
+
+## [2026-10-17] query | 5차 코드 리뷰 수정
+- 갱신: [[analysis/test-plan]] B-08
+- 메모: 사용자 의견("string 쪽은 라이브러리로 대체해도 된다")에 따라, 4차 수정에서 직접 쓴 문자 판별을 C++ 표준 라이브러리(`std::char_traits`, `std::string::find_first_not_of`, `<locale>`의 `std::tolower`)로 바꿨다. C 함수(`<cctype>`·`<cstring>`)만 피한다는 1.4절 기준은 그대로다. 십진수 해석 세 벌을 `parseDecimal` 하나로 합치면서, 상한이 한 자리 숫자보다 작을 때 뺄셈이 돌아 검사를 통과하던 결함도 고쳤다(지금 쓰는 상한은 모두 9 이상이라 실제로는 나지 않음, **판단**). webserv `7f0ed84`. 단위 82, 통합 52(Ubuntu에서 root라 1개 건너뜀) 통과.
