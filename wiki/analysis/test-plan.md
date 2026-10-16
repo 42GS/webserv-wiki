@@ -2,7 +2,7 @@
 title: 테스트 계획
 type: analysis
 sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/nginx-core-module.md, raw/macos-observed-sigpipe-leaks.md, raw/posix-poll.md, raw/design-checks-observed.md, raw/posix-recv.md, raw/rfc9112.txt, raw/rfc9110.txt, raw/rfc6585.txt, raw/rfc1945.txt, raw/rfc3986.txt]
-updated: 2026-10-16
+updated: 2026-10-17
 ---
 
 # 테스트 계획
@@ -81,6 +81,7 @@ updated: 2026-10-16
 | C-25 | location `/`가 없고 server에 `root`가 있으면 `/`를 만든다. `root`도 없으면 만들지 않는다 | 설계 3절 | U | 있음/없음 | `serverRootCreatesImplicitRootLocation`, `noImplicitRootLocationWithoutServerRoot` | 있음 |
 | C-26 | location은 긴 경로부터 정렬 (4단계 가장 긴 prefix 매칭의 준비) | 설계 7절 `matchLocation` | U | 경로 길이 내림차순 | `locationsAreSortedLongestFirst` | 있음. 매칭 자체는 4단계에서 시험 |
 | C-28 | 비정상적으로 깊게 중첩된 설정 파일에도 크래시하지 않는다. 유효한 중첩은 server > location > limit_except 3단계 | raw/subject.md:46, 설계 3절 | U, I | 깊이 4부터 설정 오류, 10만 단계도 종료 코드 1 | `rejectsBlocksNestedTooDeeply`, `test_startup.py` `test_c28_deeply_nested_config_does_not_crash` (10만 단계) | 있음. 고치기 전 10만 단계에서 종료 코드 139 |
+| C-29 | `index` 값에 `/`가 들어가면 설정 오류 (root 밖을 가리키지 못하게) | [[concepts/security]] 1절, 설계 | U | `index ../x;`는 오류 | `config_test.cpp` `c29_rejectsIndexNamesWithSlash` | 있음 |
 | C-27 | 평가 시연용 설정 파일과 기본 파일을 저장소에 둔다 | raw/subject.md:184 | M | 기능별 설정으로 시연 가능 | 9단계 | 나중 |
 
 ## 2. 이벤트 루프와 연결
@@ -167,6 +168,8 @@ updated: 2026-10-16
 | R-16 | 큰 파일은 나눠 읽어 보낸다. 루프를 멈추지 않는다 | raw/subject.md:134, raw/evaluation-sheet-en.md:59, 설계 8절 | I | 10MB 파일이 그대로 도착 | `response_stream_test.cpp` `r16_streamsLargeFileInPieces`, `test_static.py` `test_r16_large_file_arrives_intact` (10MB) | 있음 |
 | R-17 | 여러 포트에서 서로 다른 사이트 | raw/subject.md:149, raw/evaluation-sheet-en.md:107 | I | 포트마다 다른 root의 내용 | `test_static.py` `test_r17_ports_serve_different_sites` | 있음 |
 | R-18 | 정적 웹사이트를 브라우저로 끝까지 본다 | raw/subject.md:145, raw/evaluation-sheet-en.md:99 | M | 시연용 `www/` | 없음 | 나중 (9단계 시연 자료와 함께) |
+| R-20 | alias를 쓰는 location은 떼고 남은 경로가 비었거나 `/`로 시작할 때만 그 location의 파일로 본다. 아니면 404 ([[analysis/design-decisions]] 14) | raw/rfc9110.txt:8560-8565, [[concepts/security]] 1절 | U, I | `location /kapouet { alias www/; }`에서 `/kapouet../secret/s.txt`가 404 | `router_test.cpp` `r20_aliasCoversOnlyWholeSegments`, `test_static.py` `test_r20_alias_cannot_reach_outside` | 있음. 고치기 전에는 alias 밖 파일이 200 |
+| R-21 | HEAD 요청에는 오류 응답(파서 오류, 408)에도 본문을 보내지 않는다 (MUST NOT) | raw/rfc9110.txt:3987-3988 | I | HEAD에 413: 헤더만 오고 본문 0바이트 | `test_requests.py` `test_r21_head_error_has_no_body` | 있음 |
 | R-19 | 4단계에서 POST·DELETE는 정적 리소스에 대해 405 (업로드·삭제는 6단계) | 설계 7절 순서 | I | 405 + `Allow` | `router_test.cpp` `r05_r19_*`, `test_static.py` `test_r05_r19_*`, `test_requests.py` P-16·P-17 (POST가 405) | 있음. 6단계에서 바뀐다 |
 
 ## 5단계 이후 (단계를 시작할 때 채운다)

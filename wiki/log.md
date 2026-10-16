@@ -440,3 +440,7 @@
 ## [2026-10-16] query | 상수·자료형을 헤더로, 4단계 뒤 리팩토링
 - 갱신: [[analysis/design]] 1절(실제 파일 배치, 상수·자료형은 헤더에 두는 규칙, `fs/`·`http/Hex` 분리), 2절(`fs` 모듈), 7절(`ErrorPageBuilder` → `buildStatusPage`), 12절(코드 위치 `core/Limits.hpp`, 값 3개 추가)
 - 메모: 사용자 요청으로 `.cpp`에 있던 상수 약 80개와 자료형 6개를 헤더로 옮겼다(webserv `a04e914`). 상태 코드 중복(500 세 곳 등)은 `http/StatusCodes.hpp` 하나로. 이어서 리뷰 항목 리팩토링: Router 한 곳에서 경로→location (`69ca630`), `fs` 모듈 (`3a1632c`), 16진수 도우미 (`5c78725`), `buildStatusPage`·`kHtmlType` (`f99e937`), `Connection::where_` 제거 (`b867737`), 통합 테스트 도우미 (`d755481`). 동작 변경 없음, 단위 77·통합 50(Ubuntu에서 root라 1개 건너뜀) 통과. 사고: Docker 안에서 `clang-format -i`가 방금 길어진 파일을 예전 크기로 잘랐다(세 파일, 빌드 실패로 발견). 마지막 커밋에서 복구했고, 이후 포맷은 표준 입력으로 넘긴다. 헤더에 근거 없이 쓴 "NGINX도 300~599" 주석은 원문에 없어 지웠다.
+
+## [2026-10-17] query | 2차 코드 리뷰와 수정
+- 갱신: [[analysis/design-decisions]] 14(alias 경계), [[analysis/test-plan]] (R-20·R-21·C-29), [[concepts/security]] 1절(정규화 뒤 alias 이어 붙이기)
+- 메모: 리팩토링 뒤 코드를 다시 읽었다. 실측으로 확인한 보안 문제: `location /k { alias dir/; }`에 `/k../x`가 alias 밖 파일을 200으로 보냈다 → alias location은 경로 경계에서만 맞춤 (webserv `3640847`). `index ../x;` 설정도 root 밖 파일을 보냈다 → `index`에 `/` 금지 (`c949f89`). HEAD 요청의 오류 응답(413·408 등)에 본문이 실렸다 → 모든 응답이 `RequestProcessor::finish`를 거치게 함 (`228de8d`). 메서드·헤더 이름 상수 `http/HeaderNames.hpp` (`de1e6d7`), 쓰지 않는 `RouteResult::location` 제거 (`2065ce7`). 단위 79, 통합 52(Ubuntu에서 root라 1개 건너뜀) 통과, 각 수정은 일부러 되돌려 테스트 실패를 확인.

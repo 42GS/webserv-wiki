@@ -2,7 +2,7 @@
 title: 보안 — 경로·주입·길이·splitting·smuggling
 type: concept
 sources: [raw/rfc9110.txt, raw/rfc9112.txt, raw/rfc3875.txt, raw/nginx-core-module.md, raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc7578.txt, raw/rfc3986.txt, raw/rfc6265.txt, raw/rfc1945.txt, raw/rfc6585.txt, raw/nginx-observed-directory.md, raw/nginx-observed-encoded-slash.md]
-updated: 2026-10-15
+updated: 2026-10-17
 ---
 
 # 보안 — 경로·주입·길이·splitting·smuggling
@@ -42,6 +42,7 @@ subject와 평가표에는 보안 항목이 따로 없다. 하지만 아래 문�
 과제 적용:
 - URI의 `..`가 루트 위로 올라가면 6단계에서 400 + 연결 닫기 (사용자 결정, NGINX와 같음) → [[sources/nginx-observed-directory]].
 - 6단계를 통과했는데 8단계에서 최종 파일 경로가 root 밖이면(심볼릭 링크 등) URI 자체는 올바르므로 403으로 거부한다 (**판단**, NGINX 미측정).
+- 정규화를 통과해도 location과 alias를 이어 붙이는 단계에서 밖으로 나갈 수 있다: `location /k { alias dir/; }`에 `/k../x`가 `dir/../x`가 됐다(2차 코드 리뷰 실측). alias location은 경로 경계에서만 맞추고, `index` 이름에 `/`를 받지 않는다 → [[analysis/design-decisions]] 14.
 - 보안상 `/` 합치기를 끄지 말라고 권한다 (raw/nginx-core-module.md:1207).
 - 업로드 파일명(raw/subject.md:172)과 DELETE 대상 경로(raw/evaluation-sheet-en.md:73)에도 같은 검사를 적용한다. multipart의 `filename`은 그대로 쓰지 말고 들어 있는 디렉토리 경로를 쓰지 말라고 한다 (raw/rfc7578.txt:215-220). 기존 파일을 실수로 덮어쓰지 않게 한다 (raw/rfc7578.txt:497-499) → [[concepts/file-upload]].
 - 업로드된 파일에는 실행 가능한 내용이 들어 있을 수 있다 (raw/rfc7578.txt:529-530). 업로드 위치에서 CGI가 실행되지 않게 한다 (**판단**) → [[concepts/file-upload]].

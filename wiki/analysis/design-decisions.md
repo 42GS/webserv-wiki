@@ -2,7 +2,7 @@
 title: 설계 결정 목록
 type: analysis
 sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc9110.txt, raw/rfc9112.txt, raw/rfc3875.txt, raw/rfc6265.txt, raw/rfc7578.txt, raw/nginx-core-module.md, raw/nginx-request-processing.md, raw/nginx-index-module.md, raw/nginx-rewrite-module.md, raw/design-checks-observed.md]
-updated: 2026-10-16
+updated: 2026-10-17
 ---
 
 # 설계 결정 목록
@@ -25,6 +25,7 @@ updated: 2026-10-16
 | 11 | `client_max_body_size` 상한 100MB | 2026-10-16 | [[analysis/design]] 3절 |
 | 12 | CGI 자식은 `execve` 실패 시 `std::exit`, `fork` 전 `access` 검사 | 2026-10-16 | [[concepts/cgi]], [[analysis/design]] 9절 |
 | 13 | `listen`은 `IPv4:port`와 `port`만 받음 | 2026-10-16 | [[concepts/configuration-file]], [[analysis/design]] 3절 |
+| 14 | alias location은 경로 경계에서만 맞춤 | 2026-10-16 | [[concepts/security]], [[analysis/design]] 7절 |
 
 1~3은 앞서 정한 것을 함께 모았다. 근거는 각 관련 페이지에 있다.
 
@@ -109,6 +110,14 @@ updated: 2026-10-16
   - `*:8000`은 `8000`(= `0.0.0.0:8000`)과 같은 뜻의 다른 표기일 뿐이라 받을 이유가 없다.
   - 거부해도 원인 메시지와 종료 코드 1로 끝나므로 크래시가 아니다. 평가자는 설정 파일을 고칠 수 있다 (raw/evaluation-sheet-en.md:24).
 - 시험: [[analysis/test-plan]] C-11 (`rejectsListenWithoutPortOrWithWildcard`).
+
+## 14. alias location은 경로 경계에서만 맞춤
+
+- 쟁점: 2차 코드 리뷰에서 `location /kapouet { alias www/; }` 설정에 `/kapouet../secret/s.txt`를 요청하니 alias 밖의 `secret/s.txt`가 200으로 나왔다(실측, 2026-10-16). `kapouet..`는 점 세그먼트가 아니라서 정규화를 통과하고, location 부분을 떼고 남은 `../secret/s.txt`가 alias 뒤에 붙는다. URI를 파일 시스템에 매핑하는 서버는 시스템에 특별한 의미가 있는 이름에 접근하지 않아야 한다 (raw/rfc9110.txt:8560-8565).
+- 결정 (사용자, 2026-10-16): alias를 쓰는 location은 떼고 남은 경로가 비었거나 `/`로 시작할 때만 그 location의 파일로 본다. 아니면 404.
+- NGINX와 다른 점 (**판단**): NGINX의 prefix location은 `/kapouetX`처럼 경로 중간에서도 맞는다 ([[concepts/configuration-file]] "location 매칭"). 이 과제는 alias일 때만 경계를 요구한다. `root`는 정규화한 URI 전체를 붙이므로 밖으로 나갈 수 없어 그대로 둔다.
+- 함께 고친 것: `index` 값에 `/`가 들어가면 설정 오류로 한다(`index ../secret/s.txt;`도 root 밖 파일을 200으로 보냈다, 실측).
+- 시험: [[analysis/test-plan]] R-20, C-29.
 
 ## 아직 정하지 않은 것
 
