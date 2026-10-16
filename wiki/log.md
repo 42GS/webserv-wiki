@@ -368,3 +368,8 @@
 - 생성: raw/efence-observed-ubuntu2204.md (패키지 문서 발췌, 테스트 프로그램 3개, 명령, 출력, `ldd` 그대로), sources/efence-observed-ubuntu2204
 - 갱신: concepts/resilience (`e_fence` **미확인** 해소), concepts/testing (도구 표), sources/valgrind-observed-sigint·macos-observed-sigpipe-leaks (측정 범위 노트), overview, index
 - 메모: electric-fence 2.2.6은 누수를 보고하지 않았다. 포인터를 잃은 대조군도 보고 없음 (raw/efence-observed-ubuntu2204.md:351-361). 문서상 대상은 heap 경계 초과와 해제 후 접근이고 (raw/efence-observed-ubuntu2204.md:71-74), 1바이트 초과 쓰기가 segfault가 됐다 (raw/efence-observed-ubuntu2204.md:369-375). g++ `-lefence` 바이너리에는 libefence가 링크되지 않아 효과가 없었다 (raw/efence-observed-ubuntu2204.md:389-395). 원인은 **미확인**.
+
+## [2026-10-16] ingest | 413 뒤 연결 종료 방식 실측 (Ubuntu 22.04, macOS)
+- 생성: raw/close-after-413-observed.md (시험 서버·클라이언트 소스, 스크립트, 두 OS 출력 그대로), sources/close-after-413-observed
+- 갱신: concepts/connection-management (모순 콜아웃에 실측과 버리기 상한), analysis/subject-vs-evaluation (1.5절 실측 추가, 6절 미확인 삭제), overview (종합 판단 보강, 열린 질문 삭제, 근거 소스), index
+- 메모: 바로 `close()`하면 macOS에서 reset이 나고 curl 1회가 응답을 받지 못했다 (raw/close-after-413-observed.md:359-363, raw/close-after-413-observed.md:370-374). 읽고 버리다가 `close()`하면 두 OS 12/12 수신 (raw/close-after-413-observed.md:225-256, raw/close-after-413-observed.md:388-419). macOS에서는 버린 실행이 두 번 있었다(서버 기동 대기 부족, `timeout` 명령 없음). raw에 사유를 적었다. curl 응답 파일을 시도마다 지우지 않아 `body=` 값은 판정에 쓰지 않았다.

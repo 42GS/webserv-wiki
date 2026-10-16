@@ -1,7 +1,7 @@
 ---
 title: subject vs 평가표 — 차이와 모순
 type: analysis
-sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/evaluation-sheet.md, raw/rfc9110.txt, raw/rfc9112.txt, raw/rfc3875.txt, raw/nginx-core-module.md, raw/posix-poll.md, raw/posix-waitpid.md, raw/posix-bind.md, raw/posix-exit.md, raw/nginx-autoindex-module.md, raw/rfc6265.txt, raw/posix-fcntl.md, raw/rfc1945.txt, raw/os-observed-pipe-poll.md, raw/nginx-src-ngx_http_request.c, raw/nginx-src-ngx_socket.h]
+sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/evaluation-sheet.md, raw/rfc9110.txt, raw/rfc9112.txt, raw/rfc3875.txt, raw/nginx-core-module.md, raw/posix-poll.md, raw/posix-waitpid.md, raw/posix-bind.md, raw/posix-exit.md, raw/nginx-autoindex-module.md, raw/rfc6265.txt, raw/posix-fcntl.md, raw/rfc1945.txt, raw/os-observed-pipe-poll.md, raw/nginx-src-ngx_http_request.c, raw/nginx-src-ngx_socket.h, raw/close-after-413-observed.md]
 updated: 2026-10-16
 ---
 
@@ -45,6 +45,7 @@ subject는 "허용된 syscall/라이브러리 호출" 목록을 준다 (raw/subj
 - RFC 9112: 즉시 닫으면 TCP reset 때문에 클라이언트가 마지막 응답을 못 읽을 수 있다. 그래서 서버는 보통 write 쪽만 먼저 닫는다 (raw/rfc9112.txt:1539-1555).
 - subject: half-close에 쓰는 `shutdown`이 허용 함수 목록에 없다 (raw/subject.md:113).
 - 판단: `close()`만 쓴다. 대안으로 응답 후 짧게 읽기만 하다가 닫는다. NGINX의 기본 동작 `lingering_close`가 이 방식이고, 바로 닫는 것은 "프로토콜을 깨므로 쓰지 말라"고 한다 (raw/nginx-core-module.md:888-892). NGINX는 이때 `shutdown(fd, SHUT_WR)`을 먼저 호출한다 (raw/nginx-src-ngx_http_request.c:3693-3698, raw/nginx-src-ngx_socket.h:15, raw/nginx-src-ngx_socket.h:66). 과제는 그 단계 없이 읽고 버리다가 닫는 부분만 따라 한다. → [[concepts/connection-management]], [[sources/nginx-src-lingering-close]]
+- 실측: 413 뒤 바로 `close()`하면 macOS에서 클라이언트 읽기에 reset이 났고 curl 1회가 응답을 받지 못했다 (raw/close-after-413-observed.md:359-363, raw/close-after-413-observed.md:370-374). 읽고 버리다가 `close()`하면 Ubuntu 22.04 컨테이너와 macOS에서 12회 모두 응답을 받았다 (raw/close-after-413-observed.md:225-256, raw/close-after-413-observed.md:388-419) → [[sources/close-after-413-observed]].
 
 ### 1.6 HTTP/1.0 기준점 vs HTTP/1.1 기본 동작
 
@@ -150,7 +151,6 @@ subject·평가표 해석에 관한 질문만 모았다. 동작 확인이 필요
 
 - 42 EvalHub 원문이 intra의 현재 평가표와 같은지 → [[sources/evaluation-sheet-en]]
 - 허용 함수 목록이 `<ctime>`, `exit` 등 표준 라이브러리에도 적용되는지 (Date 헤더, CGI 자식 종료, 리스팅 시간 표시, 1.4절)
-- `shutdown` 없이 TCP reset 문제를 줄이는 방법. NGINX는 `shutdown`으로 쓰기 쪽을 닫은 뒤 읽고 버린다 (1.5절). 과제의 "읽고 버리다가 `close()`"는 그 일부만 따른다. 이것으로 클라이언트가 응답을 잃지 않는지는 **미확인** (확인: 큰 본문을 보내는 클라이언트에 413을 보낸 뒤 닫아 보는 실측)
 - read/write 외 함수(`poll`, `bind`)의 실패 원인을 errno로 봐도 되는지 (1.8절)
 - `waitpid` 상태 매크로를 써도 되는지 (1.9절)
 - 세션 식별자용 `/dev/urandom` 읽기가 `poll()` 예외에 들어가는지 (1.10절). 보너스를 CGI 예제로 하기로 해 서버 구현에는 필요 없다
