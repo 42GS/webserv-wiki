@@ -456,3 +456,7 @@
 ## [2026-10-17] query | 5차 코드 리뷰 수정
 - 갱신: [[analysis/test-plan]] B-08
 - 메모: 사용자 의견("string 쪽은 라이브러리로 대체해도 된다")에 따라, 4차 수정에서 직접 쓴 문자 판별을 C++ 표준 라이브러리(`std::char_traits`, `std::string::find_first_not_of`, `<locale>`의 `std::tolower`)로 바꿨다. C 함수(`<cctype>`·`<cstring>`)만 피한다는 1.4절 기준은 그대로다. 십진수 해석 세 벌을 `parseDecimal` 하나로 합치면서, 상한이 한 자리 숫자보다 작을 때 뺄셈이 돌아 검사를 통과하던 결함도 고쳤다(지금 쓰는 상한은 모두 9 이상이라 실제로는 나지 않음, **판단**). webserv `7f0ed84`. 단위 82, 통합 52(Ubuntu에서 root라 1개 건너뜀) 통과.
+
+## [2026-10-17] query | 새 engineering 규칙으로 코드 점검
+- 갱신: [[analysis/test-plan]] B-08(`std::char_traits` 삭제), [[analysis/design]] 7절 `matchLocation` 주석
+- 메모: 사용자 전역 규칙 `~/.claude/rules/engineering.md`에 "추상화 경고 신호"(pass-through, 정보 없는 이름, 같은 일을 하는 방법이 둘)와 "군더더기" 자가 검토를 넣고(근거: Beck "Fewest elements", Fowler Inline Function), 그 규칙으로 src·include를 직접 읽었다. `failAt`을 지웠다 (webserv `807c890`). alias 경계 검사를 `matchLocation` 한 곳으로 모으고(결정 14), 두 파일에 있던 `describe(ListenAddr)`를 `formatListenAddr` 하나로 합쳤다. pass-through인 `http_date::format`·`RequestProcessor::statusPage`·`isOneOf`와, 테스트에서만 쓰던 `HeaderMap::clear`를 지웠다 (`2b46594`). 단위 82(valgrind 오류 없음), 통합 52가 macOS·Ubuntu에서 통과했다(느린 테스트와 root라 건너뛰는 것 제외).

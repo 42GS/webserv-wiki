@@ -392,7 +392,7 @@ struct RouteResult {
 class Router {
 public:
     explicit Router(const ServerConfig& server);
-    const LocationConfig* matchLocation(const std::string& path) const;   // 가장 긴 prefix
+    const LocationConfig* matchLocation(const std::string& path) const;   // 가장 긴 prefix, alias면 세그먼트 경계까지 (결정 14)
     RouteResult route(const Request& req) const;
 };
 ```
