@@ -2,7 +2,7 @@
 title: subject vs 평가표 — 차이와 모순
 type: analysis
 sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/evaluation-sheet.md, raw/rfc9110.txt, raw/rfc9112.txt, raw/rfc3875.txt, raw/nginx-core-module.md, raw/posix-poll.md, raw/posix-waitpid.md, raw/posix-bind.md, raw/posix-exit.md, raw/nginx-autoindex-module.md, raw/rfc6265.txt, raw/posix-fcntl.md, raw/rfc1945.txt, raw/os-observed-pipe-poll.md, raw/nginx-src-ngx_http_request.c, raw/nginx-src-ngx_socket.h, raw/close-after-413-observed.md]
-updated: 2026-10-16
+updated: 2026-10-17
 ---
 
 # subject vs 평가표 — 차이와 모순
@@ -39,6 +39,7 @@ subject는 "허용된 syscall/라이브러리 호출" 목록을 준다 (raw/subj
 - **디렉토리 리스팅의 시간 표시:** NGINX 리스팅은 파일 시간을 보인다 (raw/nginx-autoindex-module.md:88). 시간 형식으로 바꾸려면 시간 함수가 필요하다. subject는 리스팅 내용을 정하지 않으므로 (raw/subject.md:170) 생략할 수 있다. → [[concepts/configuration-file]]
 - **CGI 자식 종료:** `execve`가 실패한 자식은 끝나야 한다. `exit`·`_exit`가 목록에 없다 (raw/subject.md:113). POSIX는 보통 `exit()`을 권하지만 (raw/posix-exit.md:122), `_exit`은 stream을 flush하지 않는다 (raw/posix-exit.md:36). 그래서 fork된 자식이 부모에게서 물려받은 버퍼를 다시 내보내지 않는다 (**판단**). → [[concepts/cgi]]
 - 판단 보류. 확인 방법: 동료·평가자 합의 또는 42 공식 답변.
+- 코드는 이 질문이 어느 쪽으로 정해져도 문제가 없게 엄격한 쪽을 따른다(2026-10-17): 시스템 호출은 목록 안의 것만 쓰고, 목록에 없는 C 함수(`memset`·`strchr`·`strlen`·`<cctype>`)는 C++ 표준 라이브러리나 직접 쓴 코드로 바꿨다 → [[analysis/test-plan]] B-08. C++ 표준 라이브러리(`std::string`, 컨테이너 등)는 "C++98로 구현하라"는 문장(raw/subject.md:111)에 따라 쓴다 (**판단**).
 - Date·리스팅 시각은 시간 함수 없이 허용 함수로 시각을 얻기로 해 이 질문을 피한다 (2026-10-16 결정) → [[analysis/design-decisions]] 10. CGI 자식 종료는 51줄("C 함수 사용 허용, C++ 버전 권장", raw/subject.md:51)에 따라 `std::exit`을 쓰기로 했다 (2026-10-16 결정) → [[analysis/design-decisions]] 12. 평가자가 111줄 목록만 허용으로 읽을 수 있어, 디펜스에서 설명할 질문으로 남긴다.
 
 ### 1.5 half-close — 허용 함수 목록 vs RFC 9112

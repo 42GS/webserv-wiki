@@ -2,7 +2,7 @@
 title: webserv 설계 (클래스·인터페이스)
 type: analysis
 sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/nginx-core-module.md, raw/design-checks-observed.md]
-updated: 2026-10-16
+updated: 2026-10-17
 ---
 
 # webserv 설계 (클래스·인터페이스)
@@ -312,7 +312,7 @@ private:
 };
 ```
 
-- `ListenContext`는 `ServerConfig`와 로컬 `ListenAddr`, 원격 주소를 묶은 값이다. 생성자 인자를 4개 이하로 유지한다.
+- `ListenContext`는 `ServerConfig`와 로컬 `ListenAddr`, 원격 주소를 묶은 값이다. 생성자 인자를 4개 이하로 유지한다. 지금 코드에는 `server`만 있다. 로컬·원격 주소는 읽는 곳이 없어 4차 코드 리뷰에서 뺐고, CGI(`REMOTE_ADDR` 등, 7단계)에서 다시 넣는다.
 - `recv`가 0이면 상대가 닫은 것, -1이면 에러다. 둘 다 errno 없이 `CLOSED`로 간다 → [[concepts/io-multiplexing]] "recv·send 반환값 처리".
 - keep-alive 판단과 `DRAIN` 규칙 → [[concepts/connection-management]]. 본문을 다 읽지 않고 응답했으면 `DRAIN`을 거친다 ([[sources/close-after-413-observed]]).
 - pipelining: 응답을 다 보낸 뒤 `inBuf_`에 남은 바이트로 다음 요청을 파싱한다 → [[concepts/connection-management]] "pipelining".

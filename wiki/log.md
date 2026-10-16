@@ -448,3 +448,7 @@
 ## [2026-10-17] query | 테스트 코드 상수 규칙, 3·4차 코드 리뷰
 - 갱신: [[analysis/test-plan]] (N-25)
 - 메모: 테스트 코드에도 상수·자료형은 헤더에 두는 규칙을 적용했다(webserv `639247b` C++ `tests/unit/TestConstants.hpp`·`EventLoopDoubles.hpp`, `dedbfc1` Python은 헤더가 없어 `tests/integration/constants.py`). 3차 리뷰: 이벤트 처리 밖(타임아웃 점검, poll 목록 만들기)의 예외가 `std::terminate`로 이어질 수 있었다 → 연결 단위로 잡고 `main`에서 마지막으로 잡음 (`785f4f2`). 테스트로 만들 수 없어 예외를 일부러 넣은 빌드로 확인했다. 4차 리뷰에서 허용 함수 목록 밖 C 함수(`memset`·`strchr`·`strlen`·`<cctype>`)와 읽지 않는 `ListenContext` 필드를 찾았다(사용자 결정 대기).
+
+## [2026-10-17] query | 4차 코드 리뷰 수정
+- 갱신: [[analysis/test-plan]] (B-08 신설, N-15), [[analysis/design]] 5절(`ListenContext`), [[analysis/subject-vs-evaluation]] 1.4(코드는 엄격한 쪽을 따름)
+- 메모: 목록 밖 C 함수 `memset`·`strchr`·`strlen`·`<cctype>`를 `http/Ascii`·`std::string`·값 초기화로 바꿨다 (webserv `3dbbcb3`). `isOneOf`는 NUL과 맞지 않는다(전에 `strchr`가 맞춰서 버그가 났다). 읽지 않던 `ListenContext`의 로컬·원격 주소와 `formatIpv4`를 뺐다 (`41fc4b8`, 7단계에서 다시). 단위 81, 통합 52(Ubuntu에서 root라 1개 건너뜀) 통과.

@@ -44,6 +44,7 @@ updated: 2026-10-17
 | B-02 | 다시 링크하지 않는다 | raw/subject.md:47, raw/evaluation-sheet-en.md:60 | I | 두 번째 `make`가 아무것도 하지 않는다 | `test_build.py` `test_b02_second_make_does_not_relink` (느린 테스트) | 있음 |
 | B-03 | `c++ -Wall -Wextra -Werror`로 컴파일되고, `-std=c++98`을 더해도 컴파일된다 | raw/subject.md:49-50 | I | macOS·Ubuntu 모두 `make re` 성공 | `test_build.py` `test_b01_b03_rules_build_and_clean`이 컴파일 명령의 플래그를 확인 (느린 테스트) | 있음. Ubuntu 빌드는 컨테이너에서 돌린다 |
 | B-04 | C++ 버전이 있으면 C 헤더 대신 쓴다. 외부 라이브러리·Boost 금지 | raw/subject.md:51-52 | R | `.h` 헤더는 C++ 버전이 없는 POSIX 헤더뿐. 링크에 `-l` 없음 | 코드 읽기 2026-10-16: `.h`는 `arpa/inet.h`, `fcntl.h`, `netinet/in.h`, `poll.h`, `sys/socket.h`, `sys/stat.h`, `unistd.h`뿐 | 확인. 단계마다 다시 본다 |
+| B-08 | 허용 함수 목록에 없는 C 함수(`memset`·`strchr`·`strlen`·`<cctype>` 등)를 쓰지 않는다. 시스템 호출은 목록 안의 것만. 목록이 표준 라이브러리에도 적용되는지는 **미확인**이라 엄격한 쪽을 따른다 | raw/subject.md:111-113, raw/subject.md:51, [[analysis/subject-vs-evaluation]] 1.4 | R, U | 호출하는 외부 함수 목록이 허용 목록 안 | 코드 읽기 2026-10-17: 시스템 호출은 목록 안의 것만. C 함수는 `strerror`(목록 안)만 남고, 문자 판별은 `http/Ascii`, 문자열 길이·검색은 `std::string`, 구조체 초기화는 값 초기화. `ascii_test.cpp` 2개 | 있음 |
 | B-05 | 다른 웹 서버를 `execve`하지 않는다 | raw/subject.md:128 | R | `execve`는 CGI 실행에만 | 아직 `execve` 없음 | 나중 (7단계) |
 | B-06 | README: 저장소 루트, 영어, 첫 줄 이탤릭 정해진 문구, Description·Instructions·Resources(AI 사용 포함). 하나라도 없으면 0점 | raw/subject.md:196-207, raw/evaluation-sheet-en.md:35-44 | I, M | 형식은 테스트, 내용은 9단계에 읽어서 확인 | `test_readme.py` 2개 (첫 줄 형식, 세 절) | 있음(형식). 내용은 9단계. 첫 줄 login은 `yoshin, jyoo` (사용자 확인, 2026-10-16) |
 | B-07 | 제출 파일 종류: `Makefile`, `*.{h, hpp}`, `*.cpp`, `*.tpp`, `*.ipp`, 설정 파일 | raw/subject.md:105 | M | 제출할 파일을 고른다 | — | 나중. 제출 때 파일을 따로 추린다(사용자, 2026-10-16). 그 전까지 저장소에 테스트·도구 파일을 둔다 |
@@ -102,7 +103,7 @@ updated: 2026-10-17
 | N-12 | 계속 돌려도 메모리가 끝없이 늘지 않고 매달린 연결이 없다 | raw/evaluation-sheet-en.md:115-117 | M | 장시간 siege 동안 메모리 일정 | 8단계 | 나중 |
 | N-13 | 시계: 시계 파일의 수정 시각을 현재 시각으로 쓴다. 시작 때 실패하면 시작하지 않는다 | [[analysis/design-decisions]] 10, 설계 4절 "시계" | U, I | 갱신 성공 시 값이 0보다 크고 줄지 않는다. 쓸 수 없는 경로면 `refresh()`가 false | `clock_test.cpp` 2개, `test_startup.py` `test_n13_unusable_clock_file_stops_startup` | 있음 |
 | N-14 | 이벤트 루프: 처리 중 `unwatch`는 그 바퀴 끝에 반영. `onEvent` 예외는 그 handler의 `onFailure()`로 | 설계 4절 | U | pipe fd와 가짜 handler로 확인 | `event_loop_test.cpp` 3개 | 있음 |
-| N-15 | IPv4 주소 변환 (listen 주소 → `sockaddr_in`, 접속한 주소 → 문자열) | 설계 (구현 세부) | U | 네트워크 바이트 순서 | `convertsIpv4BothWays`, `buildsSockaddrInNetworkOrder` (`tests/unit/socket_address_test.cpp`) | 있음 |
+| N-15 | IPv4 주소 변환 (listen 주소 → `sockaddr_in`). 접속한 주소 → 문자열은 7단계에서 다시 | 설계 (구현 세부) | U | 네트워크 바이트 순서 | `parsesIpv4`, `buildsSockaddrInNetworkOrder` (`tests/unit/socket_address_test.cpp`) | 있음 |
 | N-16 | 모든 소켓은 non-blocking | raw/subject.md:129 | R | listen 소켓과 accept한 소켓 모두 `O_NONBLOCK` | 코드 읽기 2026-10-16: `src/core/Listener.cpp:48`(listen, `bind`·`listen` 뒤에 켬), `:69`(accept한 소켓, 실패하면 닫음) | 확인 |
 | N-17 | `fcntl`은 `F_SETFL`, `O_NONBLOCK`, `FD_CLOEXEC`만 | raw/subject.md:155-157 | R | 다른 플래그 없음 | 코드 읽기 2026-10-16: `fcntl` 호출은 위 두 곳, 둘 다 `F_SETFL, O_NONBLOCK` | 확인 |
 | N-18 | `poll()`이 메인 루프 안에 있다 | raw/evaluation-sheet-en.md:53 | R | `main` → `EventLoop::run` → `poll` | 코드 읽기 2026-10-16: `src/main.cpp:49` `loop.run(server)`, `run`이 매 바퀴 `poll` | 확인 |
