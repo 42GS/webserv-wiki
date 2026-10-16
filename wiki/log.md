@@ -412,3 +412,7 @@
 - 생성: [[analysis/test-plan]] (요구사항 → 테스트 대응표, 0~2단계 상세, 3단계 이후 항목)
 - 갱신: [[analysis/implementation-plan]] (테스트 계획 링크), [[index]] (test-plan 행, design-decisions 건수 8→12 정정)
 - 메모: 사용자가 "테스트 계획 없이 테스트를 신뢰할 수 있나"를 물어 시작. webserv `4f27998`(프레임워크: `CHECK_EQ` 이중 평가, 예외가 전체 실행을 멈추던 문제), `d1761bd`(단위 테스트 빈칸 채움, `[0]`→`at()`), `4b68ef5`(통합 테스트 `tests/integration`, `make integration`). 단위 30개, 통합 18개(느린 3개, Linux 전용 1개 포함) Ubuntu 22.04 컨테이너에서 모두 통과. 줄마다 코드를 일부러 틀리게 바꿔 실패를 확인했다. `SIGPIPE` 무시 제거는 지금 테스트로 잡지 못해 4단계로 넘김. valgrind·siege 결과는 아직 커밋 메시지·log에만 있어 8단계에서 절차로 남긴다.
+
+## [2026-10-16] schema | 구현 작업 때 위키 참고 규칙
+- 갱신: `CLAUDE.md` 작업 흐름에 "구현 (`webserv/` 코드·테스트)" 절 추가
+- 메모: 테스트 계획을 쓰면서 `concepts/io-multiplexing`·`concepts/resilience`·`sources/macos-observed-sigpipe-leaks`를 읽지 않아, 위키에 실측이 있는 SIGPIPE 동작을 판단으로 적고 2단계의 "`POLLOUT`은 보낼 데이터가 있을 때만" 요구를 계획에서 빠뜨렸다. 사용자 요청으로 작업 전 해당 범위 위키를 읽는 규칙을 추가했다.
