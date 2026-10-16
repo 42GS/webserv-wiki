@@ -20,6 +20,7 @@ updated: 2026-10-15
 | 6 | index 파일이 CGI 확장자면 CGI로 실행 | 2026-10-15 | [[concepts/configuration-file]], [[concepts/cgi]] |
 | 7 | 업로드는 서버가 `multipart/form-data`만 받아 저장 | 2026-10-15 | [[concepts/file-upload]] |
 | 8 | 보너스 쿠키·세션은 CGI 예제로 보여 줌 | 2026-10-15 | [[concepts/bonus]] |
+| 9 | 설정 파일은 NGINX 문법을 따름 | 2026-10-16 | [[concepts/configuration-file]], [[analysis/design]] |
 
 1~3은 앞서 정한 것을 함께 모았다. 근거는 각 관련 페이지에 있다.
 
@@ -62,6 +63,12 @@ updated: 2026-10-15
 - 스크립트가 할 일: 식별자 발급, 세션 상태 저장, 쿠키 만료 처리.
 - 위험 (**판단**): 평가표 문구는 "웹 서버에 동작하는 세션·쿠키 시스템"이다 (raw/evaluation-sheet-en.md:126). 평가자가 서버 자체의 기능으로 해석할 수 있으므로, 디펜스에서 서버가 쿠키 헤더를 어떻게 전달하는지와 subject의 "예제 제공" 문구를 함께 설명한다.
 - 이 결정으로 1.10절의 `/dev/urandom` 질문은 서버 구현에서는 생기지 않는다. 스크립트 언어(Python 등)의 난수 기능은 subject 허용 함수 목록의 대상인지 불분명하다 (**미확인**, 평가자 합의).
+
+## 9. 설정 파일은 NGINX 문법
+
+- 근거: subject는 NGINX 설정의 `server` 섹션을 참고해도 된다고 한다 (raw/subject.md:161). 평가자가 NGINX와 비교하며 볼 수 있다 (raw/subject.md:186).
+- 구현: `server { ... }`, `location 경로 { ... }` 블록, `지시자 인자 ...;` 형식, `#` 주석. NGINX에 같은 기능의 지시자가 있으면 그 이름과 인자 형식을 쓴다 (`listen`, `root`, `index`, `autoindex`, `error_page`, `client_max_body_size`, `return`). 크기는 NGINX처럼 `1m` 같은 단위를 받는다 (기본값 표기 `client_max_body_size 1m;`, raw/nginx-core-module.md:355). 지시자 목록과 세부는 [[analysis/design]] 3절.
+- NGINX에 없는 기능(업로드 저장 위치, 확장자별 CGI 실행)은 새 지시자를 만든다 (**판단**).
 
 ## 아직 정하지 않은 것
 

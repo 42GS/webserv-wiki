@@ -383,3 +383,7 @@
 - 생성: analysis/design (파일 배치, 모듈 책임·의존 방향, 설정 구조체, `IoHandler`/`EventLoop`, Connection 상태기계, `HeaderMap`/`RequestParser`/`Router`/`Response`/`CgiProcess` 인터페이스, 정적 파일 나눠 읽기, 에러 처리, 시그널, 상수)
 - 갱신: analysis/implementation-plan (설계 링크), index, overview
 - 메모: 사용자 선택 — 위키 analysis/에 클래스·인터페이스 수준까지. 모든 구조·값은 판단이다. 정할 것: 설정 문법 세부, 업로드 쓰기 방식, 상수 값, `Date` 헤더.
+
+## [2026-10-16] query | 설계 수정 (설계 원칙 대조, NGINX 설정 문법)
+- 갱신: analysis/design (원칙 대조 후 재작성: `RequestProcessor`·`ResponseStream`·`ChildReaper` 분리, 소유자 하나 원칙과 소유 관계 표, `IoRegistry`·`LoopObserver`·`CgiObserver` 인터페이스, `ListenContext`·`CgiContext`로 파라미터 묶음, `util/`·로그 모듈 제거, 3절 NGINX 문법·지시자 표·예시, 13절 원칙 대조와 의도한 예외), analysis/design-decisions (결정 9 NGINX 문법)
+- 메모: 사용자 결정 — 설정은 NGINX 문법, 허용 메서드는 `limit_except METHOD ... { deny all; }` 형식(A). 첫 설계가 SRP(`Connection` 과다 책임), 소유권(같은 객체를 두 곳이 포인터로 보유), DIP(`EventLoop` 구체 의존), 파라미터 수에서 원칙을 어겼음을 사용자 질문으로 대조해 찾고 고쳤다. `root` 매핑 방식(NGINX `root` vs subject 예시의 `alias` 방식)은 사용자 결정 대기.

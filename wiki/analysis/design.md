@@ -1,7 +1,7 @@
 ---
 title: webserv 설계 (클래스·인터페이스)
 type: analysis
-sources: [raw/subject.md, raw/evaluation-sheet-en.md]
+sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/nginx-core-module.md]
 updated: 2026-10-16
 ---
 
@@ -22,152 +22,271 @@ conf/                 시연용 설정 파일 (기능별)
 www/                  시연용 정적 사이트, 에러 페이지, CGI 스크립트
 src/
   main.cpp
-  config/   ConfigLexer  ConfigParser  ServerConfig  LocationConfig
-  core/     EventLoop  IoHandler  Listener  Signals
-  http/     Connection  Request  RequestParser  Response  ResponseBuilder  HeaderMap  StatusCodes  MimeTypes
+  config/   ConfigLexer  ConfigParser  ServerConfig  LocationConfig  SizeParser
+  core/     EventLoop  IoHandler  IoRegistry  LoopObserver  Server  Listener  ChildReaper  Signals
+  http/     Connection  Request  RequestParser  HeaderMap  Response  ResponseStream  StatusCodes  MimeTypes
+  app/      RequestProcessor  ProcessOutcome
   route/    Router  RouteResult  PathResolver
   handler/  StaticHandler  AutoindexHandler  UploadHandler  DeleteHandler  ErrorPageBuilder
-  cgi/      CgiProcess  CgiEnv  CgiOutputParser  CgiPipe
-  util/     StringUtil  TimeUtil  Logger
+  cgi/      CgiProcess  CgiContext  CgiEnv  CgiPipe  CgiOutputParser  CgiObserver
 tests/                Python 테스트 스크립트
 ```
+
+- 공용 `util/`은 두지 않는다. 문자열 처리 같은 도우미는 그것을 쓰는 모듈 안에 둔다. 두 모듈 이상에서 같은 이유로 쓰게 되면 그때 뺀다.
+- 로그 모듈은 필요해질 때 만든다.
 
 ## 2. 모듈과 책임
 
 | 모듈 | 책임 | 하지 않는 것 |
 |---|---|---|
 | `config` | 설정 파일을 읽어 검증된 `ServerConfig` 목록을 만든다. 잘못되면 시작 전에 에러로 끝낸다 | 네트워크·HTTP |
-| `core` | `poll()` 루프, fd 등록·해제, 타이머 점검, 시그널 플래그 | HTTP 의미 해석 |
-| `http` | 연결 상태기계, 요청 파싱, 응답 직렬화 | 파일 시스템 접근 |
-| `route` | 요청 + 설정 → 처리 방식 결정 (location 선택, 경로 정규화, 메서드 검사) | 실제 처리 |
+| `core` | `poll()` 루프, 객체 수명 관리(`Server`), 자식 회수, 시그널 | HTTP 의미 해석 |
+| `http` | 연결의 소켓 I/O와 상태 전이, 요청 파싱, 응답 직렬화 | 요청을 어떻게 처리할지 결정 |
+| `app` | 완성된 요청 하나를 받아 응답 또는 CGI 실행으로 바꾼다 (Router → Handler 조율) | 소켓 I/O |
+| `route` | 요청 + 설정 → 처리 방식 결정 (경로 정규화, location 선택, 메서드 검사) | 실제 처리 |
 | `handler` | 결정된 방식대로 응답을 만든다 (정적 파일, 리스팅, 업로드, 삭제, 에러 페이지) | 소켓 I/O |
-| `cgi` | 자식 프로세스 실행, pipe I/O, CGI 출력 → `Response` | 소켓 I/O |
+| `cgi` | 자식 프로세스 실행, pipe I/O, CGI 출력 → `Response` | 소켓 I/O, 자식 회수 |
 
-의존 방향: `main → config, core` / `core → (IoHandler 인터페이스만)` / `http → route → handler, cgi` / 모두 `util` 사용. `core`는 HTTP를 모른다.
+의존 방향 (화살표는 "안다"):
 
-## 3. 설정 데이터
+```
+main → config, core
+core(Server) → http(Connection) → app → route, handler, cgi
+cgi → core의 인터페이스(IoRegistry, IoHandler)만
+EventLoop → IoHandler, LoopObserver 인터페이스만
+```
+
+## 3. 설정 파일 (NGINX 문법, 결정 9)
+
+### 문법
+
+- `server { ... }` 블록 여러 개, 그 안에 `location 경로 { ... }` 블록. 지시자는 `이름 인자 ...;`, `#`부터 줄 끝까지 주석.
+- 크기는 숫자 또는 `k`·`m` 단위 (`client_max_body_size 1m;`, raw/nginx-core-module.md:355).
+- 같은 이름의 지시자가 server와 location에 모두 있으면 location 값을 쓴다. location에 없으면 server 값을 물려받는다.
+
+### 지시자
+
+| 지시자 | 위치 | 형식 | NGINX와 관계 |
+|---|---|---|---|
+| `listen` | server | `listen 127.0.0.1:8080;`, `listen 8080;` | 같은 이름. 주소를 생략하면 `0.0.0.0` |
+| `error_page` | server | `error_page 404 /errors/404.html;` (코드 여러 개 가능) | 같은 이름. 내부 리다이렉트 대신 그 파일을 읽어 보낸다 |
+| `client_max_body_size` | server, location | `client_max_body_size 10m;` | 같음. 0이면 검사 안 함 |
+| `root` | server, location | `root /var/www;` | 같은 이름. **매핑 방식은 미정** (14절) |
+| `index` | server, location | `index index.html index.php;` | 같음 |
+| `autoindex` | server, location | `autoindex on;` | 같음. 기본 off |
+| `return` | location | `return 301 /new/;` | 같음. 코드와 URL을 함께 받는다 |
+| `limit_except` | location | `limit_except GET POST { deny all; }` | 같은 형식. 블록 안에는 `deny all;`만 받는다. GET을 허용하면 HEAD도 허용 (raw/nginx-core-module.md:795) |
+| `upload_store` | location | `upload_store /var/www/uploads;` | **새 지시자**. 있으면 그 location에서 업로드 허용 |
+| `cgi` | location | `cgi .php /usr/bin/php-cgi;` | **새 지시자**. 확장자와 실행 파일 |
+
+- `limit_except`가 없는 location은 서버가 아는 메서드(GET, HEAD, POST, DELETE)를 모두 허용한다. 막힌 메서드는 405 + `Allow`, 모르는 메서드는 501 → [[concepts/configuration-file]] "라우트 규칙을 응답으로 옮길 때".
+- 알 수 없는 지시자, 잘못된 위치의 지시자, 인자 개수가 틀린 지시자는 설정 오류다.
+
+### 예시
+
+```nginx
+server {
+    listen 127.0.0.1:8080;
+    root /var/www/site;
+    index index.html;
+    error_page 404 /errors/404.html;
+    client_max_body_size 1m;
+
+    location / {
+        limit_except GET { deny all; }
+    }
+    location /upload/ {
+        limit_except GET POST DELETE { deny all; }
+        upload_store /var/www/site/upload;
+        client_max_body_size 10m;
+    }
+    location /cgi-bin/ {
+        cgi .php /usr/bin/php-cgi;
+        cgi .py /usr/bin/python3;
+    }
+    location /old/ {
+        return 301 /new/;
+    }
+}
+```
+
+### 데이터
 
 ```cpp
 struct ListenAddr {            // interface:port 하나
-    std::string host;          // "0.0.0.0" 또는 IP
+    std::string    host;       // "0.0.0.0" 또는 IP
     unsigned short port;
 };
 
 struct LocationConfig {
-    std::string                 path;            // prefix, 정규화된 형태
-    std::string                 root;
-    std::set<std::string>       methods;         // 비어 있으면 GET, HEAD
-    std::vector<std::string>    indexFiles;
-    bool                        autoindex;
-    int                         returnCode;      // 0이면 리다이렉트 없음
-    std::string                 returnUrl;
-    bool                        uploadEnabled;
-    std::string                 uploadStore;
-    std::map<std::string, std::string> cgi;      // ".php" -> "/usr/bin/php-cgi"
-    size_t                      maxBodySize;     // server 값 상속
+    std::string                        path;          // prefix
+    std::string                        root;
+    std::vector<std::string>           indexFiles;
+    bool                               autoindex;
+    std::set<std::string>              allowedMethods;  // limit_except. 비면 전부 허용
+    int                                returnCode;      // 0이면 리다이렉트 없음
+    std::string                        returnUrl;
+    std::string                        uploadStore;     // 비면 업로드 불가
+    std::map<std::string, std::string> cgiByExtension;  // ".php" -> "/usr/bin/php-cgi"
+    size_t                             maxBodySize;
 };
 
 struct ServerConfig {
     std::vector<ListenAddr>     listens;
-    std::map<int, std::string>  errorPages;      // 404 -> "/errors/404.html"
-    size_t                      maxBodySize;
-    std::vector<LocationConfig> locations;       // 긴 prefix 순으로 정렬해 둠
+    std::map<int, std::string>  errorPages;   // 404 -> "/errors/404.html"
+    std::vector<LocationConfig> locations;    // 상속을 반영한 최종 값
 };
 ```
 
-- `ConfigParser::parse(path)`는 `std::vector<ServerConfig>`를 돌려주거나 `ConfigError`(파일·줄 번호 포함)를 던진다.
-- 검증: 같은 `interface:port` 중복, `0.0.0.0`과 특정 IP의 같은 포트, 알 수 없는 지시자, 범위 밖 값 → [[concepts/configuration-file]] "포트 관련 엣지 케이스", 결정 4.
-- 문법은 NGINX `server`/`location` 블록과 비슷하게 한다 → [[concepts/configuration-file]] "NGINX 지시자 대응표".
-- virtual host가 없으므로(결정 4) `ListenAddr` 하나에 `ServerConfig`가 하나 대응한다. `Listener`가 자기 `ServerConfig`를 가리킨다.
+- `ConfigParser::parse(path)`는 `std::vector<ServerConfig>`를 돌려주거나 `ConfigError`(파일·줄 번호 포함)를 던진다. server 값의 상속은 파싱 단계에서 끝내, 실행 중에는 `LocationConfig`만 보면 되게 한다.
+- 검증: 같은 `interface:port` 중복, `0.0.0.0`과 특정 IP의 같은 포트 → [[concepts/configuration-file]] "포트 관련 엣지 케이스", 결정 4.
+- virtual host가 없으므로(결정 4) `ListenAddr` 하나에 `ServerConfig`가 하나 대응한다.
+- 설정 객체는 프로그램이 끝날 때까지 `main`이 갖는다. 다른 객체는 `const` 참조로만 쓴다.
 
-## 4. 이벤트 루프
+## 4. 이벤트 루프와 객체 소유
+
+### 인터페이스
 
 ```cpp
-class IoHandler {                       // poll에 등록되는 모든 것
+class IoHandler {                          // poll에 등록되는 것
 public:
     virtual ~IoHandler() {}
-    virtual int  fd() const = 0;
-    virtual short wantedEvents() const = 0;   // POLLIN / POLLOUT 조합. 매 루프마다 다시 물음
-    virtual void onEvent(short revents) = 0;  // 이 안에서 I/O는 최대 1번
-    virtual void onTick(time_t now) = 0;      // 타임아웃 점검
-    virtual bool isDone() const = 0;          // true면 루프가 해제
+    virtual int   fd() const = 0;
+    virtual short wantedEvents() const = 0;   // 매 바퀴 다시 묻는다
+    virtual void  onEvent(short revents) = 0; // I/O는 최대 1번
 };
 
-class EventLoop {
+class IoRegistry {                         // 등록·해제만. 소유하지 않는다
 public:
-    void add(IoHandler* handler);            // 소유권을 가져감
-    void run();                              // 종료 플래그가 설 때까지
-private:
-    std::vector<IoHandler*> handlers_;
-    void buildPollSet(std::vector<pollfd>& fds);
-    void dispatch(const std::vector<pollfd>& fds);
-    void reapDone();                         // isDone()인 handler를 delete, close
+    virtual ~IoRegistry() {}
+    virtual void watch(IoHandler* handler) = 0;
+    virtual void unwatch(IoHandler* handler) = 0;
+};
+
+class LoopObserver {                       // 매 바퀴 끝에 불림
+public:
+    virtual ~LoopObserver() {}
+    virtual void afterIteration(time_t now) = 0;
+    virtual bool shouldStop() const = 0;
+};
+
+class EventLoop : public IoRegistry {
+public:
+    explicit EventLoop(LoopObserver& observer);
+    void watch(IoHandler* handler);
+    void unwatch(IoHandler* handler);       // 순회 중이면 표시만 하고 바퀴 끝에 뺀다
+    void run();
 };
 ```
 
-- 구현체: `Listener`(listen 소켓, `accept` → `Connection` 생성), `Connection`(클라이언트 소켓), `CgiPipe`(CGI 입력·출력 pipe 각각).
-- 루프 한 바퀴: `buildPollSet` → `poll(timeout 1000ms)` → `dispatch` → 모든 handler에 `onTick` → `reapDone`. 순회 중에는 지우지 않고 끝에서 지운다(순회 중 벡터가 바뀌는 문제를 피함).
-- `wantedEvents()`를 매번 다시 묻기 때문에 `POLLOUT`은 보낼 데이터가 있을 때만 켜진다 → [[concepts/io-multiplexing]] "POLLOUT은 보낼 데이터가 있을 때만".
-- `poll()`이 -1이면 errno를 보지 않고 다음 바퀴로 간다. 시그널로 깬 경우 종료 플래그가 서 있다 → [[concepts/resilience]].
-- `revents`에 `POLLHUP`·`POLLERR`·`POLLNVAL`이 있으면 `POLLIN`이 없어도 `onEvent`에 넘긴다. 처리 규칙은 각 handler가 정한다.
+- `EventLoop`는 아무것도 소유하지 않고 `delete`하지 않는다. 한 바퀴: poll 목록 구성 → `poll(kPollTimeoutMs)` → 각 handler의 `onEvent` → `unwatch`된 것 정리 → `observer.afterIteration(now)`.
+- `wantedEvents()`를 매번 묻기 때문에 `POLLOUT`은 보낼 데이터가 있을 때만 켜진다 → [[concepts/io-multiplexing]] "POLLOUT은 보낼 데이터가 있을 때만".
+- `poll()`이 -1이면 errno를 보지 않고 다음 바퀴로 간다. 시그널로 깬 경우 `shouldStop()`이 참이 된다.
+- `revents`에 `POLLHUP`·`POLLERR`·`POLLNVAL`이 있으면 `POLLIN`이 없어도 `onEvent`에 넘긴다.
+- `onEvent`에서 나온 예외는 `EventLoop`가 잡아 그 handler에 `onFailure()`를 알린다 (11절).
 
-## 5. Connection 상태기계
+### 소유 관계
+
+| 객체 | 소유자 | 지우는 시점 |
+|---|---|---|
+| `ServerConfig` 목록 | `main` | 프로그램 끝 |
+| `Listener` | `Server` | 서버 종료 |
+| `Connection` | `Server` (`std::map<int, Connection*>`) | `afterIteration`에서 `isClosed()`인 것 |
+| `CgiProcess` | 그 요청의 `Connection` (하나만) | CGI 완료 후 또는 `Connection` 소멸 시 |
+| `CgiPipe` (입력·출력) | 그 `CgiProcess` | `CgiProcess` 소멸 시 (먼저 `unwatch`) |
+| 끝난 자식의 pid | `ChildReaper` | `waitpid`로 회수되면 |
+
+- 소유자가 하나뿐이라 C++98에서도 해제 경로가 분명하다. 다른 객체는 참조만 갖고, 수명이 더 긴 쪽만 참조한다(`Connection` → `ServerConfig`, `CgiProcess` → `CgiObserver`인 자기 `Connection`).
+- `Server`는 `LoopObserver`를 구현한다. `afterIteration`에서 연결 타임아웃 점검 → 닫힌 연결 삭제 → `ChildReaper::reap()`를 차례로 한다. `Listener`가 `accept`하면 `Server::adopt(fd, ...)`로 `Connection`을 넘긴다.
+
+```cpp
+class Server : public LoopObserver {
+public:
+    Server(const std::vector<ServerConfig>& configs, EventLoop& loop, ChildReaper& reaper);
+    bool openListeners();                       // 실패하면 원인 출력 후 false
+    void adopt(int clientFd, const ListenContext& where);
+    void afterIteration(time_t now);
+    bool shouldStop() const;                    // Signals::stopRequested()
+    void shutdown();                            // 모든 연결·CGI 정리
+};
+
+class ChildReaper {
+public:
+    void adopt(pid_t pid);                      // 이미 kill했거나 출력이 끝난 자식
+    void reap();                                // waitpid(pid, &status, WNOHANG)로 하나씩
+    void killAndReapAll();                      // 종료 시
+};
+```
+
+## 5. Connection
+
+`Connection`은 소켓 I/O와 상태 전이만 맡는다. 요청 처리는 `RequestProcessor`, 본문 출처(메모리·파일)는 `ResponseStream`에 맡긴다.
 
 ```
-READ_HEAD ──머리 완성──▶ READ_BODY ──본문 완성──▶ PROCESS ─┬─▶ WRITE ──다 보냄──┬─ keep-alive ─▶ READ_HEAD
-    │                        │                            │                  └─ close ──────▶ DRAIN 또는 CLOSED
-    │                        │                            └─▶ WAIT_CGI ──CGI 완료──▶ WRITE
+READ_HEAD ──머리 완성──▶ READ_BODY ──본문 완성──▶ (RequestProcessor) ─┬─▶ WRITE ──다 보냄──┬─ keep-alive ─▶ READ_HEAD
+    │                        │                                      │                  └─ close ──────▶ DRAIN 또는 CLOSED
+    │                        │                                      └─▶ WAIT_CGI ──onCgiFinished──▶ WRITE
     └──── 파싱 에러·크기 초과 ────┴──────────▶ (에러 응답) WRITE → DRAIN → CLOSED
 ```
 
 | 상태 | `wantedEvents` | 타임아웃 (넘으면) |
 |---|---|---|
-| `READ_HEAD` | `POLLIN` | 헤더 수신 (408 후 닫기. 아무 바이트도 오지 않은 keep-alive 대기는 그냥 닫기) |
+| `READ_HEAD` | `POLLIN` | 헤더 수신 (408 후 닫기. 첫 바이트 전의 keep-alive 대기는 그냥 닫기) |
 | `READ_BODY` | `POLLIN` | 본문 수신 (408 후 닫기) |
-| `PROCESS` | 없음 (같은 바퀴 안에서 끝남) | — |
-| `WAIT_CGI` | 없음 (`CgiPipe`가 따로 등록됨) | CGI 타임아웃 (504, 자식 종료) |
+| `WAIT_CGI` | 0 (pipe는 `CgiProcess`가 등록) | CGI 타임아웃 (504, 자식 종료) |
 | `WRITE` | `POLLOUT` | 응답 전송 (닫기) |
 | `DRAIN` | `POLLIN` | 무입력·총 시간 상한 (닫기) |
 
 ```cpp
-class Connection : public IoHandler {
+class Connection : public IoHandler, public CgiObserver {
 public:
-    Connection(int fd, const ServerConfig& server, const ListenAddr& local);
-    // IoHandler 구현
+    Connection(int fd, const ListenContext& where, IoRegistry& registry, ChildReaper& reaper);
+    ~Connection();                               // CGI가 남아 있으면 kill 후 reaper에 넘김
+    int   fd() const;
+    short wantedEvents() const;
+    void  onEvent(short revents);
+    void  onFailure();                           // 예외 등 → CLOSED
+    void  checkTimeout(time_t now);
+    bool  isClosed() const;
+    void  onCgiFinished(const Response& res);    // CgiObserver
 private:
-    enum State { READ_HEAD, READ_BODY, PROCESS, WAIT_CGI, WRITE, DRAIN, CLOSED };
-    State          state_;
-    std::string    inBuf_;          // 받은 바이트 (파서가 소비)
-    std::string    outBuf_;         // 보낼 바이트
-    size_t         outPos_;
-    RequestParser  parser_;
-    time_t         stateSince_;     // 상태 진입 시각
-    time_t         lastActivity_;
-    bool           keepAlive_;
-    bool           bodyFullyRead_;  // false면 응답 뒤 DRAIN
-    CgiProcess*    cgi_;            // WAIT_CGI 동안만
-    FileSource*    file_;           // 큰 정적 파일을 나눠 읽을 때
-    void           onReadable();    // recv 1번
-    void           onWritable();    // send 1번
-    void           process();       // Router → Handler → outBuf_
-    void           finishResponse(const Response& res);
+    enum State { READ_HEAD, READ_BODY, WAIT_CGI, WRITE, DRAIN, CLOSED };
+    void  receiveOnce();                         // recv 1번
+    void  sendOnce();                            // send 1번
+    void  handleParsed();                        // RequestProcessor 호출
+    void  startResponse(const Response& res);    // ResponseStream 준비, 다음 상태 결정
+    void  changeState(State next, time_t now);
+
+    int                 fd_;
+    State               state_;
+    ListenContext       where_;                  // ServerConfig 참조 + 로컬·원격 주소 (연결마다 다름)
+    std::string         inBuf_;
+    RequestParser       parser_;
+    RequestProcessor    processor_;
+    ResponseStream      out_;
+    CgiProcess*         cgi_;                    // 소유. WAIT_CGI 동안만
+    time_t              stateSince_;
+    time_t              lastProgress_;
+    bool                keepAlive_;
+    bool                requestBodyConsumed_;    // false면 응답 뒤 DRAIN
 };
 ```
 
+- `ListenContext`는 `ServerConfig`와 로컬 `ListenAddr`, 원격 주소를 묶은 값이다. 생성자 인자를 4개 이하로 유지한다.
 - `recv`가 0이면 상대가 닫은 것, -1이면 에러다. 둘 다 errno 없이 `CLOSED`로 간다 → [[concepts/io-multiplexing]] "recv·send 반환값 처리".
-- keep-alive 판단과 `DRAIN` 규칙 → [[concepts/connection-management]]. 본문을 다 읽지 않고 응답했으면 `DRAIN`을 거친다 (실측 근거 [[sources/close-after-413-observed]]).
-- pipelining: 한 응답을 다 보낸 뒤 `inBuf_`에 남은 바이트로 다음 요청 파싱을 시작한다 → [[concepts/connection-management]] "pipelining".
+- keep-alive 판단과 `DRAIN` 규칙 → [[concepts/connection-management]]. 본문을 다 읽지 않고 응답했으면 `DRAIN`을 거친다 ([[sources/close-after-413-observed]]).
+- pipelining: 응답을 다 보낸 뒤 `inBuf_`에 남은 바이트로 다음 요청을 파싱한다 → [[concepts/connection-management]] "pipelining".
 
 ## 6. 요청 파싱
 
 ```cpp
-class HeaderMap {                    // 이름 대소문자 무시, 같은 이름 여러 값 허용
+class HeaderMap {                    // 이름 대소문자 무시, 같은 이름 여러 값
 public:
     void add(const std::string& name, const std::string& value);
     bool has(const std::string& name) const;
     const std::string* first(const std::string& name) const;
-    std::vector<std::string> all(const std::string& name) const;
-    size_t count(const std::string& name) const;
+    std::vector<std::string> all(const std::string& name) const;   // Set-Cookie 여러 줄
+    size_t count(const std::string& name) const;                    // Host 중복 → 400
 };
 
 struct Request {
@@ -178,25 +297,39 @@ struct Request {
 
 class RequestParser {
 public:
-    enum Result { NEED_MORE, DONE, ERROR };
-    explicit RequestParser(const Limits& limits);
-    Result  feed(std::string& buf);  // buf 앞부분을 소비
-    int     errorStatus() const;     // ERROR일 때 400, 413, 414, 431, 501, 505 등
-    void    setMaxBodySize(size_t n);// 머리 완성 뒤 location 결정 후 호출
+    enum Result { NEED_MORE, HEAD_DONE, DONE, ERROR };
+    explicit RequestParser(const ParserLimits& limits);
+    Result  feed(std::string& buf);       // buf 앞부분을 소비
+    void    setMaxBodySize(size_t n);     // HEAD_DONE 뒤 location 결정 후 호출
+    int     errorStatus() const;          // 400, 413, 414, 431, 501, 505 등
     const Request& request() const;
-    void    reset();                 // keep-alive 다음 요청
+    void    reset();                      // 다음 요청
 };
 ```
 
-- 순서: 요청줄 → 헤더 → 본문 길이 결정 → 본문 → [[concepts/request-parsing]]. 코드 선택은 [[concepts/status-codes]].
-- 본문 상한은 location마다 다르므로, 머리를 다 읽은 뒤 `Router`가 location을 고르고 `setMaxBodySize`를 부른다. 그래서 `Content-Length`가 상한을 넘으면 본문을 읽기 전에 413을 낸다.
-- `HeaderMap`이 같은 이름 여러 값을 담는 것은 응답의 `Set-Cookie` 여러 줄 때문이다 (결정 8).
+- 순서: 요청줄 → 헤더 → 본문 길이 결정 → 본문 → [[concepts/request-parsing]]. 코드는 [[concepts/status-codes]].
+- 머리가 끝나면 `HEAD_DONE`을 돌려준다. `Connection`이 `RequestProcessor::bodyLimitFor(request)`로 location의 상한을 받아 `setMaxBodySize`를 부른 뒤 계속 넣는다. 그래서 `Content-Length`가 상한을 넘으면 본문을 읽기 전에 413을 낸다.
 
-## 7. 라우팅과 처리
+## 7. 요청 처리 (app, route, handler)
 
 ```cpp
+struct ProcessOutcome {
+    enum Kind { RESPONSE, CGI };
+    Kind        kind;
+    Response    response;          // RESPONSE
+    CgiProcess* cgi;               // CGI. 소유권이 호출자에게 넘어감
+};
+
+class RequestProcessor {
+public:
+    explicit RequestProcessor(const ListenContext& where);
+    size_t         bodyLimitFor(const Request& req) const;
+    ProcessOutcome process(const Request& req, IoRegistry& registry, CgiObserver& observer);
+    Response       errorResponse(int status) const;    // ErrorPageBuilder 사용
+};
+
 struct RouteResult {
-    enum Kind { STATIC_FILE, DIRECTORY_INDEX, AUTOINDEX, REDIRECT, UPLOAD, DELETE, CGI, ERROR };
+    enum Kind { STATIC_FILE, DIRECTORY_LISTING, REDIRECT, UPLOAD, DELETE, CGI, ERROR };
     Kind                  kind;
     const LocationConfig* location;
     std::string           fsPath;      // root 매핑 결과
@@ -213,9 +346,10 @@ public:
 };
 ```
 
-- `route()` 순서: 경로 정규화(`PathResolver`) → location 선택 → `return` → 메서드 검사(405 + `Allow`, 모르는 메서드 501) → CGI 확장자 → 업로드 POST → DELETE → 파일·디렉토리 → [[concepts/security]] "경로 정규화 절차", [[concepts/configuration-file]] "디렉토리 요청 처리 순서".
-- index 파일이 CGI 확장자면 index 경로로 `route()`를 다시 부른다. 내부 리다이렉트 횟수는 10회까지, 넘으면 500 (결정 6).
-- Handler는 상태가 없는 함수 묶음으로 둔다: `Response StaticHandler::serve(const RouteResult&, const Request&)` 등. CGI만 `CgiProcess`를 만든다.
+- `RequestProcessor::process`: `Router::route` → `RouteResult::Kind`에 따라 Handler 하나를 부른다. CGI면 `CgiProcess`를 만들어 `start`한 뒤 넘긴다. HEAD는 결과 `Response`의 본문 전송만 끈다 (결정 5).
+- `Router::route` 순서: 경로 정규화(`PathResolver`) → location 선택 → `return` → `limit_except` 검사 → CGI 확장자 → 업로드 POST → DELETE → 파일·디렉토리 → [[concepts/security]] "경로 정규화 절차", [[concepts/configuration-file]] "디렉토리 요청 처리 순서".
+- index 파일을 찾으면 그 경로로 `route`를 다시 부른다(CGI 확장자면 CGI가 된다). 다시 부르는 횟수는 `kMaxInternalRedirects`까지, 넘으면 500 (결정 6).
+- Handler는 상태가 없는 함수다: `Response StaticHandler::serve(const RouteResult&)`, `UploadHandler::store(const RouteResult&, const Request&)` 등. 인자는 2개 이하.
 - `ErrorPageBuilder::build(status, server)`: 설정된 에러 페이지 파일이 있으면 그 파일, 없거나 읽지 못하면 내장 기본 페이지 (raw/subject.md:143).
 
 ## 8. 응답
@@ -224,52 +358,65 @@ public:
 struct Response {
     int         status;
     HeaderMap   headers;
-    std::string body;
-    bool        headOnly;       // HEAD: 헤더는 GET과 같게, 본문은 보내지 않음
-    bool        closeAfter;     // Connection: close
+    std::string body;            // 메모리 본문
+    std::string bodyFile;        // 큰 정적 파일이면 경로 (body 대신)
+    size_t      bodyFileSize;
+    bool        omitBody;        // HEAD
 };
 
-std::string ResponseBuilder::serialize(const Response& res);   // 상태줄 + 헤더 + 본문
+class ResponseStream {           // 직렬화한 머리 + 본문(메모리 또는 파일)을 조금씩 내보낸다
+public:
+    void        reset(const Response& res, bool closeAfter);
+    bool        hasPending() const;
+    const char* data() const;    // 다음에 보낼 바이트
+    size_t      size() const;
+    void        consume(size_t n);   // send가 보낸 만큼. 비면 파일에서 다음 조각을 읽어 채운다
+};
 ```
 
-- `Content-Length`는 204를 빼고 항상 넣는다 → [[concepts/http-features]] "응답 헤더 규칙". 응답에 chunked는 쓰지 않는다: 정적 파일은 `stat` 크기, CGI 출력은 EOF까지 모은 뒤의 길이로 미리 알 수 있다.
+- `Content-Length`는 204를 빼고 항상 넣는다 → [[concepts/http-features]] "응답 헤더 규칙". 응답에 chunked는 쓰지 않는다: 정적 파일은 `stat` 크기, CGI 출력은 EOF까지 모은 뒤의 길이를 쓴다.
 - `Date` 헤더는 시간 함수 허용 여부가 정해지지 않아 보류한다 → [[concepts/http-features]] "Date 헤더와 허용 함수".
-- HEAD는 GET과 같은 처리 뒤 `headOnly`로 본문만 뺀다 (결정 5).
+- 일반 파일은 `poll()` 없이 읽어도 되지만 루프를 멈추게 하면 안 된다 (raw/subject.md:134, raw/evaluation-sheet-en.md:59). 그래서 `kInMemoryFileLimit`보다 큰 파일은 `ResponseStream`이 `kFileChunkSize`씩 나눠 읽는다.
 
-## 9. 정적 파일 읽기
-
-일반 파일은 `poll()` 없이 읽어도 되지만 루프를 멈추게 하면 안 된다 (raw/subject.md:134, raw/evaluation-sheet-en.md:59).
-
-- 작은 파일(예: 1MB 이하)은 한 번에 읽어 `Response.body`에 넣는다.
-- 큰 파일은 `FileSource`가 열어 두고, `Connection`이 `outBuf_`가 비어 갈 때마다 정해진 크기(예: 64KB)씩 읽어 채운다. `Content-Length`는 `stat` 크기로 미리 정한다.
-- 업로드 저장도 같은 방식으로 나눠 쓸지는 단계 6에서 정한다.
-
-## 10. CGI
+## 9. CGI
 
 ```cpp
+struct CgiContext {                 // CGI 실행에 필요한 값 묶음
+    const Request&       request;
+    const RouteResult&   route;
+    const ListenContext& where;     // 서버 이름·포트, 원격 주소
+};
+
+class CgiObserver {
+public:
+    virtual ~CgiObserver() {}
+    virtual void onCgiFinished(const Response& res) = 0;
+};
+
 class CgiProcess {
 public:
-    CgiProcess(const RouteResult& route, const Request& req, const ListenAddr& local,
-               const std::string& remoteAddr);
-    bool start(EventLoop& loop);        // pipe, fork, execve. 실패하면 false → 500
-    bool isFinished() const;
-    Response takeResponse();            // CgiOutputParser 결과 또는 502/504
-    void onTick(time_t now);            // 타임아웃이면 kill(SIGKILL)
-    void reap();                        // waitpid(pid, &st, WNOHANG)
+    CgiProcess(const CgiContext& ctx, IoRegistry& registry, CgiObserver& observer);
+    ~CgiProcess();                  // pipe unwatch·close
+    bool  start();                  // pipe, fork, execve. 실패하면 false → 500
+    void  checkTimeout(time_t now); // 넘으면 kill(SIGKILL) 후 observer에 504
+    pid_t releaseChild();           // 회수 책임을 ChildReaper로 넘김
 private:
-    pid_t       pid_;
-    CgiPipe*    stdinPipe_;             // 본문 쓰기 (EventLoop 소유)
-    CgiPipe*    stdoutPipe_;            // 출력 읽기 (EventLoop 소유)
-    std::string output_;
-    time_t      startedAt_;
+    void  onOutputClosed();         // EOF → CgiOutputParser → observer에 응답(또는 502)
+    // CgiPipe stdin_, stdout_ (값으로 보유), pid_t pid_, std::string output_, time_t startedAt_
 };
 ```
 
 - `CgiEnv`가 메타변수 배열을 만든다. php-cgi용 `REDIRECT_STATUS`·`SCRIPT_FILENAME`을 넣고 `REDIRECT_URL`은 넣지 않는다 → [[concepts/cgi]] "메타변수".
 - 자식: `dup2`로 표준 입출력 연결 → 필요 없는 fd 모두 `close` → 스크립트 디렉토리로 `chdir` → `execve`. `execve` 실패 시 자식 종료 방법은 [[analysis/subject-vs-evaluation]] 1.4절.
-- 출력 pipe는 `POLLHUP`만 와도 `read`해서 0(EOF)을 확인한다. 입력 pipe는 본문을 다 쓰면 닫는다 → [[concepts/cgi]] "1. 호출 절차" 설계 제약.
+- 출력 pipe는 `POLLHUP`만 와도 `read`해서 0(EOF)을 확인한다. 입력 pipe는 본문을 다 쓰면 닫는다 → [[concepts/cgi]] "1. 호출 절차".
 - 판정은 종료 코드가 아니라 출력으로 한다: 형식이 맞으면 그 응답, 아니면 502, 타임아웃이면 504 → [[concepts/cgi]] "5. 실패 처리".
-- `Connection`이 먼저 닫혀도 `CgiProcess`는 자식을 `kill`하고 회수할 때까지 남아 있어야 한다. 소유: `CgiProcess`는 별도 목록(`CgiRegistry`)이 갖고, `Connection`은 포인터만 쥔다.
+- `CgiProcess`는 `waitpid`를 하지 않는다. 출력이 끝났거나 `kill`한 자식의 pid를 `ChildReaper`에 넘기고, 회수는 `ChildReaper`가 바퀴마다 `WNOHANG`으로 한다. `Connection`이 먼저 닫혀도 같은 경로로 회수된다.
+
+## 10. 시그널
+
+- `Signals::install()`: `SIGPIPE` → `SIG_IGN`, `SIGINT`·`SIGTERM` → 플래그만 세우는 핸들러. `SIGCHLD`는 기본 동작 → [[concepts/resilience]] "시그널 처리".
+- 플래그(`volatile sig_atomic_t`)는 `Signals.cpp` 안의 파일 범위 변수다. 다른 곳은 `Signals::stopRequested()`로만 읽는다. 시그널 핸들러가 쓸 수 있는 곳이 전역뿐이라 전역 상태 금지의 예외로 둔다.
+- 종료: `run()`이 끝나면 `Server::shutdown()`(모든 연결 삭제 → 각 CGI 자식 `kill` 후 reaper로) → `ChildReaper::killAndReapAll()` → listen 소켓 `close` → `main` 반환. valgrind에서 "All heap blocks were freed"가 나와야 한다 ([[sources/valgrind-observed-sigint]]).
 
 ## 11. 에러 처리 방침
 
@@ -277,18 +424,13 @@ private:
 |---|---|
 | 설정 오류, listen 실패 (`bind` 등) | 원인 메시지를 stderr에 쓰고 종료 코드 1로 끝낸다 |
 | 요청 오류 (파싱, 라우팅) | 해당 4xx 응답. 연결 유지 여부는 [[concepts/connection-management]] |
-| 처리 중 서버 문제 (파일 열기 실패, `fork` 실패) | 500 (권한 문제면 403, 없으면 404) |
-| 메모리 부족 (`std::bad_alloc`) | 그 연결만 닫는다. 서버는 계속 돈다 |
+| 처리 중 서버 문제 (`fork`·`pipe` 실패, 파일을 읽지 못함) | 500. 파일이 없으면 404, 권한이 없으면 403 |
+| handler 안의 예외 (`std::bad_alloc` 등) | `EventLoop`가 잡아 `onFailure()` → 그 연결만 닫는다 |
 | 소켓 I/O -1·0 | 그 연결만 닫는다 |
 
-- 예외는 설정 파싱과 handler 내부에서만 쓰고, `EventLoop::dispatch`가 handler 하나에서 나온 예외를 잡아 그 handler만 정리한다. 서버 프로세스는 어떤 요청에도 끝나지 않아야 한다 (raw/evaluation-sheet-en.md:24).
+- 예외는 설정 파싱과 요청 처리 내부에서만 던진다. 서버 프로세스는 어떤 요청에도 끝나지 않아야 한다 (raw/evaluation-sheet-en.md:24).
 
-## 12. 시그널
-
-- `SIGPIPE` → `SIG_IGN`. `SIGINT`·`SIGTERM` → 핸들러가 `volatile sig_atomic_t` 플래그만 세운다. `SIGCHLD`는 기본 동작 → [[concepts/resilience]] "시그널 처리".
-- 종료 시: 모든 CGI 자식 `kill` + `waitpid`, 모든 fd `close`, 모든 handler `delete` 뒤 `main`에서 반환한다 (valgrind에서 "All heap blocks were freed"가 나와야 함, [[sources/valgrind-observed-sigint]]).
-
-## 13. 상수 (초기값, 시험하며 조정)
+## 12. 상수 (초기값, 시험하며 조정)
 
 | 이름 | 값 | 비고 |
 |---|---|---|
@@ -303,11 +445,32 @@ private:
 | `kCgiTimeout` | 10초 | 무한 루프 스크립트 시연 |
 | `kDrainIdle` / `kDrainTotal` | 1초 / 5초 | 413 실측에서 쓴 값 |
 | `kMaxInternalRedirects` | 10 | NGINX와 같음 |
-| `kDefaultMaxBodySize` | 1MB | NGINX 기본값과 같음 |
+| `kDefaultMaxBodySize` | 1MB | NGINX 기본값 `1m`과 같음 |
+| `kInMemoryFileLimit` | 1MB | 넘으면 나눠 읽음 |
+| `kFileChunkSize` | 65536 | |
+
+## 13. 설계 원칙 대조
+
+`~/.claude/rules/engineering.md`의 원칙과 이 설계를 대조한 결과다.
+
+| 원칙 | 설계에서 지킨 방법 |
+|---|---|
+| SRP | `Connection`은 I/O·상태만, 처리 조율은 `RequestProcessor`, 본문 출처는 `ResponseStream`, 자식 회수는 `ChildReaper` |
+| 리소스 해제 | 모든 객체에 소유자가 하나 (4절 표). `EventLoop`는 소유하지 않는다 |
+| DIP·낮은 결합도 | `EventLoop`는 `IoHandler`·`LoopObserver`만 안다. `cgi`는 `IoRegistry`·`CgiObserver` 인터페이스만 안다 |
+| 파라미터 4개 이하 | `ListenContext`, `CgiContext`로 묶었다 |
+| 높은 응집도·YAGNI | 공용 `util/`과 로그 모듈을 두지 않는다 |
+| 매직 넘버 금지 | 12절 상수 |
+
+의도한 예외:
+- **OCP**: `RequestProcessor`는 `RouteResult::Kind`로 분기한다. 처리 방식이 7개로 고정이고 늘어날 계획이 없어, Handler 인터페이스 계층보다 분기 하나가 읽기 쉽다 (KISS, 우선순위상 가독성이 유지보수성보다 앞섬).
+- **전역 상태**: 시그널 플래그 하나 (10절).
+- **데메테르**: 설정 구조체(`LocationConfig` 등)는 행동 없는 데이터라 필드를 직접 읽는다. 행동이 있는 객체끼리는 체인 호출을 하지 않는다.
 
 ## 14. 정해야 할 것
 
-- 설정 파일 문법의 세부 (지시자 이름, 단위 표기 `1m` 지원 여부). NGINX와 같게 할지 단순화할지.
-- 업로드 저장을 한 번에 쓸지 나눠 쓸지 (9절).
+- **`root` 매핑 방식.** subject 예시는 location prefix를 떼고 root에 붙이는데 (raw/subject.md:169), 이것은 NGINX `alias` 방식이고 NGINX `root`는 URI 전체를 붙인다 → [[concepts/configuration-file]] "subject 예시는 NGINX alias 방식". NGINX 문법을 따르기로 했으므로 (a) `root`는 NGINX대로, subject 방식은 `alias`로 둘 다 지원하거나, (b) `root` 하나만 두고 subject 방식으로 동작시키는 것 중 하나를 정해야 한다.
+
+- 업로드 저장을 한 번에 쓸지 나눠 쓸지 (단계 6에서).
 - 위 상수 값.
 - `Date` 헤더를 보낼지 (`<ctime>` 사용을 평가자와 합의할지).
