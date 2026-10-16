@@ -143,9 +143,34 @@ updated: 2026-10-16
 | P-21 | 파서 비용이 입력 길이에 비례한다. 작은 chunk가 많아도 recv 1번 처리가 루프를 오래 붙잡지 않는다 | raw/subject.md:148 (항상 가용). 파서 비용과 잇는 것은 **판단** | M | 1바이트 chunk 6MB 처리 CPU 시간 | 측정 (scratch 벤치마크, 최적화 없는 빌드): 1바이트 chunk 6MB가 1.6초 → 0.2초 (2026-10-16) | 확인. 테스트로 남기지 않음(시간 측정은 기계마다 다르다) |
 | P-20 | telnet·curl로 시연할 수 있다 | raw/evaluation-sheet-en.md:77 | M | 시연 절차 | 없음 | 나중 (9단계) |
 
-## 4단계 이후 (단계를 시작할 때 채운다)
+## 4. 라우팅, 정적 파일, 응답
 
-- 4. 라우팅·정적 파일·응답: 가장 긴 prefix 매칭, `root`·`alias` 경로, index, autoindex, 리다이렉트, 기본 에러 페이지, `Date`, HEAD
+읽은 위키: [[analysis/implementation-plan]] 4단계, [[analysis/design]] 1·2·7·8절, [[concepts/http-features]], [[concepts/configuration-file]], [[concepts/security]] 1절, [[concepts/status-codes]], [[sources/nginx-observed-directory]]. 위키에 없던 선택은 [[analysis/design]] 7절 "구현 세부"에 적는다.
+
+| ID | 요구사항 | 근거 | 수준 | 기대 결과 | 현재 테스트 | 상태 |
+|---|---|---|---|---|---|---|
+| R-01 | 경로 정규화: 세그먼트로 나눈 뒤 `%XX`를 한 번만 디코딩, 잘못된 `%`·`%00`·`%2F`는 400, 연속 `/` 합치기, `.`·`..` 제거, 루트 위로 가면 400 + 닫기 | raw/rfc3986.txt:647-652, raw/rfc3986.txt:767-771, raw/rfc3986.txt:2443-2445, raw/rfc3986.txt:689-691, [[concepts/security]] "경로 정규화 절차", [[analysis/design-decisions]] 2·3 | U, I | 정규화 결과와 400 | `path_resolver_test.cpp` 6개, `router_test.cpp` `r01_r02_*`, `test_static.py` `test_r01_bad_paths_are_400` | 있음 |
+| R-02 | location은 정규화한 경로의 가장 긴 prefix | raw/nginx-core-module.md:1067 | U | 3단계 `router_test.cpp`를 정규화 경로로 | `router_test.cpp` `routerPicksTheLongestPrefix`, `r01_r02_routesTheNormalizedPath` | 있음 |
+| R-03 | `root`는 URI 전체를 붙이고, `alias`는 location 부분을 바꿔 끼운다 (subject 예시는 alias) | raw/nginx-core-module.md:1504-1516, raw/nginx-core-module.md:132-140, raw/subject.md:169 | U, I | `/kapouet/pouic/toto/pouet` → `/tmp/www/pouic/toto/pouet` | `router_test.cpp` `r03_rootAndAliasMapping`, `test_static.py` `test_r03_alias_follows_the_subject_example` | 있음 |
+| R-04 | `return`은 그 코드와 `Location`으로 응답 | raw/subject.md:168, raw/rfc9110.txt:7378-7379 | U, I | 301 + `Location: /new/` | `router_test.cpp` `r04_returnRedirects`, `test_static.py` `test_r04_return_redirects` | 있음 |
+| R-05 | 라우트에서 막은 메서드는 405 + `Allow` (MUST) | raw/rfc9110.txt:7603-7607, raw/evaluation-sheet-en.md:73 | U, I | 405, `Allow`에 그 location이 받는 메서드 | `router_test.cpp` `r05_r19_*`, `test_static.py` `test_r05_r19_method_not_allowed_has_allow` | 있음 |
+| R-06 | 파일 GET은 200, `Content-Length`(SHOULD), 확장자로 정한 `Content-Type`(SHOULD) | raw/rfc9110.txt:3243-3246, raw/rfc9110.txt:2944-2949 | I | 파일 내용 그대로 | `http_date_test.cpp` `r06_mimeTypeByExtension`, `test_static.py` `test_r06_file_with_type_and_length` | 있음 |
+| R-07 | HEAD는 본문 없이 GET과 같은 헤더. `Content-Length`도 GET 값 | raw/rfc9110.txt:3987-3988, raw/rfc9110.txt:3993-3994, raw/rfc9110.txt:3226-3230, [[analysis/design-decisions]] 5 | I | 본문 0바이트, 헤더는 GET과 같음 | `response_stream_test.cpp` `r07_*`, `test_static.py` `test_r07_head_has_get_head_without_body` | 있음 |
+| R-08 | 없는 파일은 404 | raw/rfc9110.txt:7589-7591, raw/evaluation-sheet-en.md:100 | I | 404 | `router_test.cpp` `r08_missingFileIs404`, `test_static.py` `test_r08_r14_*` | 있음 |
+| R-09 | 읽을 수 없는 파일은 403 | raw/rfc9110.txt:7571-7572, [[concepts/status-codes]] | I | 403 (컨테이너는 root라 macOS에서만 의미 있음) | `test_static.py` `test_r09_unreadable_file_is_403` (root면 건너뜀: 컨테이너에서는 돌지 않고 macOS에서 확인) | 있음 |
+| R-10 | 끝에 `/` 없는 디렉토리 요청은 `/`를 붙인 경로로 301 (**판단**, NGINX 실측과 같음) | [[concepts/configuration-file]] "디렉토리 요청 처리 순서", [[sources/nginx-observed-directory]] | I | 301 + `Location: /dir/` | `router_test.cpp` `r10_r11_r12_r13_directories`, `test_static.py` `test_r10_*` | 있음 |
+| R-11 | 디렉토리 요청에는 index 파일을 적은 순서대로 찾아 준다 | raw/subject.md:171, raw/evaluation-sheet-en.md:72 | I | index 내용 | `router_test.cpp` `r10_r11_r12_r13_directories`, `test_static.py` `test_r11_*` | 있음 |
+| R-12 | index가 없고 `autoindex on`이면 HTML 목록 | raw/subject.md:170, raw/evaluation-sheet-en.md:101 | I | 200, 파일 이름이 링크로 나온다. 이름은 HTML 이스케이프 | `router_test.cpp` `r10_r11_r12_r13_directories`, `test_static.py` `test_r12_listing_escapes_names` | 있음 |
+| R-13 | index가 없고 `autoindex off`면 403 (**판단**, NGINX 실측과 같음) | [[concepts/status-codes]] | I | 403 | `router_test.cpp` `r10_r11_r12_r13_directories`, `test_static.py` `test_r13_*` | 있음 |
+| R-14 | 설정한 에러 페이지가 있으면 그 파일, 없으면 기본 에러 페이지 | raw/subject.md:143, raw/subject.md:164, raw/evaluation-sheet-en.md:69 | I | 404에 설정한 파일 내용, 상태 코드는 404 그대로 | `test_static.py` `test_r08_r14_*` (설정한 파일), `test_r14_default_error_page_without_configuration` | 있음 |
+| R-15 | 2xx·3xx·4xx 응답에 `Date` (MUST, 시계가 있으므로). 형식은 IMF-fixdate | raw/rfc9110.txt:2313-2317, raw/rfc9110.txt:1855-1858, raw/rfc9110.txt:1873-1895, [[analysis/design-decisions]] 10 | U, I | `Sun, 06 Nov 1994 08:49:37 GMT` 형식 | `http_date_test.cpp` `r15_formatsImfFixdate`, `test_static.py` `test_r15_responses_carry_date` | 있음 |
+| R-16 | 큰 파일은 나눠 읽어 보낸다. 루프를 멈추지 않는다 | raw/subject.md:134, raw/evaluation-sheet-en.md:59, 설계 8절 | I | 10MB 파일이 그대로 도착 | `response_stream_test.cpp` `r16_streamsLargeFileInPieces`, `test_static.py` `test_r16_large_file_arrives_intact` (10MB) | 있음 |
+| R-17 | 여러 포트에서 서로 다른 사이트 | raw/subject.md:149, raw/evaluation-sheet-en.md:107 | I | 포트마다 다른 root의 내용 | `test_static.py` `test_r17_ports_serve_different_sites` | 있음 |
+| R-18 | 정적 웹사이트를 브라우저로 끝까지 본다 | raw/subject.md:145, raw/evaluation-sheet-en.md:99 | M | 시연용 `www/` | 없음 | 나중 (9단계 시연 자료와 함께) |
+| R-19 | 4단계에서 POST·DELETE는 정적 리소스에 대해 405 (업로드·삭제는 6단계) | 설계 7절 순서 | I | 405 + `Allow` | `router_test.cpp` `r05_r19_*`, `test_static.py` `test_r05_r19_*`, `test_requests.py` P-16·P-17 (POST가 405) | 있음. 6단계에서 바뀐다 |
+
+## 5단계 이후 (단계를 시작할 때 채운다)
+
 - 5. keep-alive·pipelining·DRAIN
 - 6. 업로드(`multipart/form-data`, 415)와 DELETE
 - 7. CGI: GET·POST, chunked 본문, 실행 디렉토리, 무한 루프(504), 에러 스크립트(502)

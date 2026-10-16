@@ -397,6 +397,15 @@ public:
 - 업로드는 본문 전체가 메모리에 모인 뒤(`client_max_body_size`로 상한, `Content-Length`를 알면 그만큼 `reserve`) 파일 하나를 `open` → `write`(다 쓸 때까지 반복) → `close`로 한 번에 저장한다. 일반 파일이라 `poll()`이 필요 없다 (raw/subject.md:134). 구현이 단순한 쪽으로 정했다 (사용자 결정, 2026-10-16).
 - Handler는 상태가 없는 함수다: `Response StaticHandler::serve(const RouteResult&)`, `UploadHandler::store(const RouteResult&, const Request&)` 등. 인자는 2개 이하.
 - `ErrorPageBuilder::build(status, server)`: 설정된 에러 페이지 파일이 있으면 그 파일, 없거나 읽지 못하면 내장 기본 페이지 (raw/subject.md:143).
+- 구현 세부 (단계 4, 2026-10-16, **판단**. 기준은 결정 13의 "요구사항에 부합하고 안전한 쪽"):
+  - Router는 3단계에서 `http/`에 만들었던 것을 설계대로 `route/`로 옮긴다. `bodyLimitFor`는 `RequestProcessor`로 옮기고 정규화한 경로로 location을 찾는다. 정규화가 실패하거나 맞는 location이 없는 요청은 기본 상한(1MB)으로 본문을 받은 뒤 라우팅에서 400·404로 답한다(머리 단계에서 따로 끊는 경로를 두지 않아 단순하다).
+  - `root`·`alias`가 상대 경로면 서버를 실행한 디렉토리 기준이다(시계 파일과 같은 기준).
+  - 에러 페이지 URI는 같은 server의 location 매핑(root·alias)으로 파일 경로를 만든다. 일반 파일이 아니거나 읽지 못하면 내장 기본 페이지를 쓴다. 에러 페이지를 처리하다 다시 에러가 나도 다시 찾지 않으므로 반복이 생기지 않는다.
+  - `Content-Type`: 확장자 표(html, htm, css, js, json, txt, png, jpg, jpeg, gif, svg, ico, pdf). 표에 없으면 `application/octet-stream`. NGINX 문서의 기본값은 `text/plain`이지만 (raw/nginx-core-module.md:386), 모르는 내용을 브라우저가 글자로 해석하지 않게 하는 쪽을 골랐다. RFC도 `Content-Type`이 없을 때 수신자가 이 타입으로 볼 수 있다고 한다 (raw/rfc9110.txt:2944-2949).
+  - 디렉토리 목록은 이름만 보인다(크기·시각 없음, [[concepts/configuration-file]] "디렉토리 요청 처리 순서"의 판단). 이름은 HTML 이스케이프하고 링크는 퍼센트 인코딩한다. `.`으로 시작하는 이름도 보이되 `.`과 `..`은 뺀다.
+  - 심볼릭 링크가 root 밖을 가리키는지는 확인하지 못한다. 허용 함수(raw/subject.md:113)에 `lstat`·`realpath`·`readlink`가 없다. URI의 `..`는 정규화에서 막는다.
+  - 4단계의 POST·DELETE: 업로드·삭제 처리는 6단계라서, 그 전까지는 정적 리소스가 받지 않는 메서드로 보고 405와 `Allow: GET, HEAD`를 보낸다.
+  - `Connection: close`는 5단계(keep-alive)까지 모든 응답에 붙인다.
 
 ## 8. 응답
 
