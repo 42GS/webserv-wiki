@@ -87,4 +87,4 @@ updated: 2026-10-16
 | [[analysis/design]] | 클래스·인터페이스 설계 — 파일 배치, 모듈 책임, 설정 구조체, `IoHandler`/`EventLoop`, Connection 상태기계와 상태별 타임아웃, 파서·라우터·응답·CGI 인터페이스, 에러 처리, 상수 |
 | [[analysis/implementation-plan]] | 구현 순서 10단계(뼈대 → 설정 파서 → 이벤트 루프 → 요청 파서 → 라우팅·정적 → 연결 관리 → 업로드·DELETE → CGI → 안정성 → 시연 준비)와 모듈 구조, 단계별 완료 기준 |
 | [[analysis/test-plan]] | 테스트 계획 — 요구사항 한 줄마다 근거·테스트 수준(단위·통합·코드 읽기·수동)·기대 결과·현재 테스트·상태. 0~2단계 상세, 일부러 틀린 코드로 실패 확인 |
-| [[analysis/design-decisions]] | 사용자가 정한 설계 결정 12건 (poll, `..`·`%2F` 400, virtual host 미구현, HEAD 지원, index→CGI, 업로드는 multipart만, 세션은 CGI 예제, NGINX 설정 문법, 파일 시계·`Date`, 본문 상한 100MB, CGI 자식 `std::exit`)과 근거·구현 영향 |
+| [[analysis/design-decisions]] | 사용자가 정한 설계 결정 13건 (poll, `..`·`%2F` 400, virtual host 미구현, HEAD 지원, index→CGI, 업로드는 multipart만, 세션은 CGI 예제, NGINX 설정 문법, 파일 시계·`Date`, 본문 상한 100MB, CGI 자식 `std::exit`, `listen`은 `IPv4:port`·`port`만)과 근거·구현 영향 |
