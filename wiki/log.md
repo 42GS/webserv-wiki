@@ -373,3 +373,8 @@
 - 생성: raw/close-after-413-observed.md (시험 서버·클라이언트 소스, 스크립트, 두 OS 출력 그대로), sources/close-after-413-observed
 - 갱신: concepts/connection-management (모순 콜아웃에 실측과 버리기 상한), analysis/subject-vs-evaluation (1.5절 실측 추가, 6절 미확인 삭제), overview (종합 판단 보강, 열린 질문 삭제, 근거 소스), index
 - 메모: 바로 `close()`하면 macOS에서 reset이 나고 curl 1회가 응답을 받지 못했다 (raw/close-after-413-observed.md:359-363, raw/close-after-413-observed.md:370-374). 읽고 버리다가 `close()`하면 두 OS 12/12 수신 (raw/close-after-413-observed.md:225-256, raw/close-after-413-observed.md:388-419). macOS에서는 버린 실행이 두 번 있었다(서버 기동 대기 부족, `timeout` 명령 없음). raw에 사유를 적었다. curl 응답 파일을 시도마다 지우지 않아 `body=` 값은 판정에 쓰지 않았다.
+
+## [2026-10-16] query | 구현 순서 정리
+- 생성: analysis/implementation-plan (모듈 구조, 단계 0~9, 단계별 완료 기준, 관련 concept 링크)
+- 갱신: index, overview
+- 메모: 사용자 요청 — 위키 조사가 구현 목적에 비해 깊어져 조사를 멈추고 구현 순서로 정리했다. 남은 미확인 중 코드에 영향 없는 것(x86_64 `O_NDELAY`, siege 나머지 소스)은 진행하지 않는다.

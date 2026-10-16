@@ -83,4 +83,5 @@ updated: 2026-10-16
 | 페이지 | 요약 |
 |---|---|
 | [[analysis/subject-vs-evaluation]] | 모순·제약(EAGAIN vs errno, HEAD, 허용 함수 범위(Date·exit), half-close, HTTP 버전, REMOTE_ADDR, read/write 외 errno, waitpid 매크로, /dev/urandom, fcntl 허용 목록, POSIX poll vs macOS 실측), 정리본 vs 원문 차이표, 해소된 미확인 |
+| [[analysis/implementation-plan]] | 구현 순서 10단계(뼈대 → 설정 파서 → 이벤트 루프 → 요청 파서 → 라우팅·정적 → 연결 관리 → 업로드·DELETE → CGI → 안정성 → 시연 준비)와 모듈 구조, 단계별 완료 기준 |
 | [[analysis/design-decisions]] | 사용자가 정한 설계 결정 8건 (poll, `..`·`%2F` 400, virtual host 미구현, HEAD 지원, index→CGI, 업로드는 multipart만, 세션은 CGI 예제)과 근거·구현 영향 |
