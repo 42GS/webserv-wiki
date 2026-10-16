@@ -22,19 +22,24 @@ conf/                 시연용 설정 파일 (기능별)
 www/                  시연용 정적 사이트, 에러 페이지, CGI 스크립트
 src/
   main.cpp
-  config/   ConfigLexer  ConfigParser  ServerConfig  LocationConfig  SizeParser
-  core/     EventLoop  IoHandler  IoRegistry  LoopObserver  Server  Listener  ChildReaper  Signals  Clock  HttpDate
-  http/     Connection  Request  RequestParser  HeaderMap  Response  ResponseStream  StatusCodes  MimeTypes
+  config/   ConfigLexer  ConfigSyntax  DirectiveRules  ConfigBuilder  ServerBuilder  LocationBuilder
+            SharedSettings  ConfigValues  ConfigLimits  ConfigLoader  ConfigError  ServerConfig  BuildContext
+  core/     EventLoop  IoHandler  Server  Listener  ListenContext  SocketAddress  ChildReaper  Signals  Clock
+            HttpDate  Limits
+  fs/       FileInfo  FileReader
+  http/     Connection  Request  RequestParser  HeaderMap  Response  ResponseStream  StatusCodes  StatusText
+            MimeTypes  Methods  Hex
   app/      RequestProcessor  ProcessOutcome
   route/    Router  RouteResult  PathResolver
-  handler/  StaticHandler  AutoindexHandler  UploadHandler  DeleteHandler  ErrorPageBuilder
+  handler/  StaticHandler  AutoindexHandler  UploadHandler  DeleteHandler  StatusPage
   cgi/      CgiProcess  CgiContext  CgiEnv  CgiPipe  CgiOutputParser  CgiObserver
 tests/                Python 테스트 스크립트
 ```
 
 - 헤더는 `include/<모듈>/`, 소스는 `src/<모듈>/`에 같은 이름으로 둔다(`-Iinclude`, 2026-10-16 사용자 요청). 단위 테스트는 `tests/unit/`, `make test`로 실행한다. 코드 포맷은 clang-format Google 스타일(`Standard: c++03`)이고 `make format`으로 맞춘다 (2026-10-16 사용자 선택).
 - config 모듈은 단계 1 리팩토링에서 `ConfigLexer` → `ConfigSyntax` → `ConfigBuilder`(서버 목록·listen 충돌) → `ServerBuilder`·`LocationBuilder`(값 해석)로 나눴다. 지시자의 위치·인자 수·블록 여부·반복 가능 여부는 `DirectiveRules`의 표 하나에 있다.
-- 공용 `util/`은 두지 않는다. 문자열 처리 같은 도우미는 그것을 쓰는 모듈 안에 둔다. 두 모듈 이상에서 같은 이유로 쓰게 되면 그때 뺀다.
+- 공용 `util/`은 두지 않는다. 문자열 처리 같은 도우미는 그것을 쓰는 모듈 안에 둔다. 두 모듈 이상에서 같은 이유로 쓰게 되면 그때 뺀다. 이 규칙으로 4단계 리뷰 뒤에 파일 종류 확인과 파일 읽기를 `fs/`로, 16진수 해석을 `http/Hex`로 뺐다.
+- 상수와 자료형은 `.cpp`가 아니라 헤더에 둔다 (2026-10-16 사용자 요청). 상태 코드는 `http/StatusCodes.hpp`, 12절의 조정용 값은 `core/Limits.hpp`(본문 상한은 `config/ConfigLimits.hpp`), 나머지는 그것을 쓰는 컴포넌트의 헤더에 컴포넌트 이름의 namespace로 둔다(예: `request_parser::`, `http_date::`).
 - 로그 모듈은 필요해질 때 만든다.
 
 ## 2. 모듈과 책임
@@ -46,6 +51,7 @@ tests/                Python 테스트 스크립트
 | `http` | 연결의 소켓 I/O와 상태 전이, 요청 파싱, 응답 직렬화 | 요청을 어떻게 처리할지 결정 |
 | `app` | 완성된 요청 하나를 받아 응답 또는 CGI 실행으로 바꾼다 (Router → Handler 조율) | 소켓 I/O |
 | `route` | 요청 + 설정 → 처리 방식 결정 (경로 정규화, location 선택, 메서드 검사) | 실제 처리 |
+| `fs` | 파일 종류·크기·읽기 권한 확인, 작은 일반 파일 읽기 (config·route·handler가 같이 씀) | 경로 결정, 응답 |
 | `handler` | 결정된 방식대로 응답을 만든다 (정적 파일, 리스팅, 업로드, 삭제, 에러 페이지) | 소켓 I/O |
 | `cgi` | 자식 프로세스 실행, pipe I/O, CGI 출력 → `Response` | 소켓 I/O, 자식 회수 |
 
@@ -353,7 +359,7 @@ public:
   - chunk 확장은 무시하고, chunk 크기 줄 하나의 길이에 상한(`kMaxChunkLine` 4096)을 두어 넘으면 400. trailer는 버리되 헤더 상한 안에서만 받는다.
   - 3단계에서는 오류 응답 뒤 항상 연결을 닫는다. keep-alive와 본문 버리기(DRAIN)는 5단계.
   - 본문 상한을 고르는 location은 `Router::matchLocation`(가장 긴 prefix)으로 찾는다. 3단계에서는 디코딩 전 경로로 찾고, 4단계에서 정규화한 경로로 바꾼다. 맞는 location이 없으면(그 요청은 404가 된다) NGINX 기본값 1MB를 쓴다.
-  - 3단계의 오류 응답 본문은 "코드 reason-phrase" 한 줄이다. 에러 페이지(`ErrorPageBuilder`)와 `Date`는 4단계.
+  - 3단계의 오류 응답 본문은 "코드 reason-phrase" 한 줄이다. 에러 페이지와 `Date`는 4단계.
 
 ## 7. 요청 처리 (app, route, handler)
 
@@ -370,7 +376,7 @@ public:
     explicit RequestProcessor(const ListenContext& where);
     size_t         bodyLimitFor(const Request& req) const;
     ProcessOutcome process(const Request& req, IoRegistry& registry, CgiObserver& observer);
-    Response       errorResponse(int status) const;    // ErrorPageBuilder 사용
+    Response       errorResponse(int status) const;    // buildStatusPage 사용
 };
 
 struct RouteResult {
@@ -396,7 +402,7 @@ public:
 - index 파일을 찾으면 그 경로로 `route`를 다시 부른다(CGI 확장자면 CGI가 된다). 다시 부르는 횟수는 `kMaxInternalRedirects`까지, 넘으면 500 (결정 6).
 - 업로드는 본문 전체가 메모리에 모인 뒤(`client_max_body_size`로 상한, `Content-Length`를 알면 그만큼 `reserve`) 파일 하나를 `open` → `write`(다 쓸 때까지 반복) → `close`로 한 번에 저장한다. 일반 파일이라 `poll()`이 필요 없다 (raw/subject.md:134). 구현이 단순한 쪽으로 정했다 (사용자 결정, 2026-10-16).
 - Handler는 상태가 없는 함수다: `Response StaticHandler::serve(const RouteResult&)`, `UploadHandler::store(const RouteResult&, const Request&)` 등. 인자는 2개 이하.
-- `ErrorPageBuilder::build(status, server)`: 설정된 에러 페이지 파일이 있으면 그 파일, 없거나 읽지 못하면 내장 기본 페이지 (raw/subject.md:143).
+- `buildStatusPage(status, configuredPages, router)` (`handler/StatusPage`): 설정된 에러 페이지 파일이 있으면 그 파일, 없거나 읽지 못하면 내장 기본 페이지 (raw/subject.md:143). 리다이렉트 응답의 본문도 이것으로 만든다. 4단계 리뷰에서 `ErrorPageBuilder`에서 이름을 바꾸고, Router를 매번 만들지 않고 `RequestProcessor`의 것을 받게 했다.
 - 구현 세부 (단계 4, 2026-10-16, **판단**. 기준은 결정 13의 "요구사항에 부합하고 안전한 쪽"):
   - Router는 3단계에서 `http/`에 만들었던 것을 설계대로 `route/`로 옮긴다. `bodyLimitFor`는 `RequestProcessor`로 옮기고 정규화한 경로로 location을 찾는다. 정규화가 실패하거나 맞는 location이 없는 요청은 기본 상한(1MB)으로 본문을 받은 뒤 라우팅에서 400·404로 답한다(머리 단계에서 따로 끊는 경로를 두지 않아 단순하다).
   - `root`·`alias`가 상대 경로면 서버를 실행한 디렉토리 기준이다(시계 파일과 같은 기준).
@@ -488,6 +494,8 @@ private:
 
 ## 12. 상수 (초기값, 시험하며 조정)
 
+코드에서는 `core/Limits.hpp`의 `limits::`에 있다(본문 상한 두 개는 `config/ConfigLimits.hpp`의 `config_limits::`). 아직 쓰지 않는 값(keep-alive, CGI, DRAIN)은 그 단계에서 넣는다.
+
 | 이름 | 값 | 비고 |
 |---|---|---|
 | `kPollTimeoutMs` | 1000 | 타이머 점검 주기 |
@@ -505,8 +513,11 @@ private:
 | `kDefaultMaxBodySize` | 1MB | NGINX 기본값 `1m`과 같음 |
 | `kMaxBodySizeCeiling` | 100MB | 설정 허용 상한 (결정 11) |
 | `kInMemoryFileLimit` | 1MB | 넘으면 나눠 읽음 |
-| `kFileChunkSize` | 65536 | |
+| `kFileChunkSize` | 65536 | 나눠 보내는 파일의 `read` 1번 크기 |
+| `kFileReadSize` | 65536 | 통째로 읽는 작은 파일의 `read` 1번 크기 |
+| `kMaxErrorPageSize` | 1MB | 설정한 에러 페이지 파일 상한. 넘으면 내장 페이지 |
 | `kClockFile` | `.webserv_clock` | 실행 디렉토리 기준 |
+| `kDefaultConfigPath` | `conf/default.conf` | 인자가 없을 때 |
 
 ## 13. 설계 원칙 대조
 
