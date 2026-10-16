@@ -444,3 +444,7 @@
 ## [2026-10-17] query | 2차 코드 리뷰와 수정
 - 갱신: [[analysis/design-decisions]] 14(alias 경계), [[analysis/test-plan]] (R-20·R-21·C-29), [[concepts/security]] 1절(정규화 뒤 alias 이어 붙이기)
 - 메모: 리팩토링 뒤 코드를 다시 읽었다. 실측으로 확인한 보안 문제: `location /k { alias dir/; }`에 `/k../x`가 alias 밖 파일을 200으로 보냈다 → alias location은 경로 경계에서만 맞춤 (webserv `3640847`). `index ../x;` 설정도 root 밖 파일을 보냈다 → `index`에 `/` 금지 (`c949f89`). HEAD 요청의 오류 응답(413·408 등)에 본문이 실렸다 → 모든 응답이 `RequestProcessor::finish`를 거치게 함 (`228de8d`). 메서드·헤더 이름 상수 `http/HeaderNames.hpp` (`de1e6d7`), 쓰지 않는 `RouteResult::location` 제거 (`2065ce7`). 단위 79, 통합 52(Ubuntu에서 root라 1개 건너뜀) 통과, 각 수정은 일부러 되돌려 테스트 실패를 확인.
+
+## [2026-10-17] query | 테스트 코드 상수 규칙, 3·4차 코드 리뷰
+- 갱신: [[analysis/test-plan]] (N-25)
+- 메모: 테스트 코드에도 상수·자료형은 헤더에 두는 규칙을 적용했다(webserv `639247b` C++ `tests/unit/TestConstants.hpp`·`EventLoopDoubles.hpp`, `dedbfc1` Python은 헤더가 없어 `tests/integration/constants.py`). 3차 리뷰: 이벤트 처리 밖(타임아웃 점검, poll 목록 만들기)의 예외가 `std::terminate`로 이어질 수 있었다 → 연결 단위로 잡고 `main`에서 마지막으로 잡음 (`785f4f2`). 테스트로 만들 수 없어 예외를 일부러 넣은 빌드로 확인했다. 4차 리뷰에서 허용 함수 목록 밖 C 함수(`memset`·`strchr`·`strlen`·`<cctype>`)와 읽지 않는 `ListenContext` 필드를 찾았다(사용자 결정 대기).

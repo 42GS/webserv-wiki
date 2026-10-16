@@ -111,6 +111,7 @@ updated: 2026-10-17
 | N-21 | 디스크 파일의 동기 I/O가 루프를 멈추지 않는다 | raw/evaluation-sheet-en.md:59 | R | 설정 파일은 시작 때만, 시계 파일은 바퀴마다 1바이트 | 코드 읽기 2026-10-16: `src/main.cpp:34` 시작 때 설정 읽기. 시계는 `Clock::refresh` | 확인. 4단계 정적 파일에서 다시 본다 |
 | N-22 | 메모리가 부족해도 크래시하지 않는다 | raw/subject.md:46 | R, M | 할당 실패가 예외로 오면 그 연결만 정리 | 코드 읽기: `Server::adopt`가 생성 실패를 잡고, `onEvent` 예외는 `onFailure`로 간다 (N-14). 다만 Ubuntu 컨테이너에서 메모리가 바닥나면 `bad_alloc` 없이 프로세스가 강제 종료됐다 (raw/design-checks-observed.md:119-123) | 부족: 예외가 오지 않는 경우는 본문 상한(결정 11)으로만 막는다 |
 | N-24 | 헤더 수신 타임아웃은 받기 시작한 때부터 잰다. 바이트를 조금씩 계속 보내도 연장되지 않는다 (본문·전송은 무입력·무진행 기준) | raw/subject.md:139, 설계 12절 | I | 5초마다 1바이트씩 보내도 약 30초 뒤 408 | `test_connections.py` `test_n24_trickled_head_still_times_out` (느린 테스트, 5초마다 1바이트) | 있음 |
+| N-25 | 이벤트 처리 밖(타임아웃 점검, poll 목록 만들기)에서 난 예외도 프로세스를 비정상 종료시키지 않는다. 연결 하나에서 나면 그 연결만 닫고, 그 밖이면 원인을 출력하고 종료 코드 1 | raw/subject.md:46, raw/evaluation-sheet-en.md:24 | R | `Server::afterIteration`이 연결마다 예외를 잡고, `main`이 마지막으로 잡는다 | 코드 읽기 + 예외 주입 실험 2026-10-17: 타임아웃 점검에서 던지면 그 연결만 닫히고 새 요청은 200, poll 처리에서 던지면 `webserv: stopped: ...`와 종료 코드 1 | 확인 |
 | N-23 | 평가자가 `valgrind`·`leaks`·`e_fence`로 돌려도 오류·누수가 없다. `e_fence`에서는 heap 경계 오류가 곧 크래시 | raw/evaluation-sheet-en.md:25, [[concepts/resilience]] "SIGINT·SIGTERM과 누수 검사" | M | valgrind 오류 0, "All heap blocks were freed" | 단계 2에서 valgrind만 손으로 확인 | 나중 (8단계 절차) |
 
 - N-01~N-03은 0점 조건이다 (raw/evaluation-sheet-en.md:53, raw/subject.md:136, raw/evaluation-sheet-en.md:57). 테스트가 통과해도 지켰다는 증거가 되지 않으므로, 단계마다 코드 경로를 읽어 확인하고 결과를 이 페이지에 적는다.
