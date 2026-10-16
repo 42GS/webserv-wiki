@@ -141,7 +141,7 @@ updated: 2026-10-17
 | P-15 | CL 숫자 변환 오버플로를 막는다 (MUST) | raw/rfc9110.txt:3251-3254 | U | 아주 긴 숫자는 400 | `request_parser_test.cpp` `p15_hugeContentLengthDoesNotOverflow` | 있음 |
 | P-16 | CL이 본문 상한을 넘으면 본문을 읽기 전에 413 | raw/rfc9110.txt:7710-7714, 설계 6절 | U, I | `HEAD_DONE` 뒤 상한 설정, 413 | `request_parser_test.cpp` `p16_contentLengthOverTheLimitIs413`, `test_requests.py` `test_p16_body_limit_follows_the_location`, `router_test.cpp` 2개 | 있음 |
 | P-17 | chunked 해제. 16진수 크기 오버플로를 막고(MUST), 모르는 확장은 무시(MUST)하되 길이를 제한, trailer는 버린다(MAY). 해제한 크기가 상한을 넘으면 413 | raw/rfc9112.txt:1078-1081, raw/rfc9112.txt:1108-1113, raw/rfc9112.txt:1126-1134, [[analysis/design-decisions]] 11 | U, I | 본문이 이어 붙여진다. 깨진 chunk는 400. 넘으면 413 | `request_parser_test.cpp` `p17_chunkedBodies`, `test_requests.py` `test_p17_chunked_body_limit` | 있음 |
-| P-18 | CL만큼 오기 전에 끊기거나 타임아웃이면 불완전한 요청. 머리·본문 수신 타임아웃이면 408 후 닫기(MAY). 첫 바이트 전이면 그냥 닫기 | raw/rfc9112.txt:973-978, raw/rfc9112.txt:1253-1255, raw/rfc9110.txt:7641-7643, 설계 5절 | I | 408 후 닫힘 (느린 테스트) | `test_requests.py` `test_p18_*` 2개 (본문 도중 408, 아무것도 안 보낸 연결은 응답 없이 닫힘), `test_connections.py` `test_n08_unfinished_head_gets_408` (모두 느린 테스트) | 있음 |
+| P-18 | CL만큼 오기 전에 끊기거나 타임아웃이면 불완전한 요청. 머리·본문 수신 타임아웃이면 408 후 닫기(MAY). 첫 바이트 전이면 그냥 닫기(5단계부터 15초, K-08) | raw/rfc9112.txt:973-978, raw/rfc9112.txt:1253-1255, raw/rfc9110.txt:7641-7643, 설계 5절 | I | 408 후 닫힘 (느린 테스트) | `test_requests.py` `test_p18_*` 2개 (본문 도중 408, 아무것도 안 보낸 연결은 응답 없이 닫힘), `test_connections.py` `test_n08_unfinished_head_gets_408` (모두 느린 테스트) | 있음 |
 | P-19 | 오류 응답의 상태줄 `HTTP-version SP status-code SP reason-phrase`, 문법 오류 뒤에는 연결을 닫는다(SHOULD) | raw/rfc9112.txt:652, raw/rfc9112.txt:690-693, raw/rfc9112.txt:319-324 | I | 상태줄과 `Connection: close`, 그 뒤 닫힘 | `test_requests.py` `test_p19_error_response_format_and_close` | 있음. 오류 응답 본문은 임시(코드와 reason phrase). 에러 페이지는 4단계 |
 | P-21 | 파서 비용이 입력 길이에 비례한다. 작은 chunk가 많아도 recv 1번 처리가 루프를 오래 붙잡지 않는다 | raw/subject.md:148 (항상 가용). 파서 비용과 잇는 것은 **판단** | M | 1바이트 chunk 6MB 처리 CPU 시간 | 측정 (scratch 벤치마크, 최적화 없는 빌드): 1바이트 chunk 6MB가 1.6초 → 0.2초 (2026-10-16) | 확인. 테스트로 남기지 않음(시간 측정은 기계마다 다르다) |
 | P-20 | telnet·curl로 시연할 수 있다 | raw/evaluation-sheet-en.md:77 | M | 시연 절차 | 없음 | 나중 (9단계) |
@@ -174,9 +174,27 @@ updated: 2026-10-17
 | R-21 | HEAD 요청에는 오류 응답(파서 오류, 408)에도 본문을 보내지 않는다 (MUST NOT) | raw/rfc9110.txt:3987-3988 | I | HEAD에 413: 헤더만 오고 본문 0바이트 | `test_requests.py` `test_r21_head_error_has_no_body` | 있음 |
 | R-19 | 4단계에서 POST·DELETE는 정적 리소스에 대해 405 (업로드·삭제는 6단계) | 설계 7절 순서 | I | 405 + `Allow` | `router_test.cpp` `r05_r19_*`, `test_static.py` `test_r05_r19_*`, `test_requests.py` P-16·P-17 (POST가 405) | 있음. 6단계에서 바뀐다 |
 
-## 5단계 이후 (단계를 시작할 때 채운다)
+## 5. 연결 관리
 
-- 5. keep-alive·pipelining·DRAIN
+읽은 위키: [[analysis/implementation-plan]] 5단계, [[analysis/design]] 5·12절, [[concepts/connection-management]], [[analysis/subject-vs-evaluation]] 1.5·1.6, [[sources/close-after-413-observed]], [[concepts/testing]] siege 절. 위키에 없던 선택은 [[analysis/design]] 5절 "구현 세부"에 적는다.
+통합 테스트 하네스의 `exchange`는 5단계부터 응답 하나를 `Content-Length`로 끊어 읽는다. 연결이 닫히는지 보는 테스트만 닫힐 때까지 읽는다.
+
+| ID | 요구사항 | 근거 | 수준 | 기대 결과 | 현재 테스트 | 상태 |
+|---|---|---|---|---|---|---|
+| K-01 | HTTP/1.1 요청은 응답 뒤에도 연결을 유지한다 (SHOULD 지원). 404·405 같은 오류 응답도 요청을 다 읽었으면 유지 | raw/rfc9112.txt:1337-1340, raw/rfc9112.txt:1350-1351 | I | 한 연결에서 요청 두 개가 모두 응답을 받고, 응답에 `Connection: close`가 없다 | `test_keepalive.py` `test_k01_connection_stays_open_after_a_response` (200·404·200) | 있음 |
+| K-02 | 요청에 `close` 옵션이 있으면 그 응답에 `Connection: close`를 붙이고 응답 뒤 닫는다. 뒤 요청은 처리하지 않는다 (MUST). 옵션은 대소문자 무시, 쉼표 목록 | raw/rfc9112.txt:1347-1348, raw/rfc9112.txt:1521-1526, raw/rfc9110.txt:2581, raw/rfc9110.txt:1699-1702 | U, I | `Connection: Keep-Alive, CLOSE`에도 닫는다. 같은 연결에 이어 보낸 요청에는 응답이 없다 | `request_parser_test.cpp` `k02_k03_persistence`, `test_keepalive.py` `test_k02_close_option_ends_the_connection` | 있음 |
+| K-03 | HTTP/1.0 요청은 `keep-alive` 옵션이 있어도 응답 뒤 닫는다 (**판단**: 1.0 keep-alive를 받아들일지는 수신자가 정한다) | raw/rfc9112.txt:1353-1359, raw/rfc1945.txt:420-422 | U, I | `Connection: close` 후 닫힘 | `request_parser_test.cpp` `k02_k03_persistence`, `test_keepalive.py` `test_k03_http10_closes_even_with_keep_alive` | 있음 |
+| K-04 | 한 번에 온 요청 여러 개(pipelining)에 받은 순서대로 응답한다 (MUST) | raw/rfc9112.txt:1398-1403, P-02 | I | 요청 둘을 한 번에 보내면 응답 둘이 순서대로 온다 | `test_keepalive.py` `test_k04_pipelined_requests_are_answered_in_order` (GET·404·HEAD·GET 한 번에) | 있음. 남은 바이트를 바로 파싱하지 않게 바꾸면 실패한다 |
+| K-05 | 요청을 끝까지 믿을 수 없는 오류(파서 오류, 408)와 경로 400(결정 2)은 `Connection: close` 후 닫는다 | raw/rfc9112.txt:1374-1377, [[analysis/design-decisions]] 2 | I | 400·413 뒤 닫힘 | `test_keepalive.py` `test_k05_untrusted_requests_close_the_connection` (Host 없음, `/../x`, 413) | 있음 |
+| K-06 | 본문을 다 읽지 않고 응답(413)하면 남은 입력을 읽어 버린 뒤 닫는다. 클라이언트가 본문을 계속 보내도 응답을 받는다 | raw/rfc9112.txt:1539-1546, [[sources/close-after-413-observed]] | I | 10MB 본문을 보내는 동안 413을 받는다 | `test_keepalive.py` `test_k06_whole_body_can_be_sent_after_413` (실측의 Python 클라이언트처럼 본문 10MB를 다 보낸 뒤 읽는다) | 있음. DRAIN을 빼면 `sendall`이 Broken pipe로 실패한다(3회 모두). 처음 쓴 "보내는 도중 읽기" 테스트는 DRAIN을 빼도 통과해서 바꿨다 |
+| K-07 | 버리기(DRAIN)에는 무입력 1초, 총 5초 상한 | 설계 12절 `kDrainIdle`·`kDrainTotal` | I | 413 뒤 아무것도 안 보내면 약 1초 뒤, 계속 보내면 약 5초 뒤 닫힌다 | `test_keepalive.py` `test_k07_*` 2개 (무입력이면 4초 안에, 계속 보내면 4초 이상 10초 안에 닫힘) | 있음 |
+| K-08 | 요청 첫 바이트를 기다리는 연결(새 연결, keep-alive 대기)은 15초 뒤 응답 없이 닫는다 | raw/rfc9112.txt:1465-1466, 설계 12절 `kKeepAliveTimeout` | I | 응답 하나 뒤 아무것도 안 보내면 약 15초 뒤 닫힘 (느린 테스트) | `test_keepalive.py` `test_k08_idle_keep_alive_connection_is_closed`, `test_requests.py` `test_p18_silent_connection_is_closed_without_response` (새 연결, 둘 다 느린 테스트) | 있음 |
+| K-09 | 응답을 읽지 않는 클라이언트는 전송이 30초 동안 진행되지 않으면 닫는다 | 설계 12절 `kSendTimeout`, [[concepts/connection-management]] 타임아웃 표 | I | 큰 파일을 읽지 않고 기다리면 닫히고, 그 뒤 받은 바이트가 파일보다 적다 (느린 테스트) | `test_keepalive.py` `test_k09_unread_response_times_out` (64MB 파일, 느린 테스트). macOS에서 버퍼가 찬 뒤 5초 뒤에도 `send`가 한 번 더 진행돼서 40초를 기다린다 | 있음 |
+| K-10 | keep-alive 연결도 머리 타임아웃은 요청의 첫 바이트부터 잰다 | 설계 12절, N-24 | I | keep-alive 대기 뒤 보낸 미완성 머리가 약 30초 뒤 408 (느린 테스트) | `test_keepalive.py` `test_k10_head_timeout_starts_at_the_first_byte` (5초 쉰 뒤 미완성 머리, 느린 테스트) | 있음 |
+| K-11 | `siege -b`를 오래 돌려도 메모리가 늘지 않고 매달린 연결이 없다 | raw/evaluation-sheet-en.md:114-117 | M | availability 99.5% 초과, 메모리 일정 | 2026-10-17 Ubuntu 22.04 컨테이너, siege 4.0.7 `-b -c 50 -t 60S`, 빈 페이지. `connection = close`: 690,358건, availability 100%, 실패 0. `keep-alive`: 3,476,698건, 100%, 실패 0, 실행 중 연결 50개 유지. 서버 RSS는 두 실행 모두 1.9~3.1MB에서 늘지 않았고, 끝난 뒤 fd는 시작 때와 같은 4개. siege를 셸 백그라운드(`&`)로 돌리면 "Lifting the server siege..." 뒤 siege가 끝나지 않는 일이 두 번 있었다. 그때 서버에는 클라이언트 연결이 없었고 siege 쪽 소켓은 CLOSE_WAIT였다(서버는 이미 닫음). 포그라운드로 돌리면 세 번 모두 정상 종료 | 확인. 8단계에서 더 긴 실행과 절차로 남긴다 |
+
+## 6단계 이후 (단계를 시작할 때 채운다)
+
 - 6. 업로드(`multipart/form-data`, 415)와 DELETE
 - 7. CGI: GET·POST, chunked 본문, 실행 디렉토리, 무한 루프(504), 에러 스크립트(502)
 - 8. 안정성: [[concepts/resilience]] "요구 목록"

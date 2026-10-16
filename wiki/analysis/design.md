@@ -1,7 +1,7 @@
 ---
 title: webserv 설계 (클래스·인터페이스)
 type: analysis
-sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/nginx-core-module.md, raw/design-checks-observed.md, raw/cpp-core-guidelines.md, raw/google-cpp-style-guide.md]
+sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/nginx-core-module.md, raw/design-checks-observed.md, raw/cpp-core-guidelines.md, raw/google-cpp-style-guide.md, raw/rfc9110.txt, raw/rfc9112.txt, raw/siegerc.in]
 updated: 2026-10-17
 ---
 
@@ -317,6 +317,13 @@ private:
 - `recv`가 0이면 상대가 닫은 것, -1이면 에러다. 둘 다 errno 없이 `CLOSED`로 간다 → [[concepts/io-multiplexing]] "recv·send 반환값 처리".
 - keep-alive 판단과 `DRAIN` 규칙 → [[concepts/connection-management]]. 본문을 다 읽지 않고 응답했으면 `DRAIN`을 거친다 ([[sources/close-after-413-observed]]).
 - pipelining: 응답을 다 보낸 뒤 `inBuf_`에 남은 바이트로 다음 요청을 파싱한다 → [[concepts/connection-management]] "pipelining".
+- 구현 세부 (단계 5, 2026-10-17, **판단**. 기준은 결정 13의 "요구사항에 부합하고 안전한 쪽"). 근거 줄과 테스트는 [[analysis/test-plan]] 5절.
+  - 유지 여부는 파서가 머리를 끝낼 때 `Request::persistent`로 정한다. HTTP/1.1은 `Connection`에 `close` 옵션이 없으면 유지한다. HTTP/1.0은 `keep-alive` 옵션이 있어도 닫는다. RFC 9112 9.3은 1.0 keep-alive를 받아들일지 수신자에게 맡긴다 (raw/rfc9112.txt:1353-1359). siege 기본 설정은 HTTP/1.1이다 (raw/siegerc.in:213).
+  - 응답 뒤 유지하는지는 `RequestProcessor`가 `Response::keepAlive`로 정한다. 요청이 유지를 원하고 응답이 400이 아닐 때만 유지한다. 400은 경로 오류(결정 2)이거나 파서 오류다. 파서 오류와 408은 `errorResponse`로 만들고 항상 닫는다. 404·405·403 등은 요청을 다 읽었으므로 유지한다. 닫는 응답에만 `Connection: close`를 붙인다.
+  - `DRAIN`은 요청을 다 읽지 못하고 응답한 뒤(파서 오류, 408)에만 거친다. 다 읽은 요청에 닫는 응답을 보냈으면 바로 닫는다. `DRAIN`에서는 받은 바이트를 파싱하지 않고 버린다.
+  - 요청 첫 바이트를 기다리는 시간은 새 연결이든 keep-alive든 `kKeepAliveTimeout`(15초)이고, 넘으면 응답 없이 닫는다. 머리 타임아웃(30초)은 요청의 첫 바이트를 받은 때부터 잰다.
+  - 시계가 초 단위라 모든 타임아웃은 경과 초가 상한보다 **클 때** 넘은 것으로 본다. 같을 때로 보면 초가 바뀐 직후에 실제로는 거의 0초 뒤에도 넘을 수 있고, `DRAIN` 무입력 1초에서 이 오차가 상한 전체와 같아진다(테스트로 확인).
+  - pipelining: 응답을 다 보내면 파서를 초기화하고 `inBuffer_`에 남은 바이트를 바로 파싱한다. 응답을 보내는 동안(`WRITE`)에는 읽지 않으므로 응답 순서가 요청 순서와 같다.
 
 ## 6. 요청 파싱
 
@@ -358,7 +365,7 @@ public:
   - `HTTP/1.x`에서 x가 2 이상이면 1.1로 처리한다(SHOULD). 메이저가 1이 아니면 505.
   - absolute-form(`http://host[:port]/path`)은 path와 query만 쓴다. virtual host가 없으므로 host 부분은 server 선택에 쓰지 않는다(결정 4). `*`(asterisk-form)와 authority-form은 400. 메서드가 OPTIONS·CONNECT면 그 전에 501이다.
   - chunk 확장은 무시하고, chunk 크기 줄 하나의 길이에 상한(`kMaxChunkLine` 4096)을 두어 넘으면 400. trailer는 버리되 헤더 상한 안에서만 받는다.
-  - 3단계에서는 오류 응답 뒤 항상 연결을 닫는다. keep-alive와 본문 버리기(DRAIN)는 5단계.
+  - 오류 응답 뒤에는 항상 연결을 닫는다. 5단계부터는 요청을 다 읽지 못했으면 닫기 전에 남은 입력을 버린다(DRAIN, 5절).
   - 본문 상한을 고르는 location은 `Router::matchLocation`(가장 긴 prefix)으로 찾는다. 3단계에서는 디코딩 전 경로로 찾고, 4단계에서 정규화한 경로로 바꾼다. 맞는 location이 없으면(그 요청은 404가 된다) NGINX 기본값 1MB를 쓴다.
   - 3단계의 오류 응답 본문은 "코드 reason-phrase" 한 줄이다. 에러 페이지와 `Date`는 4단계.
 
@@ -412,7 +419,7 @@ public:
   - 디렉토리 목록은 이름만 보인다(크기·시각 없음, [[concepts/configuration-file]] "디렉토리 요청 처리 순서"의 판단). 이름은 HTML 이스케이프하고 링크는 퍼센트 인코딩한다. `.`으로 시작하는 이름도 보이되 `.`과 `..`은 뺀다.
   - 심볼릭 링크가 root 밖을 가리키는지는 확인하지 못한다. 허용 함수(raw/subject.md:113)에 `lstat`·`realpath`·`readlink`가 없다. URI의 `..`는 정규화에서 막는다.
   - 4단계의 POST·DELETE: 업로드·삭제 처리는 6단계라서, 그 전까지는 정적 리소스가 받지 않는 메서드로 보고 405와 `Allow: GET, HEAD`를 보낸다.
-  - `Connection: close`는 5단계(keep-alive)까지 모든 응답에 붙인다.
+  - `Connection: close`는 5단계(keep-alive)까지 모든 응답에 붙였다. 5단계부터는 닫는 응답에만 붙인다 (5절 구현 세부).
 
 ## 8. 응답
 
@@ -495,7 +502,7 @@ private:
 
 ## 12. 상수 (초기값, 시험하며 조정)
 
-코드에서는 `core/Limits.hpp`의 `limits::`에 있다(본문 상한 두 개는 `config/ConfigLimits.hpp`의 `config_limits::`). 아직 쓰지 않는 값(keep-alive, CGI, DRAIN)은 그 단계에서 넣는다.
+코드에서는 `core/Limits.hpp`의 `limits::`에 있다(본문 상한 두 개는 `config/ConfigLimits.hpp`의 `config_limits::`). 시간 값의 코드 이름에는 `Seconds`가 붙는다(`kKeepAliveTimeoutSeconds` 등). 아직 쓰지 않는 값(CGI)은 그 단계에서 넣는다.
 
 | 이름 | 값 | 비고 |
 |---|---|---|
@@ -504,10 +511,10 @@ private:
 | `kMaxRequestLine` | 8192 | 넘으면 414 |
 | `kMaxHeaderBytes` | 16384 | 넘으면 431 |
 | `kMaxChunkLine` | 4096 | chunk 크기 줄(확장 포함) 상한. 넘으면 400 |
-| `kHeaderTimeout` | 30초 | |
+| `kHeaderTimeout` | 30초 | 요청 첫 바이트부터 |
 | `kBodyTimeout` | 30초 (무입력 기준) | |
 | `kSendTimeout` | 30초 (무진행 기준) | |
-| `kKeepAliveTimeout` | 15초 | |
+| `kKeepAliveTimeout` | 15초 | 요청 첫 바이트를 기다리는 시간 (새 연결 포함) |
 | `kCgiTimeout` | 10초 | 무한 루프 스크립트 시연 |
 | `kDrainIdle` / `kDrainTotal` | 1초 / 5초 | 413 실측에서 쓴 값 |
 | `kMaxInternalRedirects` | 10 | NGINX와 같음 |

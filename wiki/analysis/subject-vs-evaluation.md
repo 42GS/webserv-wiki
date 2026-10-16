@@ -1,7 +1,7 @@
 ---
 title: subject vs 평가표 — 차이와 모순
 type: analysis
-sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/evaluation-sheet.md, raw/rfc9110.txt, raw/rfc9112.txt, raw/rfc3875.txt, raw/nginx-core-module.md, raw/posix-poll.md, raw/posix-waitpid.md, raw/posix-bind.md, raw/posix-exit.md, raw/nginx-autoindex-module.md, raw/rfc6265.txt, raw/posix-fcntl.md, raw/rfc1945.txt, raw/os-observed-pipe-poll.md, raw/nginx-src-ngx_http_request.c, raw/nginx-src-ngx_socket.h, raw/close-after-413-observed.md]
+sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/evaluation-sheet.md, raw/rfc9110.txt, raw/rfc9112.txt, raw/rfc3875.txt, raw/nginx-core-module.md, raw/posix-poll.md, raw/posix-waitpid.md, raw/posix-bind.md, raw/posix-exit.md, raw/nginx-autoindex-module.md, raw/rfc6265.txt, raw/posix-fcntl.md, raw/rfc1945.txt, raw/os-observed-pipe-poll.md, raw/nginx-src-ngx_http_request.c, raw/nginx-src-ngx_socket.h, raw/close-after-413-observed.md, raw/siegerc.in]
 updated: 2026-10-17
 ---
 
@@ -56,7 +56,7 @@ subject는 "허용된 syscall/라이브러리 호출" 목록을 준다 (raw/subj
 - 브라우저는 HTTP/1.1 이상으로 요청한다 (**미확인**, 평가 시 브라우저 네트워크 탭에서 확인 가능, raw/evaluation-sheet-en.md:97-98).
 - RFC 1945 (HTTP/1.0): 요청마다 연결을 닫는 것이 기본이다 (raw/rfc1945.txt:420-422). 1.0 서버는 0.9 요청도 이해하고 클라이언트와 같은 버전으로 응답해야 한다 (raw/rfc1945.txt:694-703). status code 목록에 405·411·413·414·505가 없다 (raw/rfc1945.txt:1487-1501). 과제 필수 메서드인 DELETE는 본문이 아니라 "일관되게 구현되지 않은 기능"인 부록 D에 있다 (raw/rfc1945.txt:3185-3199, raw/rfc1945.txt:3223-3226). 즉 과제 요구사항은 HTTP/1.0만으로 다 설명되지 않는다.
 - RFC 9110: 서버는 요청의 메이저 버전 이하에서 자신이 따르는 가장 높은 버전으로 응답한다 (SHOULD, raw/rfc9110.txt:2054-2056). HTTP/1.0 요청에 `HTTP/1.1`로 응답해도 된다.
-- 판단: 응답은 `HTTP/1.1`로 보내고, HTTP/1.0 요청은 `keep-alive`가 없으면 응답 후 닫는다. HTTP/0.9는 지원하지 않고 400 (raw/rfc9112.txt:430-432, raw/rfc9112.txt:2215-2221) → [[sources/rfc1945]].
+- 판단: 응답은 `HTTP/1.1`로 보내고, HTTP/1.0 요청은 `keep-alive` 옵션이 있어도 응답 후 닫는다 (2026-10-17 5단계에서 바꿈. 전에는 "`keep-alive`가 없으면 닫는다"였다. 1.0 keep-alive를 받아들일지는 수신자가 정하고(raw/rfc9112.txt:1353-1359), siege 기본 설정은 HTTP/1.1이다(raw/siegerc.in:213)). HTTP/0.9는 지원하지 않고 400 (raw/rfc9112.txt:430-432, raw/rfc9112.txt:2215-2221) → [[sources/rfc1945]].
 - 판단: 응답 버전을 HTTP/1.1로 하면 위 규칙을 따라야 한다. 다만 subject가 chunked 처리(raw/subject.md:179)를 요구하므로 어느 쪽이든 HTTP/1.1 파싱 규칙 대부분은 필요하다. → [[concepts/connection-management]], [[concepts/request-parsing]]
 
 ### 1.7 REMOTE_ADDR — 허용 함수 목록 vs RFC 3875

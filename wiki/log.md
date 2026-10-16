@@ -477,3 +477,7 @@
 ## [2026-10-17] query | 함수 주석 위치의 근거
 - 갱신: [[analysis/design]] 1절(주석 규칙 근거), [[sources/google-cpp-style-guide]] (Function Definitions 절), [[index]]
 - 메모: 사용자 질문("함수 주석은 소스에는 일부러 생략했나")에 답하며, 헤더에 문서가 있는 함수를 `.cpp` 정의에서 되풀이하지 않는 규칙의 근거로 Google C++ Style Guide Function Definitions 절을 붙였다 (raw/google-cpp-style-guide.md:2643, raw/google-cpp-style-guide.md:2645). 이 절을 원본 HTML과 대조했다.
+
+## [2026-10-17] query | 5단계 연결 관리
+- 갱신: [[analysis/test-plan]] 5절(K-01~K-11 신설, P-18), [[analysis/design]] 5절 구현 세부·7절·12절, [[analysis/subject-vs-evaluation]] 1.6, [[concepts/connection-management]]
+- 메모: keep-alive, pipelining, DRAIN, 타임아웃 4종을 넣었다 (webserv `870f06a`). HTTP/1.0은 `keep-alive`가 있어도 닫도록 판단을 바꿨다(전에는 "없으면 닫는다". RFC 9112 9.3은 수신자에게 맡긴다, siege 기본은 HTTP/1.1). 파서 오류·408·경로 400은 닫고, 요청을 다 읽지 못했으면 닫기 전에 버린다. 요청 첫 바이트를 기다리는 시간은 새 연결도 15초다. 시계가 초 단위라 `>=`로 비교하면 1초 상한이 실제로 거의 0초가 되는 것을 K-07 테스트가 잡아서, 모든 타임아웃을 `>`로 바꿨다. 하네스 `exchange`는 응답 하나를 길이로 끊어 읽는다. 이 때문에 N-04의 fd 기준값을 서버가 연결을 닫기 전에 재는 경쟁이 Ubuntu에서 드러나 고쳤다. K-06은 처음 쓴 형태가 DRAIN을 빼도 통과해서, 413 실측의 클라이언트처럼 본문을 다 보낸 뒤 읽게 바꿨다. K-01~K-10은 모두 코드를 틀리게 바꿔 실패를 확인했다. macOS·Ubuntu에서 단위 83(valgrind 오류 없음), 통합 63(느린 테스트 포함) 통과. siege 결과는 K-11.
