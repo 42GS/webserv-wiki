@@ -473,3 +473,7 @@
 - 생성: [[sources/cpp-core-guidelines]], [[sources/google-cpp-style-guide]]
 - 갱신: [[analysis/design]] 1절(보조 클래스·함수 위치와 근거), 6절 `RequestParser` 생성자, [[index]]
 - 메모: 사용자 질문("모든 타입과 상수를 헤더에 두는 게 깔끔하지 않나, C++ 관례인가")에 답하며 근거로 쓴 두 원문을 넣었다. 둘 다 커밋을 고정해 받았다 (Core Guidelines 33bcd01, markdown 그대로. Google 가이드 0acdb47, pandoc 3.10). 위키에서는 SF.21·SF.22와 Internal Linkage 절만 읽고 썼다. 설계 1절 규칙은 유지한다. 같은 날 `SyntaxParser`를 `ConfigSyntax.cpp`의 이름 없는 namespace로 옮기고 (webserv `6770e26`), 생성하는 곳이 `defaultParserLimits()` 하나뿐이던 `ParserLimits`를 없앴다. 파서는 `core/Limits.hpp` 상수를 직접 쓴다 (`3633eca`). 단위 82(Ubuntu valgrind 오류 없음), 통합 52 통과.
+
+## [2026-10-17] query | 함수 주석 위치의 근거
+- 갱신: [[analysis/design]] 1절(주석 규칙 근거), [[sources/google-cpp-style-guide]] (Function Definitions 절), [[index]]
+- 메모: 사용자 질문("함수 주석은 소스에는 일부러 생략했나")에 답하며, 헤더에 문서가 있는 함수를 `.cpp` 정의에서 되풀이하지 않는 규칙의 근거로 Google C++ Style Guide Function Definitions 절을 붙였다 (raw/google-cpp-style-guide.md:2643, raw/google-cpp-style-guide.md:2645). 이 절을 원본 HTML과 대조했다.

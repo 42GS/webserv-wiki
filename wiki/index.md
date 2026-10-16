@@ -60,7 +60,7 @@ updated: 2026-10-17
 | [[sources/iana-http-status-codes]] | IANA status code 레지스트리 — 코드 이름(reason phrase)과 정의 문서 | `raw/iana-http-status-codes.txt` |
 | [[sources/rfc6585]] | RFC 6585 추가 status code — 431 정의, 선택 사항, 공격 시 연결 종료 | `raw/rfc6585.txt` |
 | [[sources/cpp-core-guidelines]] | C++ Core Guidelines — SF.21·SF.22 이름 없는 namespace (헤더에는 쓰지 않고, 내부용은 모두 그 안에) | `raw/cpp-core-guidelines.md` |
-| [[sources/google-cpp-style-guide]] | Google C++ Style Guide — Internal Linkage (다른 파일이 참조하지 않는 정의는 `.cc`의 이름 없는 namespace에) | `raw/google-cpp-style-guide.md` |
+| [[sources/google-cpp-style-guide]] | Google C++ Style Guide — Internal Linkage (다른 파일이 참조하지 않는 정의는 `.cc`의 이름 없는 namespace에), Function Definitions (정의 주석은 선언 주석을 되풀이하지 않음) | `raw/google-cpp-style-guide.md` |
 | [[sources/evaluation-sheet]] | 평가표 한국어 정리본 — **구버전, 영어 원문으로 대체됨** | `raw/evaluation-sheet.md` |
 
 ## Concepts
