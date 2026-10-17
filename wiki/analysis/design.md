@@ -1,7 +1,7 @@
 ---
 title: webserv 설계 (클래스·인터페이스)
 type: analysis
-sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/nginx-core-module.md, raw/design-checks-observed.md, raw/cpp-core-guidelines.md, raw/google-cpp-style-guide.md, raw/rfc9110.txt, raw/rfc9112.txt, raw/siegerc.in, raw/rfc2046.txt, raw/rfc7578.txt]
+sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/nginx-core-module.md, raw/design-checks-observed.md, raw/cpp-core-guidelines.md, raw/google-cpp-style-guide.md, raw/rfc9110.txt, raw/rfc9112.txt, raw/siegerc.in, raw/rfc2046.txt, raw/rfc7578.txt, raw/posix-remove.md, raw/fs-observed-remove-name-length.md]
 updated: 2026-10-17
 ---
 
@@ -435,7 +435,7 @@ public:
   - 파일 저장:
     - `filename`이 비어 있지 않은 part만 파일로 본다. 다른 필드와 `filename=""`인 part는 무시하고, 파일이 하나도 없으면 400이다.
     - 이름은 마지막 `/`나 `\` 뒤만 쓴다 (디렉토리 경로를 쓰지 말 것, raw/rfc7578.txt:215-220). 그 결과가 비었거나 `.`·`..`이면 400이다.
-    - 이름이 255바이트보다 길면 400이다. 리뷰 전에는 `open`이 실패해 500이었다. 실측(2026-10-17): Ubuntu 22.04 컨테이너는 255바이트까지 만들고 256바이트와 258바이트(한글 86자)는 "File name too long"이었다. macOS(APFS)는 765바이트(한글 255자)도 만들어 글자 수로 세는 것으로 보인다(**판단**). 평가 환경에 맞춰 바이트로 센다.
+    - 이름이 255바이트보다 길면 400이다. 리뷰 전에는 `open`이 실패해 500이었다. Ubuntu 22.04 컨테이너는 255바이트까지 만들고 256바이트(ASCII)와 258바이트(한글 86자)는 실패했다. macOS(APFS)는 765바이트(한글 255자)도 만들어 글자 수로 세는 것으로 보인다(**판단**) (raw/fs-observed-remove-name-length.md:73-75, raw/fs-observed-remove-name-length.md:95-97, raw/fs-observed-remove-name-length.md:103-105). 평가 환경에 맞춰 바이트로 센다.
     - 파일 part는 5개까지이고, 넘으면 413이다 (결정 18). 넘는 순간 멈춰서, 그 뒤 이름은 디스크에서 찾지 않는다.
     - 모든 이름을 쓰기 전에 검사한다. 같은 이름이 있으면 아무것도 저장하지 않는다 (결정 17).
     - 파일은 `O_CREAT | O_EXCL`, 모드 0644(umask 적용)로 만든다. 쓰기가 실패하면 이 요청이 만든 파일을 `std::remove`로 지우고 500을 보낸다 (결정 15).
@@ -450,6 +450,7 @@ public:
     - 일반 파일만 지우고 204를 보낸다 (raw/rfc9110.txt:4235-4236).
     - 없으면 404이다. 디렉토리와 그 밖의 종류, 그리고 파일이 든 디렉토리에 쓰기·검색 권한(`access(W_OK | X_OK)`)이 없는 경우는 403이다. `std::remove`가 실패하면 500이다.
     - 경로는 GET과 같이 정규화(결정 2)를 거치므로 root 밖은 지울 수 없다.
+    - 일반 파일인지 검사한 뒤 `std::remove`를 부르기 전에 다른 프로세스가 그 경로를 빈 디렉토리로 바꾸면 지워진다 (`remove`는 디렉토리면 `rmdir`, raw/posix-remove.md:35). 막을지는 보류 → [[analysis/design-decisions]] 15.
 
 ## 8. 응답
 

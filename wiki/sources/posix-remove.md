@@ -1,7 +1,7 @@
 ---
 title: POSIX remove() — 파일이면 unlink, 디렉토리면 rmdir
 type: source
-sources: [raw/posix-remove.md, raw/posix-rmdir.md]
+sources: [raw/posix-remove.md, raw/posix-rmdir.md, raw/fs-observed-remove-name-length.md]
 updated: 2026-10-17
 ---
 
@@ -33,8 +33,9 @@ C++98 `<cstdio>`의 `std::remove`로 DELETE를 구현한다 ([[analysis/design-d
 ## 과제 적용 (판단)
 
 - DELETE의 라우터는 일반 파일인지 확인한 뒤에만 `std::remove`를 부른다 ([[analysis/design]] 7절). 그 사이에 다른 프로세스가 같은 경로를 빈 디렉토리로 바꾸면 `remove`는 `rmdir`처럼 그 디렉토리를 지운다 (raw/posix-remove.md:35). 비어 있지 않은 디렉토리는 지워지지 않는다 → [[sources/posix-rmdir]].
-- macOS와 Linux가 이 POSIX 확장을 따르는지는 이 문서로 알 수 없다(**미확인**). 확인 방법: 두 OS에서 빈 디렉토리와 비지 않은 디렉토리에 `std::remove`를 불러 본다.
+- macOS와 Ubuntu 22.04에서 실제로 이렇게 동작했다: 빈 디렉토리는 지워지고, 비어 있지 않은 디렉토리는 -1로 남았다(실측) → [[sources/fs-observed-remove-name-length]].
+- 이 틈을 막을지는 사용자가 정한다(2026-10-17 보류) → [[analysis/design-decisions]] 15.
 
 ## 관련
 
-- [[sources/posix-rmdir]], [[analysis/design-decisions]] 15, [[analysis/subject-vs-evaluation]] 1.4절
+- [[sources/posix-rmdir]], [[sources/fs-observed-remove-name-length]], [[analysis/design-decisions]] 15, [[analysis/subject-vs-evaluation]] 1.4절

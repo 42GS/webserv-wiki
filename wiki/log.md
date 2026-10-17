@@ -502,3 +502,8 @@
 ## [2026-10-17] ingest | POSIX remove()
 - 생성: raw/posix-remove.md, raw/posix-remove.source.html, [[sources/posix-remove]]
 - 메모: 6단계 리뷰 5번(DELETE 검사와 `std::remove` 사이의 틈)을 사용자가 정하기 전에 동작을 확인하려고 받았다. 디렉토리가 아니면 `unlink`, 디렉토리면 `rmdir`과 같다(CX, ISO C 밖의 POSIX 확장). 원본 HTML 본문 전체를 직접 대조했다.
+
+## [2026-10-17] ingest | 파일 시스템 실측 (std::remove, 파일 이름 길이)
+- 생성: raw/fs-observed-remove-name-length.md, [[sources/fs-observed-remove-name-length]]
+- 갱신: [[sources/posix-remove]](미확인 해소), [[analysis/design-decisions]] 15(동작과 남은 쟁점), [[analysis/design]] 7절(이름 길이 근거, DELETE의 틈), [[index]]
+- 메모: macOS와 Ubuntu 22.04 컨테이너에서 `std::remove`가 빈 디렉토리를 지우고 비지 않은 디렉토리에는 -1을 돌려주는 것을 확인했다. 리뷰 3번의 이름 길이 실측도 같은 파일에 넣었다. 처음 실행한 ASCII 이름 명령에는 제대로 동작하지 않은 한글 시험이 섞여 있어, 적은 명령을 두 OS에서 다시 실행한 출력을 붙였다. 리뷰 5번(검사와 삭제 사이의 틈)은 사용자가 정하기로 보류했다.

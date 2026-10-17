@@ -1,7 +1,7 @@
 ---
 title: 설계 결정 목록
 type: analysis
-sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc9110.txt, raw/rfc9112.txt, raw/rfc3875.txt, raw/rfc6265.txt, raw/rfc7578.txt, raw/nginx-core-module.md, raw/nginx-request-processing.md, raw/nginx-index-module.md, raw/nginx-rewrite-module.md, raw/design-checks-observed.md]
+sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/posix-remove.md, raw/posix-rmdir.md, raw/fs-observed-remove-name-length.md, raw/rfc9110.txt, raw/rfc9112.txt, raw/rfc3875.txt, raw/rfc6265.txt, raw/rfc7578.txt, raw/nginx-core-module.md, raw/nginx-request-processing.md, raw/nginx-index-module.md, raw/nginx-rewrite-module.md, raw/design-checks-observed.md]
 updated: 2026-10-17
 ---
 
@@ -128,6 +128,8 @@ updated: 2026-10-17
 - 쟁점: DELETE가 동작해야 하는데 (raw/subject.md:147, raw/evaluation-sheet-en.md:79), 허용 함수 목록에 파일을 지우는 `unlink`·`remove`가 없다 (raw/subject.md:113).
 - 결정 (사용자, 2026-10-17): 결정 12와 같이 51줄("C 함수 사용 허용, C++ 버전 권장", raw/subject.md:51)에 따라 C++98 `<cstdio>`의 `std::remove`를 쓴다.
 - 쓰는 곳: DELETE, 그리고 업로드 쓰기가 중간에 실패했을 때 그 요청이 만든 파일을 지울 때.
+- 동작: POSIX에서 `remove()`는 디렉토리가 아니면 `unlink`, 디렉토리면 `rmdir`과 같다 (raw/posix-remove.md:33-35). `rmdir`은 빈 디렉토리만 지운다 (raw/posix-rmdir.md:25). macOS와 Ubuntu 22.04도 그렇게 동작했다 (raw/fs-observed-remove-name-length.md:40-42, raw/fs-observed-remove-name-length.md:48-50).
+- 남은 쟁점 (사용자가 정할 것, 2026-10-17 보류): DELETE는 라우터가 일반 파일인지 확인한 뒤 `std::remove`를 부른다. 그 사이에 다른 프로세스가 같은 경로를 빈 디렉토리로 바꾸면 그 디렉토리가 지워진다. 비어 있지 않은 디렉토리는 지워지지 않는다. 서버는 단일 프로세스라 요청끼리는 이 틈을 만들 수 없다 (**판단**).
 - 디펜스: 51줄과 111~113줄을 함께 보여 주고 해석을 설명한다 → [[analysis/subject-vs-evaluation]] 1.4절.
 
 ## 16. `limit_except`가 없는 location은 GET·HEAD만 받음
