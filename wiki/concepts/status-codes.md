@@ -58,8 +58,9 @@ RFC가 특정 코드를 직접 지정하지 않는 상황은 **판단**으로 �
 | 라우트에서 허용하지 않은 메서드 (알려진 메서드) | 405 | raw/rfc9110.txt:3801-3804, raw/rfc9110.txt:7603-7607 | `Allow` 헤더 MUST. 평가 "DELETE with and without permission" (raw/evaluation-sheet-en.md:73) |
 | 클라이언트가 제한 시간 안에 요청을 다 보내지 않음 | 408 | raw/rfc9110.txt:7641-7643 | 닫기 전에 에러 응답을 보낼 수 있음 (MAY, raw/rfc9112.txt:1253-1255) → [[concepts/connection-management]]  NGINX는 헤더 전체 수신 시간, 본문 read 간격 기준으로 408을 보낸다 (raw/nginx-core-module.md:317, raw/nginx-core-module.md:347) |
 | chunked 요청을 받지 않기로 한 경우 | 411 | raw/rfc9110.txt:7692-7694, raw/rfc9112.txt:999-1000 | MAY. subject가 un-chunk를 요구하므로(raw/subject.md:179) 이 과제에서는 쓰지 않는다. `Content-Length`도 TE도 없는 요청은 본문 길이 0이다 (raw/rfc9112.txt:980-981) |
+| 업로드 요청의 파일이 5개보다 많음 | 413 | raw/rfc9110.txt:7710-7712 | 상한은 사용자 결정, 코드는 **판단** (→ [[analysis/design-decisions]] 18) |
 | body가 `client_max_body_size` 초과 | 413 | raw/rfc9110.txt:7710-7714 | 평가 body 제한 테스트 (raw/evaluation-sheet-en.md:70). 남은 본문을 읽지 않으면 응답 후 연결을 닫아야 함 (raw/rfc9112.txt:1374-1377) |
-| 업로드 본문이 multipart 문법에 맞지 않음, boundary가 잘못됨, 파일 part가 없음, 파일 이름이 `.`·`..`·빈 값 | 400 | raw/rfc9110.txt:7543-7546 | **판단**. 클라이언트 오류로 본다 → [[analysis/design]] 7절 "구현 세부 (단계 6)" |
+| 업로드 본문이 multipart 문법에 맞지 않음, boundary가 잘못됨, 파일 part가 없음, 파일 이름이 `.`·`..`·빈 값이거나 255바이트 초과 | 400 | raw/rfc9110.txt:7543-7546 | **판단**. 클라이언트 오류로 본다 → [[analysis/design]] 7절 "구현 세부 (단계 6)" |
 | 업로드할 파일 이름이 저장 위치에 이미 있음 (한 요청에 같은 이름이 두 번 와도) | 409 | raw/rfc9110.txt:7652-7655 | 사용자 결정 (→ [[analysis/design-decisions]] 17). 충돌 원인을 알 수 있는 내용을 보낸다 (SHOULD, raw/rfc9110.txt:7655-7657) |
 | DELETE 대상이 디렉토리, 또는 서버가 파일을 지울 권한이 없음 | 403 | raw/rfc9110.txt:7571-7572 | **판단**. 일반 파일만 지운다 |
 | 업로드 라우트에 `multipart/form-data`가 아닌 본문 | 415 | raw/rfc9110.txt:7738-7740 | **판단**. 업로드는 multipart만 받는다는 결정에 따름 (→ [[analysis/design-decisions]] 7). `Accept`로 받을 수 있는 형식을 알려 줄 수 있음 (raw/rfc9110.txt:7751-7753) |

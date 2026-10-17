@@ -206,7 +206,7 @@ updated: 2026-10-17
 | F-04 | multipart 파싱: preamble·epilogue 무시, 구분자 뒤 공백(transport-padding) 처리 (MUST), 내용은 아무 바이트 | raw/rfc2046.txt:1110-1112, raw/rfc2046.txt:1239-1244, raw/rfc2046.txt:1269 | U | NUL·CRLF가 든 내용, 빈 내용 | `multipart_test.cpp` `f04_*` 2개 | 있음 |
 | F-05 | 요청 `Content-Type`이 `multipart/form-data`가 아니거나 없으면 415 | [[analysis/design-decisions]] 7, raw/rfc9110.txt:7738-7740 | U, I | urlencoded, `text/plain`, 없음, `multipart/mixed` 모두 415 | `multipart_test.cpp` `f05_f06_*`, `test_upload.py` `test_f05_*` | 있음 |
 | F-06 | boundary가 없거나 잘못됨(1~70자 bchars, 공백으로 끝나지 않음), 본문 문법 오류(첫·마지막 구분자 없음, 구분자 줄에 다른 글자, name 있는 `form-data` disposition 없음)는 400 | raw/rfc2046.txt:1200-1214, raw/rfc7578.txt:197-201 | U, I | 400, 아무것도 저장 안 됨 | `multipart_test.cpp` `f05_f06_*`, `f06_*`, `test_upload.py` `test_f06_*` | 있음 |
-| F-07 | 파일 이름의 디렉토리 부분(`/`, `\`)은 버린다. 남은 이름이 비었거나 `.`·`..`이면 400 | raw/rfc7578.txt:215-220 | I | `../../evil.txt`는 저장 위치의 `evil.txt`. `..`, `dir/`, `x/..`는 400 | `test_upload.py` `test_f07_*` | 있음 |
+| F-07 | 파일 이름의 디렉토리 부분(`/`, `\`)은 버린다. 남은 이름이 비었거나 `.`·`..`이거나 255바이트보다 길면 400 (리뷰 전에는 긴 이름이 500) | raw/rfc7578.txt:215-220 | I | `../../evil.txt`는 저장 위치의 `evil.txt`. `..`, `dir/`, `x/..`, 256바이트 이름은 400, 255바이트는 201 | `test_upload.py` `test_f07_*` 2개 | 있음 |
 | F-08 | 저장 위치에 있는 이름, 한 요청 안에서 겹치는 이름은 409. 그 요청의 파일은 하나도 저장하지 않는다. 본문에 충돌한 이름 | [[analysis/design-decisions]] 17, raw/rfc7578.txt:497-499, raw/rfc9110.txt:7655-7657 | I | 409, 앞 파일도 저장 안 됨, 기존 파일 내용 그대로, 디렉토리 이름도 409 | `test_upload.py` `test_f08_*` | 있음 |
 | F-09 | `upload_store`가 없는 location의 POST는 405이고 `Allow`에 POST가 없다 | [[analysis/design-decisions]] 16 | U, I | `limit_except GET POST`인데 저장 위치가 없으면 405 + `Allow: GET, HEAD` | `router_test.cpp` `f09_f12_d04_*`, `test_upload.py` `test_f09_*` | 있음 |
 | F-10 | chunked 본문의 업로드 | raw/subject.md:179, [[concepts/request-parsing]] | I | 해제한 본문이 그대로 저장 | `test_upload.py` `test_f10_*` | 있음 (파서의 chunked 시험은 P-xx) |
@@ -219,9 +219,11 @@ updated: 2026-10-17
 | D-04 | `limit_except`에 DELETE가 없으면 405 + `Allow` (평가 "권한 없이 DELETE") | raw/evaluation-sheet-en.md:73, raw/rfc9110.txt:7603-7607 | U, I | 405 + `Allow: GET, HEAD`, 파일 그대로 | `router_test.cpp` `f09_f12_d04_*`, `test_upload.py` `test_d04_*` | 있음 |
 | D-05 | root 밖은 지울 수 없다 (`..`는 400, 결정 2) | [[analysis/design-decisions]] 2 | U | 400 | `router_test.cpp` `d02_d03_*` | 있음. DELETE도 GET과 같은 정규화를 거친다. 정규화의 변이 확인은 R-01 |
 | D-06 | 서버가 바꿀 수 없는 디렉토리 안의 파일 DELETE는 403 | raw/rfc9110.txt:7571-7572 | I | 403, 파일 그대로 (컨테이너는 root라 macOS에서만 의미 있음) | `test_upload.py` `test_d06_*` (root면 건너뜀) | 있음 |
+| F-15 | 한 요청의 파일은 5개까지, 넘으면 413이고 아무것도 저장하지 않는다 | [[analysis/design-decisions]] 18, raw/rfc9110.txt:7710-7712 | I | 6개는 413, 5개는 201 | `test_upload.py` `test_f15_*` | 있음 |
+| F-16 | multipart 파싱은 본문 크기에 비례하는 시간 안에 끝난다 (루프를 멈추지 않음) | raw/subject.md:139, 6단계 코드 리뷰 | U, I | 빈 줄 없는 part 약 1만 개인 1MB 본문이 2초 안에 400. 헤더가 구분자 CRLF에서 끝나는 part도 받는다 | `multipart_test.cpp` `f04_headersEndingAtTheDelimiter`, `test_upload.py` `test_f16_*` | 있음. 고치기 전 8.24초 |
 | F-14 | 브라우저 폼으로 올린 파일을 다시 받는다 | raw/evaluation-sheet-en.md:82 | M | 같은 파일 | 없음 | 나중 (9단계 시연 자료와 함께) |
 
-일부러 틀리게 바꾼 확인 (2026-10-17): 통합 테스트 17개 변이(쓰기 실패 무시, CRLF를 내용에 포함, 미디어 타입 검사 제거, 경로 버리기 제거, 기존 이름·겹치는 이름 검사 제거, 저장 위치 없는 POST 허용, 기본 허용에 POST·DELETE 추가, `std::remove` 생략, 디렉토리 삭제 허용, 권한 검사 제거, `Location` 매핑 검사 제거, 빈 `filename` 저장, 파일 없음 허용, 없는 파일 404 제거, DELETE 분기 제거, 409 본문의 이름 제거)와 단위 테스트 10개 변이(quoted-pair 처리, 같은 parameter 검사, padding 건너뛰기, preamble 찾기, boundary 길이·끝 공백, 마지막 구분자, 값 뒤 글자, disposition 두 번, `limit_except`가 기본값을 비우지 않음)가 모두 해당 테스트를 실패시켰다.
+일부러 틀리게 바꾼 확인 (2026-10-17): 통합 테스트 20개 변이(리뷰 뒤 추가한 빈 줄 찾기 범위·파일 수 상한·이름 길이 상한 포함, 쓰기 실패 무시, CRLF를 내용에 포함, 미디어 타입 검사 제거, 경로 버리기 제거, 기존 이름·겹치는 이름 검사 제거, 저장 위치 없는 POST 허용, 기본 허용에 POST·DELETE 추가, `std::remove` 생략, 디렉토리 삭제 허용, 권한 검사 제거, `Location` 매핑 검사 제거, 빈 `filename` 저장, 파일 없음 허용, 없는 파일 404 제거, DELETE 분기 제거, 409 본문의 이름 제거)와 단위 테스트 10개 변이(quoted-pair 처리, 같은 parameter 검사, padding 건너뛰기, preamble 찾기, boundary 길이·끝 공백, 마지막 구분자, 값 뒤 글자, disposition 두 번, `limit_except`가 기본값을 비우지 않음)가 모두 해당 테스트를 실패시켰다.
 
 ## 7단계 이후 (단계를 시작할 때 채운다)
 

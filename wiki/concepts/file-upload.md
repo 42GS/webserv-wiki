@@ -96,6 +96,7 @@ Content-Type: text/plain
 - **서버가 `multipart/form-data`만 직접 파싱해 저장한다** (사용자 결정, 2026-10-15 → [[analysis/design-decisions]] 7). 과제 문서는 이를 정하지 않지만, "업로드를 허용하고 저장 위치를 지정"하는 설정 요구(raw/subject.md:172)와 맞는다.
 - 업로드 라우트에 multipart가 아닌 본문(예: `curl --data-binary`)이 오면 415로 거부한다 (**판단**, raw/rfc9110.txt:7738-7740) → [[concepts/status-codes]].
 - 업로드한 파일을 다시 받는 경로. 평가는 업로드 후 다시 받아 본다 (raw/evaluation-sheet-en.md:82). 저장 위치가 GET으로 접근 가능한 root 아래인지 설정을 맞춰 둔다. 서버는 그렇게 닿을 때만 201에 `Location`을 붙인다.
+- 한 요청의 파일은 5개까지이고, 넘으면 413이다 (사용자 결정, 2026-10-17 → [[analysis/design-decisions]] 18).
 - 업로드 location에도 `limit_except GET POST`처럼 POST를 적어야 한다. `limit_except`가 없는 location은 GET·HEAD만 받는다 (사용자 결정, 2026-10-17 → [[analysis/design-decisions]] 16).
 - 구현(6단계)의 세부 규칙과 판단은 [[analysis/design]] 7절 "구현 세부 (단계 6)", 시험은 [[analysis/test-plan]] 6절.
 

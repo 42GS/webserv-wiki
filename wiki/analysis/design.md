@@ -422,7 +422,7 @@ public:
   - `Connection: close`는 5단계(keep-alive)까지 모든 응답에 붙였다. 5단계부터는 닫는 응답에만 붙인다 (5절 구현 세부).
 - 구현 세부 (단계 6, 2026-10-17). 사용자가 정한 것은 [[analysis/design-decisions]] 15~17이고, 나머지는 **판단**이다:
   - 메서드: `limit_except`가 허용하고 그 location이 답할 수 있는 메서드만 받는다. POST는 `upload_store`가 있어야 답한다. 405의 `Allow`도 같은 기준으로 만든다 (결정 16).
-  - 업로드 요청 검사 (`UploadHandler`, `http/Multipart`):
+  - 업로드 요청 검사 (`UploadHandler`, `http/Multipart`). part 헤더의 끝(빈 줄)은 그 part 안에서만 찾는다. 리뷰 전에는 본문 끝까지 찾아서, 빈 줄 없는 part가 많은 1MB 본문에 8.24초 동안 루프가 멈췄다(실측, macOS). 고친 뒤 0.063초다:
     - 요청 `Content-Type`이 없거나 `multipart/form-data`가 아니면 415 (결정 7).
     - boundary가 없거나, 끝이 공백이 아닌 1~70자의 bchars가 아니면 400 (raw/rfc2046.txt:1200-1214).
     - 본문이 multipart 문법에 맞지 않으면 400. 첫 구분자나 마지막 구분자가 없을 때, 구분자 줄에 공백 말고 다른 글자가 있을 때, part에 `name`이 있는 `Content-Disposition: form-data`가 없을 때다 (MUST, raw/rfc7578.txt:197-201).
@@ -435,11 +435,13 @@ public:
   - 파일 저장:
     - `filename`이 비어 있지 않은 part만 파일로 본다. 다른 필드와 `filename=""`인 part는 무시하고, 파일이 하나도 없으면 400이다.
     - 이름은 마지막 `/`나 `\` 뒤만 쓴다 (디렉토리 경로를 쓰지 말 것, raw/rfc7578.txt:215-220). 그 결과가 비었거나 `.`·`..`이면 400이다.
+    - 이름이 255바이트보다 길면 400이다. 리뷰 전에는 `open`이 실패해 500이었다. 실측(2026-10-17): Ubuntu 22.04 컨테이너는 255바이트까지 만들고 256바이트와 258바이트(한글 86자)는 "File name too long"이었다. macOS(APFS)는 765바이트(한글 255자)도 만들어 글자 수로 세는 것으로 보인다(**판단**). 평가 환경에 맞춰 바이트로 센다.
+    - 파일 part는 5개까지이고, 넘으면 413이다 (결정 18). 넘는 순간 멈춰서, 그 뒤 이름은 디스크에서 찾지 않는다.
     - 모든 이름을 쓰기 전에 검사한다. 같은 이름이 있으면 아무것도 저장하지 않는다 (결정 17).
     - 파일은 `O_CREAT | O_EXCL`, 모드 0644(umask 적용)로 만든다. 쓰기가 실패하면 이 요청이 만든 파일을 `std::remove`로 지우고 500을 보낸다 (결정 15).
     - 저장 위치가 없거나 디렉토리가 아니면 파일을 만들 수 없어 500이다.
     - 본문은 메모리에 모은 뒤 쓴다(위 업로드 방식). part 내용은 복사하지 않고 본문 안의 범위로 넘긴다.
-  - 업로드 응답:
+  - 업로드 응답 (`UploadHandler`가 만들고 `RequestProcessor`는 고르기만 한다. 리뷰 전에는 `RequestProcessor`가 만들었다):
     - 201의 `Location`은 처음 저장한 파일이다. URI는 POST 경로의 디렉토리 + 파일 이름이고, 그 URI가 저장한 파일로 다시 매핑될 때만 붙인다. `upload_store`는 GET으로 닿지 않는 경로일 수 있다.
     - 201 본문은 저장한 파일의 URI(없으면 이름)를 한 줄씩 적은 `text/plain`이다. 201은 `Location`과 함께, 새 리소스를 가리키며 결과를 설명하는 표현을 보낸다 (SHOULD, raw/rfc9110.txt:4050-4055).
     - 409 본문에는 충돌한 이름을 적는다 (SHOULD, raw/rfc9110.txt:7655-7657). 설정한 `error_page` 대신 이 본문을 쓴다.
@@ -552,6 +554,7 @@ private:
 | `kFileChunkSize` | 65536 | 나눠 보내는 파일의 `read` 1번 크기 |
 | `kFileReadSize` | 65536 | 통째로 읽는 작은 파일의 `read` 1번 크기 |
 | `kMaxErrorPageSize` | 1MB | 설정한 에러 페이지 파일 상한. 넘으면 내장 페이지 |
+| `kMaxUploadFiles` | 5 | 업로드 요청 하나가 저장하는 파일 수. 넘으면 413 (결정 18) |
 | `kClockFile` | `.webserv_clock` | 실행 디렉토리 기준 |
 | `kDefaultConfigPath` | `conf/default.conf` | 인자가 없을 때 |
 
