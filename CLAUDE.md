@@ -69,10 +69,11 @@ pandoc/              pandoc Lua 필터 (HTML 본문 영역 추출)
   ```
   - 버전을 3.10으로 고정한 이유: pandoc 3.11부터 `<code>` 없는 `<pre>`를 코드 블록이 아니라 줄바꿈 텍스트로 읽고 공백을 NBSP로 바꾼다 (pandoc changelog 3.11 "Handle `pre` without `code` (#11810)"). nginx.org·POSIX 페이지의 예시가 이 형태라 인용·검색에 불리하다. 2026-10-15에 3.1~3.10은 코드 블록, 3.11·3.12.1은 줄바꿈 텍스트임을 직접 실행해 확인했다.
   - `pandoc/only-id.lua`: 지정한 id의 요소 하나만 남긴다. 해당 id가 없으면 오류로 끝난다. 본문 id 예: nginx.org `content`, php.net 페이지별 id, peps.python.org `pep-content`(`<section>`; 이 필터로는 아직 시험하지 않음).
-  - 본문이 고유 id 요소에 없는 사이트(pubs.opengroup.org 등)는 처리 방법을 사용자와 정한 뒤 받는다.
+  - `pandoc/opengroup-body.lua` (pubs.opengroup.org, 2026-10-17 사용자와 정함): 맨 위 `div.NAVHEADER` 다음 블록부터 "return to top of page"가 든 블록 직전까지 남긴다. 저작권 줄로 시작하고 끝의 내비게이션·상표 문구는 빠진다. 둘 중 하나라도 없으면 오류로 끝난다. `-M keep-id` 없이 `-L /f/opengroup-body.lua`로 쓴다.
+  - 본문이 고유 id 요소에 없는 다른 사이트는 처리 방법을 사용자와 정한 뒤 받는다.
   - GFM으로 옮길 수 없는 표는 HTML 표로 남는다. 글자는 그대로 남으므로 그대로 둔다.
 - **검증은 직접 읽어서 한다.** 원본 HTML(또는 브라우저로 연 페이지)과 변환 결과를 절 단위로 나란히 읽고, 문장·코드·표 내용이 빠지거나 바뀌지 않았는지 확인한다. 확인한 범위와 날짜를 source 페이지에 적는다.
-- `raw/<name>.md` 첫머리에 출처 URL, 받은 날짜, 변환 방법(pandoc 버전, keep-id)을 인용문으로 적는다.
+- `raw/<name>.md` 첫머리에 출처 URL, 받은 날짜, 변환 방법(pandoc 버전, keep-id 또는 필터)을 인용문으로 적는다.
 
 ### Query (질문)
 1. `wiki/index.md`를 먼저 읽고 관련 페이지를 찾는다.

@@ -489,3 +489,8 @@
 ## [2026-10-17] query | 6단계 코드 리뷰
 - 갱신: [[analysis/design-decisions]] 18 신설, [[analysis/design]] 7절 구현 세부·12절, [[analysis/test-plan]] F-07·F-15·F-16, [[concepts/status-codes]], [[concepts/file-upload]], [[index]]
 - 메모: 사용자 요청으로 6단계 변경을 리뷰했다. (1) multipart 헤더 끝을 본문 끝까지 찾아, 빈 줄 없는 part가 많은 1MB 본문에 이벤트 루프가 8.24초 멈췄다(크기 2배에 시간 약 4배, 실측). part 안에서만 찾게 고쳐 0.063초. (2) 1MB 요청 하나가 파일 15,000개를 만들었다. 사용자가 상한 5개를 정했고, 코드는 413을 골랐다(결정 18). (3) 255바이트를 넘는 파일 이름이 `open` 실패로 500이던 것을 400으로 바꿨다. Ubuntu 22.04는 255바이트, macOS APFS는 글자 수 기준이었다(실측). (4) 201·409 응답 만들기를 설계 2절대로 `UploadHandler`로 옮겼다. (5) DELETE의 검사와 `std::remove` 사이에 외부 프로세스가 그 자리를 빈 디렉토리로 바꾸면 지워질 수 있다는 점은 `std::remove` 동작을 원문으로 확인한 뒤 사용자가 정한다. 새 테스트 3개는 변이로 실패를 확인했다. webserv `ea1b330`. macOS·Ubuntu 단위 95(valgrind 오류 0), 통합 82 통과. 리뷰 중 띄운 시험 서버 두 개가 `kill %1`로 꺼지지 않고 남아 있던 것을 찾아 끝냈다.
+
+## [2026-10-17] schema | pubs.opengroup.org 변환 필터
+- 생성: `pandoc/opengroup-body.lua`
+- 갱신: CLAUDE.md "웹 문서 받기"
+- 메모: POSIX `remove()`를 받기 전에 사용자와 방법을 정했다(pandoc 3.10 + 새 필터). 남기는 범위는 예전 `tools/posix_wrap.py`로 받은 POSIX 페이지와 같다(내비게이션 다음 저작권 줄부터 "return to top of page" 직전까지).
