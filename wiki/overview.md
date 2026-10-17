@@ -2,7 +2,7 @@
 title: webserv 개요
 type: overview
 sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc9110.txt, raw/rfc1945.txt]
-updated: 2026-10-16
+updated: 2026-10-17
 ---
 
 # webserv 개요
@@ -46,7 +46,8 @@ C++98로 HTTP 서버를 만드는 42 과제. 실행은 `./webserv [configuration
 - CGI 자식은 `waitpid(pid, &status, WNOHANG)`으로 회수한다. `WNOHANG`이 없으면 루프가 멈추고, 회수하지 않으면 좀비가 남는다. `SIGCHLD`는 `SIG_IGN`으로 바꾸지 않는다. 서버를 끌 때는 실행 중인 CGI도 끝낸다 → [[concepts/cgi]].
 - 같은 포트를 쓰는 webserv를 하나 더 띄우면 `bind`가 `EADDRINUSE`로 실패한다. 이때 에러 메시지와 함께 정상 종료해야 한다. 한 설정 안의 중복은 파싱 단계에서 거부한다 → [[concepts/configuration-file]].
 - siege의 Availability는 소켓 연결 성공률이다. 4xx·5xx는 깎이지 않고 연결 거부·끊김·타임아웃이 깎인다. 기본 설정의 siege는 `connection = close`라 요청마다 새 연결을 맺는다고 보고, `accept`와 응답 후 종료 처리를 핵심으로 본다(판단). siege의 `timeout`은 응답 대기를 끊지 않는다(siege 4.0.7 실측: 응답 없는 서버 앞에서 150초 동안 끝나지 않음). siege는 매 요청에 `Connection: close`를 보낸다 → [[concepts/testing]], [[sources/siege-observed-ubuntu2204]].
-- 브라우저 업로드는 `multipart/form-data`다. 구분자 앞의 CRLF는 파일 내용이 아니다(포함하면 파일이 손상된다). `filename`은 경로를 버리고 덮어쓰기를 막으며, 업로드 위치에서는 CGI를 실행하지 않는다 → [[concepts/file-upload]].
+- 브라우저 업로드는 `multipart/form-data`다. 구분자 앞의 CRLF는 파일 내용이 아니다(포함하면 파일이 손상된다). `filename`은 경로를 버리고, 같은 이름이 있으면 409로 거부하며(결정 17), 업로드 위치에서는 CGI를 실행하지 않는다 → [[concepts/file-upload]].
+- `limit_except`가 없는 location은 GET·HEAD만 받는다. 파일을 바꾸는 POST·DELETE는 설정에 적어야 열린다(결정 16). 삭제는 `std::remove`로 한다(결정 15) → [[analysis/design-decisions]].
 - 문서로 정해지지 않는 응답은 판단으로 확정했다: 끝에 `/`가 없는 디렉토리 요청은 301, 리스팅 off + index 없음은 403(둘 다 NGINX 실측과 같음). root 위로 올라가는 `..`는 400 + 연결 닫기(NGINX 실측, 사용자 결정). Host 없는 HTTP/1.1은 400, 막힌 메서드는 405 + `Allow` (RFC MUST) → [[concepts/configuration-file]], [[concepts/status-codes]].
 - 요청 경로는 query 분리 → 세그먼트 분할 → 한 번만 디코딩 → `%00`·`%2F` 거부 → `..` 제거 → 매핑 → root 안인지 확인 순서로 처리한다. `%2F`는 400으로 거부한다(사용자 결정). NGINX는 `%2F`를 구분자로 쓰고 디코딩을 먼저 하므로 이 점은 NGINX와 다르다(실측) → [[concepts/security]], [[sources/nginx-observed-encoded-slash]].
 - 리다이렉트 설정은 `return 코드 URL` 형식으로 받는다. index·`error_page`·CGI local redirect 같은 내부 리다이렉트는 반복 횟수에 상한을 두고 넘으면 500 → [[concepts/configuration-file]], [[concepts/resilience]].
@@ -59,7 +60,7 @@ C++98로 HTTP 서버를 만드는 42 과제. 실행은 `./webserv [configuration
 ## 열린 질문
 
 - 42 EvalHub 원문이 intra 현재 평가표와 같은지 → [[sources/evaluation-sheet-en]]
-- 허용 함수 목록이 `exit` 같은 표준 라이브러리에도 적용되는지 (CGI 자식 종료). `std::exit`을 쓰기로 했고(결정 12) 디펜스에서 설명한다. 시각은 허용 함수로 얻는다(결정 10) → [[analysis/subject-vs-evaluation]]
+- 허용 함수 목록이 `exit` 같은 표준 라이브러리에도 적용되는지 (CGI 자식 종료, 파일 삭제). `std::exit`(결정 12)과 `std::remove`(결정 15)를 쓰기로 했고 디펜스에서 설명한다. 시각은 허용 함수로 얻는다(결정 10) → [[analysis/subject-vs-evaluation]]
 - Ubuntu 평가에서 `fcntl()`(subject상 "For macOS only" 절) 사용이 인정되는지 → [[concepts/io-multiplexing]]
 - read/write 외 함수(`poll`, `bind`)의 errno를 봐도 되는지, `waitpid` 매크로를 써도 되는지, `/dev/urandom` 읽기가 `poll()` 예외인지, `FD_CLOEXEC`를 위해 `F_SETFD`를 써도 되는지 → [[analysis/subject-vs-evaluation]]
 - 쿠키·세션 보너스를 CGI 예제로 보여 주는 것을 평가자가 "웹 서버의 세션 시스템"으로 인정할지 → [[analysis/design-decisions]] 8

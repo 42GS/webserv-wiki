@@ -2,7 +2,7 @@
 title: 파일 업로드
 type: concept
 sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc7578.txt, raw/rfc9110.txt, raw/rfc9112.txt, raw/rfc2046.txt]
-updated: 2026-10-15
+updated: 2026-10-17
 ---
 
 # 파일 업로드
@@ -84,7 +84,7 @@ Content-Type: text/plain
 - 받는 쪽의 기존 파일을 실수로 덮어쓰지 않게 주의하라고 한다 (raw/rfc7578.txt:497-499).
 - 과제 적용 (**판단**):
   - `/`와 `..`를 포함한 경로 부분을 버리고 마지막 이름만 쓴다. 빈 이름, `.`, `..`는 거부하거나 서버가 이름을 만든다 → [[concepts/security]] 1절.
-  - 같은 이름의 파일이 있으면 덮어쓸지, 다른 이름으로 저장할지, 409로 거부할지 정한다. 409는 대상 리소스의 현재 상태와 충돌할 때의 코드다 (raw/rfc9110.txt:7652-7655).
+  - 같은 이름의 파일이 있으면 409로 거부한다 (사용자 결정, 2026-10-17 → [[analysis/design-decisions]] 17). 409는 대상 리소스의 현재 상태와 충돌할 때의 코드다 (raw/rfc9110.txt:7652-7655). 덮어쓰기와 다른 이름으로 저장하기는 고르지 않았다.
 
 ## 업로드 위치와 CGI
 
@@ -95,7 +95,9 @@ Content-Type: text/plain
 
 - **서버가 `multipart/form-data`만 직접 파싱해 저장한다** (사용자 결정, 2026-10-15 → [[analysis/design-decisions]] 7). 과제 문서는 이를 정하지 않지만, "업로드를 허용하고 저장 위치를 지정"하는 설정 요구(raw/subject.md:172)와 맞는다.
 - 업로드 라우트에 multipart가 아닌 본문(예: `curl --data-binary`)이 오면 415로 거부한다 (**판단**, raw/rfc9110.txt:7738-7740) → [[concepts/status-codes]].
-- 업로드한 파일을 다시 받는 경로. 평가는 업로드 후 다시 받아 본다 (raw/evaluation-sheet-en.md:82). 저장 위치가 GET으로 접근 가능한 root 아래인지 설정을 맞춰 둔다.
+- 업로드한 파일을 다시 받는 경로. 평가는 업로드 후 다시 받아 본다 (raw/evaluation-sheet-en.md:82). 저장 위치가 GET으로 접근 가능한 root 아래인지 설정을 맞춰 둔다. 서버는 그렇게 닿을 때만 201에 `Location`을 붙인다.
+- 업로드 location에도 `limit_except GET POST`처럼 POST를 적어야 한다. `limit_except`가 없는 location은 GET·HEAD만 받는다 (사용자 결정, 2026-10-17 → [[analysis/design-decisions]] 16).
+- 구현(6단계)의 세부 규칙과 판단은 [[analysis/design]] 7절 "구현 세부 (단계 6)", 시험은 [[analysis/test-plan]] 6절.
 
 ## 관련
 

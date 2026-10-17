@@ -1,7 +1,7 @@
 ---
 title: 테스트 계획
 type: analysis
-sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/nginx-core-module.md, raw/macos-observed-sigpipe-leaks.md, raw/posix-poll.md, raw/design-checks-observed.md, raw/posix-recv.md, raw/rfc9112.txt, raw/rfc9110.txt, raw/rfc6585.txt, raw/rfc1945.txt, raw/rfc3986.txt]
+sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/nginx-core-module.md, raw/macos-observed-sigpipe-leaks.md, raw/posix-poll.md, raw/design-checks-observed.md, raw/posix-recv.md, raw/rfc9112.txt, raw/rfc9110.txt, raw/rfc6585.txt, raw/rfc1945.txt, raw/rfc3986.txt, raw/rfc2046.txt, raw/rfc7578.txt]
 updated: 2026-10-17
 ---
 
@@ -71,7 +71,7 @@ updated: 2026-10-17
 | C-14 | 기본 에러 페이지 설정 (`error_page 코드... 경로`) | raw/subject.md:164, raw/evaluation-sheet-en.md:69 | U | 코드별 경로. 300~599 밖 코드, `/`로 시작하지 않는 경로, 같은 코드 중복은 거부 | `parsesDesignExample`, `rejectsBadErrorPages` | 있음 |
 | C-15 | 요청 본문 최대 크기 설정. 숫자·`k`·`m` 단위, 1 이상 100MB 이하 | raw/subject.md:165, [[analysis/design-decisions]] 11 | U | 범위 밖·잘못된 단위·넘침은 거부 | `rejectsBodySizeOutsideRange`, `acceptsBodySizeWithoutUnitAndLowerBound`, `locationInheritsServerSettings` (`2k`), `parsesDesignExample` (`10m`) | 있음 |
 | C-16 | 라우트는 prefix로 지정하고 정규식은 받지 않는다. 경로는 `/`로 시작. 같은 경로 중복은 거부 | raw/subject.md:166 | U | 수식어(`=`, `~`) 거부 | `rejectsUnknownOrMisplacedDirectives`, `rejectsLocationProblems` | 있음 |
-| C-17 | 라우트별 허용 메서드 (`limit_except ... { deny all; }`). GET을 허용하면 HEAD도. 없으면 전부 허용 | raw/subject.md:167, raw/evaluation-sheet-en.md:73, 설계 3절 | U | 허용 집합. 블록 안 다른 내용·모르는 메서드는 거부 | `parsesDesignExample`, `rejectsBadLocationDirectives` | 있음 |
+| C-17 | 라우트별 허용 메서드 (`limit_except ... { deny all; }`). GET을 허용하면 HEAD도. 없으면 GET·HEAD만 (2026-10-17 [[analysis/design-decisions]] 16. 그 전에는 전부 허용) | raw/subject.md:167, raw/evaluation-sheet-en.md:73, 설계 3절 | U | 허용 집합. 블록 안 다른 내용·모르는 메서드는 거부 | `parsesDesignExample`, `rejectsBadLocationDirectives` | 있음 |
 | C-18 | HTTP 리다이렉트 (`return 코드 URL`) | raw/subject.md:168 | U | 코드와 URL. 301·302·303·307·308이 아니면 거부 (설계) | `parsesDesignExample`, `rejectsBadLocationDirectives` | 있음 |
 | C-19 | 파일을 찾을 디렉토리 (`root`, subject 예시는 `alias`). 한 location에 둘 다 있으면 거부. 둘 다 없고 `return`도 없으면 거부 | raw/subject.md:169, 설계 3절 | U | 값 저장과 거부 | `parsesDesignExample`, `rejectsLocationProblems` | 있음 |
 | C-20 | 디렉토리 리스팅 켜기·끄기 (`autoindex`), 기본 off | raw/subject.md:170 | U | `on`/`off`만 받는다 | `defaultsWhenNotConfigured`, `locationInheritsServerSettings`, `rejectsBadLocationDirectives` | 있음 |
@@ -172,7 +172,7 @@ updated: 2026-10-17
 | R-18 | 정적 웹사이트를 브라우저로 끝까지 본다 | raw/subject.md:145, raw/evaluation-sheet-en.md:99 | M | 시연용 `www/` | 없음 | 나중 (9단계 시연 자료와 함께) |
 | R-20 | alias를 쓰는 location은 떼고 남은 경로가 비었거나 `/`로 시작할 때만 그 location의 파일로 본다. 아니면 404 ([[analysis/design-decisions]] 14) | raw/rfc9110.txt:8560-8565, [[concepts/security]] 1절 | U, I | `location /kapouet { alias www/; }`에서 `/kapouet../secret/s.txt`가 404 | `router_test.cpp` `r20_aliasCoversOnlyWholeSegments`, `test_static.py` `test_r20_alias_cannot_reach_outside` | 있음. 고치기 전에는 alias 밖 파일이 200 |
 | R-21 | HEAD 요청에는 오류 응답(파서 오류, 408)에도 본문을 보내지 않는다 (MUST NOT) | raw/rfc9110.txt:3987-3988 | I | HEAD에 413: 헤더만 오고 본문 0바이트 | `test_requests.py` `test_r21_head_error_has_no_body` | 있음 |
-| R-19 | 4단계에서 POST·DELETE는 정적 리소스에 대해 405 (업로드·삭제는 6단계) | 설계 7절 순서 | I | 405 + `Allow` | `router_test.cpp` `r05_r19_*`, `test_static.py` `test_r05_r19_*`, `test_requests.py` P-16·P-17 (POST가 405) | 있음. 6단계에서 바뀐다 |
+| R-19 | 4단계에서 POST·DELETE는 정적 리소스에 대해 405 (업로드·삭제는 6단계) | 설계 7절 순서 | I | 405 + `Allow` | `router_test.cpp` `r05_r19_*`, `test_static.py` `test_r05_r19_*`, `test_requests.py` P-16·P-17 (POST가 405) | 있음. 6단계부터는 `upload_store`가 없는 location의 POST와 `limit_except`에 없는 DELETE가 405다 (F-09, F-12, D-04) |
 
 ## 5. 연결 관리
 
@@ -193,9 +193,38 @@ updated: 2026-10-17
 | K-10 | keep-alive 연결도 머리 타임아웃은 요청의 첫 바이트부터 잰다 | 설계 12절, N-24 | I | keep-alive 대기 뒤 보낸 미완성 머리가 약 30초 뒤 408 (느린 테스트) | `test_keepalive.py` `test_k10_head_timeout_starts_at_the_first_byte` (5초 쉰 뒤 미완성 머리, 느린 테스트) | 있음 |
 | K-11 | `siege -b`를 오래 돌려도 메모리가 늘지 않고 매달린 연결이 없다 | raw/evaluation-sheet-en.md:114-117 | M | availability 99.5% 초과, 메모리 일정 | 2026-10-17 Ubuntu 22.04 컨테이너, siege 4.0.7 `-b -c 50 -t 60S`, 빈 페이지. `connection = close`: 690,358건, availability 100%, 실패 0. `keep-alive`: 3,476,698건, 100%, 실패 0, 실행 중 연결 50개 유지. 서버 RSS는 두 실행 모두 1.9~3.1MB에서 늘지 않았고, 끝난 뒤 fd는 시작 때와 같은 4개. siege를 셸 백그라운드(`&`)로 돌리면 "Lifting the server siege..." 뒤 siege가 끝나지 않는 일이 두 번 있었다. 그때 서버에는 클라이언트 연결이 없었고 siege 쪽 소켓은 CLOSE_WAIT였다(서버는 이미 닫음). 포그라운드로 돌리면 세 번 모두 정상 종료 | 확인. 8단계에서 더 긴 실행과 절차로 남긴다 |
 
-## 6단계 이후 (단계를 시작할 때 채운다)
+## 6. 업로드와 DELETE
 
-- 6. 업로드(`multipart/form-data`, 415)와 DELETE
+읽은 위키: [[analysis/implementation-plan]] 6단계, [[concepts/file-upload]], [[analysis/design-decisions]] 7·11, [[analysis/design]] 1·3·7·12절, [[concepts/http-features]] 메서드별 규칙, [[concepts/status-codes]], [[concepts/security]] 1절, [[analysis/subject-vs-evaluation]] 1.4절. 새로 정한 것은 [[analysis/design-decisions]] 15~17, 위키에 없던 선택은 [[analysis/design]] 7절 "구현 세부 (단계 6)"에 적는다.
+업로드는 `F-`, 삭제는 `D-`로 쓴다. 통합 테스트는 `test_upload.py`다.
+
+| ID | 요구사항 | 근거 | 수준 | 기대 결과 | 현재 테스트 | 상태 |
+|---|---|---|---|---|---|---|
+| F-01 | `multipart/form-data`로 올린 파일을 바이트 그대로 저장하고 GET으로 다시 받는다. 구분자 앞의 CRLF는 내용이 아니다 | raw/subject.md:146, raw/evaluation-sheet-en.md:82, raw/rfc2046.txt:1073-1076 | U, I | CRLF로 끝나고 구분자 비슷한 바이트가 든 내용이 그대로 저장되고 GET 본문도 같다 | `multipart_test.cpp` `f01_f03_*`, `router_test.cpp` `f01_postToAnUploadLocation`, `test_upload.py` `test_f01_*` | 있음 |
+| F-02 | 201에 처음 저장한 파일의 `Location`, 본문에 저장한 파일 목록 (SHOULD). GET으로 닿지 않는 저장 위치면 `Location`을 붙이지 않는다 | raw/rfc9110.txt:4050-4055 | I | `Location: /upload/a.txt`, 본문 `/upload/a.txt\n/upload/c%20d.txt\n`. 닿지 않으면 `Location` 없이 이름만 | `test_upload.py` `test_f02_*` 2개 | 있음 |
+| F-03 | 파일이 아닌 필드와 `filename=""`인 part는 건너뛰고, 파일이 하나도 없으면 400 | raw/rfc7578.txt:207-213, 설계 7절 | U, I | 필드·빈 파일 입력이 섞여도 파일 하나만 저장. 필드만 있으면 400 | `multipart_test.cpp` `f01_f03_*`, `test_upload.py` `test_f03_*` | 있음 |
+| F-04 | multipart 파싱: preamble·epilogue 무시, 구분자 뒤 공백(transport-padding) 처리 (MUST), 내용은 아무 바이트 | raw/rfc2046.txt:1110-1112, raw/rfc2046.txt:1239-1244, raw/rfc2046.txt:1269 | U | NUL·CRLF가 든 내용, 빈 내용 | `multipart_test.cpp` `f04_*` 2개 | 있음 |
+| F-05 | 요청 `Content-Type`이 `multipart/form-data`가 아니거나 없으면 415 | [[analysis/design-decisions]] 7, raw/rfc9110.txt:7738-7740 | U, I | urlencoded, `text/plain`, 없음, `multipart/mixed` 모두 415 | `multipart_test.cpp` `f05_f06_*`, `test_upload.py` `test_f05_*` | 있음 |
+| F-06 | boundary가 없거나 잘못됨(1~70자 bchars, 공백으로 끝나지 않음), 본문 문법 오류(첫·마지막 구분자 없음, 구분자 줄에 다른 글자, name 있는 `form-data` disposition 없음)는 400 | raw/rfc2046.txt:1200-1214, raw/rfc7578.txt:197-201 | U, I | 400, 아무것도 저장 안 됨 | `multipart_test.cpp` `f05_f06_*`, `f06_*`, `test_upload.py` `test_f06_*` | 있음 |
+| F-07 | 파일 이름의 디렉토리 부분(`/`, `\`)은 버린다. 남은 이름이 비었거나 `.`·`..`이면 400 | raw/rfc7578.txt:215-220 | I | `../../evil.txt`는 저장 위치의 `evil.txt`. `..`, `dir/`, `x/..`는 400 | `test_upload.py` `test_f07_*` | 있음 |
+| F-08 | 저장 위치에 있는 이름, 한 요청 안에서 겹치는 이름은 409. 그 요청의 파일은 하나도 저장하지 않는다. 본문에 충돌한 이름 | [[analysis/design-decisions]] 17, raw/rfc7578.txt:497-499, raw/rfc9110.txt:7655-7657 | I | 409, 앞 파일도 저장 안 됨, 기존 파일 내용 그대로, 디렉토리 이름도 409 | `test_upload.py` `test_f08_*` | 있음 |
+| F-09 | `upload_store`가 없는 location의 POST는 405이고 `Allow`에 POST가 없다 | [[analysis/design-decisions]] 16 | U, I | `limit_except GET POST`인데 저장 위치가 없으면 405 + `Allow: GET, HEAD` | `router_test.cpp` `f09_f12_d04_*`, `test_upload.py` `test_f09_*` | 있음 |
+| F-10 | chunked 본문의 업로드 | raw/subject.md:179, [[concepts/request-parsing]] | I | 해제한 본문이 그대로 저장 | `test_upload.py` `test_f10_*` | 있음 (파서의 chunked 시험은 P-xx) |
+| F-11 | parameter 문법: 이름은 대소문자 무시, 값은 token이나 quoted-string, quoted-pair는 뒤 옥텟으로 (MUST). `=` 앞뒤 공백, 닫히지 않은 따옴표, 같은 이름 두 번은 오류 | raw/rfc9110.txt:1789-1792, raw/rfc9110.txt:1818-1825, raw/rfc9110.txt:1833-1834 | U | 값과 오류 | `field_syntax_test.cpp` 3개 | 있음 |
+| F-12 | `limit_except`가 없는 location은 POST·DELETE를 받지 않는다 | [[analysis/design-decisions]] 16 | U, I | 405 + `Allow: GET, HEAD`, 파일은 그대로 | `config_test.cpp` `parsesDesignExample`, `router_test.cpp` `f09_f12_d04_*`, `test_upload.py` `test_f12_*` | 있음 |
+| F-13 | 쓰기 실패는 500이고 그 요청이 만든 파일을 지운다 | 설계 7절 | I, R | 저장 위치가 없으면 500 | `test_upload.py` `test_f13_missing_store_is_500`. 여러 파일 중 중간 실패 뒤 지우기는 실패를 만들 방법이 없어 코드 읽기로 확인 (2026-10-17) | 있음, 지우기는 확인 |
+| D-01 | DELETE는 일반 파일을 지우고 204 (본문·`Content-Length` 없음). 뒤 GET은 404 | raw/rfc9110.txt:4235-4236, raw/rfc9110.txt:3238-3239, raw/evaluation-sheet-en.md:79 | I | 같은 연결에서 DELETE 뒤 GET이 404 (204의 길이 처리 확인) | `test_upload.py` `test_d01_*` | 있음 |
+| D-02 | 없는 파일의 DELETE는 404 | raw/rfc9110.txt:7589-7591 | U, I | 404 | `router_test.cpp` `d02_d03_*`, `test_upload.py` `test_d02_d03_*` | 있음 |
+| D-03 | 디렉토리의 DELETE는 403 (**판단**, 일반 파일만 지움) | raw/rfc9110.txt:7571-7572 | U, I | `/` 있음·없음 모두 403, 디렉토리 그대로 | `router_test.cpp` `d02_d03_*`, `test_upload.py` `test_d02_d03_*` | 있음 |
+| D-04 | `limit_except`에 DELETE가 없으면 405 + `Allow` (평가 "권한 없이 DELETE") | raw/evaluation-sheet-en.md:73, raw/rfc9110.txt:7603-7607 | U, I | 405 + `Allow: GET, HEAD`, 파일 그대로 | `router_test.cpp` `f09_f12_d04_*`, `test_upload.py` `test_d04_*` | 있음 |
+| D-05 | root 밖은 지울 수 없다 (`..`는 400, 결정 2) | [[analysis/design-decisions]] 2 | U | 400 | `router_test.cpp` `d02_d03_*` | 있음. DELETE도 GET과 같은 정규화를 거친다. 정규화의 변이 확인은 R-01 |
+| D-06 | 서버가 바꿀 수 없는 디렉토리 안의 파일 DELETE는 403 | raw/rfc9110.txt:7571-7572 | I | 403, 파일 그대로 (컨테이너는 root라 macOS에서만 의미 있음) | `test_upload.py` `test_d06_*` (root면 건너뜀) | 있음 |
+| F-14 | 브라우저 폼으로 올린 파일을 다시 받는다 | raw/evaluation-sheet-en.md:82 | M | 같은 파일 | 없음 | 나중 (9단계 시연 자료와 함께) |
+
+일부러 틀리게 바꾼 확인 (2026-10-17): 통합 테스트 17개 변이(쓰기 실패 무시, CRLF를 내용에 포함, 미디어 타입 검사 제거, 경로 버리기 제거, 기존 이름·겹치는 이름 검사 제거, 저장 위치 없는 POST 허용, 기본 허용에 POST·DELETE 추가, `std::remove` 생략, 디렉토리 삭제 허용, 권한 검사 제거, `Location` 매핑 검사 제거, 빈 `filename` 저장, 파일 없음 허용, 없는 파일 404 제거, DELETE 분기 제거, 409 본문의 이름 제거)와 단위 테스트 10개 변이(quoted-pair 처리, 같은 parameter 검사, padding 건너뛰기, preamble 찾기, boundary 길이·끝 공백, 마지막 구분자, 값 뒤 글자, disposition 두 번, `limit_except`가 기본값을 비우지 않음)가 모두 해당 테스트를 실패시켰다.
+
+## 7단계 이후 (단계를 시작할 때 채운다)
+
 - 7. CGI: GET·POST, chunked 본문, 실행 디렉토리, 무한 루프(504), 에러 스크립트(502)
 - 8. 안정성: [[concepts/resilience]] "요구 목록"
 - 9. README·시연 설정

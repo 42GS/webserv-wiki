@@ -1,7 +1,7 @@
 ---
 title: webserv 설계 (클래스·인터페이스)
 type: analysis
-sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/nginx-core-module.md, raw/design-checks-observed.md, raw/cpp-core-guidelines.md, raw/google-cpp-style-guide.md, raw/rfc9110.txt, raw/rfc9112.txt, raw/siegerc.in]
+sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/nginx-core-module.md, raw/design-checks-observed.md, raw/cpp-core-guidelines.md, raw/google-cpp-style-guide.md, raw/rfc9110.txt, raw/rfc9112.txt, raw/siegerc.in, raw/rfc2046.txt, raw/rfc7578.txt]
 updated: 2026-10-17
 ---
 
@@ -26,19 +26,19 @@ src/
             SharedSettings  ConfigValues  ConfigLimits  ConfigLoader  ConfigError  ServerConfig  BuildContext
   core/     EventLoop  IoHandler  Server  Listener  ListenContext  SocketAddress  ChildReaper  Signals  Clock
             HttpDate  Limits
-  fs/       FileInfo  FileReader
+  fs/       FileInfo  FileReader  FileWriter
   http/     Connection  Request  RequestParser  HeaderMap  Response  ResponseStream  StatusCodes  StatusText
-            MimeTypes  Methods  Hex
+            MimeTypes  Methods  HeaderNames  Hex  Ascii  FieldSyntax  Multipart
   app/      RequestProcessor  ProcessOutcome
   route/    Router  RouteResult  PathResolver
-  handler/  StaticHandler  AutoindexHandler  UploadHandler  DeleteHandler  StatusPage
+  handler/  StaticHandler  AutoindexHandler  UploadHandler  StatusPage
   cgi/      CgiProcess  CgiContext  CgiEnv  CgiPipe  CgiOutputParser  CgiObserver
 tests/                Python 테스트 스크립트
 ```
 
 - 헤더는 `include/<모듈>/`, 소스는 `src/<모듈>/`에 같은 이름으로 둔다(`-Iinclude`, 2026-10-16 사용자 요청). 단위 테스트는 `tests/unit/`, `make test`로 실행한다. 코드 포맷은 clang-format Google 스타일(`Standard: c++03`)이고 `make format`으로 맞춘다 (2026-10-16 사용자 선택).
 - config 모듈은 단계 1 리팩토링에서 `ConfigLexer` → `ConfigSyntax` → `ConfigBuilder`(서버 목록·listen 충돌) → `ServerBuilder`·`LocationBuilder`(값 해석)로 나눴다. 지시자의 위치·인자 수·블록 여부·반복 가능 여부는 `DirectiveRules`의 표 하나에 있다.
-- 공용 `util/`은 두지 않는다. 문자열 처리 같은 도우미는 그것을 쓰는 모듈 안에 둔다. 두 모듈 이상에서 같은 이유로 쓰게 되면 그때 뺀다. 이 규칙으로 4단계 리뷰 뒤에 파일 종류 확인과 파일 읽기를 `fs/`로, 16진수 해석을 `http/Hex`로 뺐다.
+- 공용 `util/`은 두지 않는다. 문자열 처리 같은 도우미는 그것을 쓰는 모듈 안에 둔다. 두 모듈 이상에서 같은 이유로 쓰게 되면 그때 뺀다. 이 규칙으로 4단계 리뷰 뒤에 파일 종류 확인과 파일 읽기를 `fs/`로, 16진수 해석을 `http/Hex`로 뺐다. 6단계에서는 요청 파서 안에 있던 token·목록·공백 처리를 multipart 파서도 쓰게 되어 `http/FieldSyntax`로 뺐다(parameter·quoted-string 해석을 더함).
 - 헤더에는 다른 파일이 쓰는 상수·자료형만 둔다 (2026-10-17 사용자 결정. 2026-10-16의 "상수와 자료형은 모두 헤더에" 규칙을 가독성 때문에 바꿨다). 여러 파일이 쓰는 어휘(상태 코드 `http/StatusCodes.hpp`, 헤더 이름, 메서드 이름)와 12절의 조정용 값(`core/Limits.hpp`, 본문 상한은 `config/ConfigLimits.hpp`)은 헤더에 둔다. 한 `.cpp`에서만 쓰는 상수·표와 그 행 타입은 그 `.cpp`의 이름 없는 namespace 맨 위에 둔다. 한 `.cpp`에서만 쓰는 보조 클래스·함수도 그 `.cpp`의 이름 없는 namespace에 둔다. 근거: C++ Core Guidelines SF.22는 다른 파일에 내보내지 않는 것을 모두 이름 없는 namespace에 두라고 하고, 구현 파일에 정의한 "helper" 클래스·함수를 예로 든다 (raw/cpp-core-guidelines.md:19791-19796, raw/cpp-core-guidelines.md:19816). SF.21은 헤더에 이름 없는 namespace를 쓰지 말라고 한다 (raw/cpp-core-guidelines.md:19758-19762). Google C++ Style Guide도 다른 파일이 참조하지 않는 `.cc` 파일의 정의에 internal linkage를 권하고 `.h` 파일에는 쓰지 말라고 한다 (raw/google-cpp-style-guide.md:434). 이렇게 두면 다른 파일이 같은 이름을 선언해도 서로 독립이다 (raw/google-cpp-style-guide.md:438). 자세한 내용은 [[sources/cpp-core-guidelines]], [[sources/google-cpp-style-guide]]. 의미가 바로 옆 코드나 주석에서 보이는 값(문법상 글자 위치, 진법, `%XX`의 2, fd의 -1, 참고한 알고리즘의 숫자)은 리터럴로 쓴다.
 - 주석은 Doxygen 형식이고, 영어 문장 바로 아래 줄에 같은 뜻의 한국어를 쓴다 (2026-10-17 사용자 결정). 파일마다 `@file`, 헤더의 모든 선언과 `.cpp`의 이름 없는 namespace 함수에 `@brief`·`@param[in/out]`·`@return`을 단다. 매개변수 없는 조회 함수는 `@brief`만. 구조체·클래스 멤버 주석은 선언 위 한 줄(`/** 영어 / 한국어 */`), 열거값과 정렬한 상수 표는 줄 끝 `/**< */`. 헤더에 문서가 있는 함수는 `.cpp` 정의에서 되풀이하지 않고, 구현 쪽 이유만 적는다. 근거: Google C++ Style Guide는 정의의 주석에 선언의 주석을 되풀이하지 말고 어떻게 하는지에 집중하라고 하고 (raw/google-cpp-style-guide.md:2645), 정의에 쓸 내용으로 쓴 기법, 단계 개요, 다른 방법 대신 이 방법을 고른 이유를 예로 든다 (raw/google-cpp-style-guide.md:2643). 복사 금지용 private 선언은 `/// @cond`로 문서에서 뺀다.
 - 로그 모듈은 필요해질 때 만든다.
@@ -52,8 +52,8 @@ tests/                Python 테스트 스크립트
 | `http` | 연결의 소켓 I/O와 상태 전이, 요청 파싱, 응답 직렬화 | 요청을 어떻게 처리할지 결정 |
 | `app` | 완성된 요청 하나를 받아 응답 또는 CGI 실행으로 바꾼다 (Router → Handler 조율) | 소켓 I/O |
 | `route` | 요청 + 설정 → 처리 방식 결정 (경로 정규화, location 선택, 메서드 검사) | 실제 처리 |
-| `fs` | 파일 종류·크기·읽기 권한 확인, 작은 일반 파일 읽기 (config·route·handler가 같이 씀) | 경로 결정, 응답 |
-| `handler` | 결정된 방식대로 응답을 만든다 (정적 파일, 리스팅, 업로드, 삭제, 에러 페이지) | 소켓 I/O |
+| `fs` | 파일 종류·크기·권한 확인, 작은 일반 파일 읽기, 새 파일 쓰기 (config·route·handler가 같이 씀) | 경로 결정, 응답 |
+| `handler` | 결정된 방식대로 응답을 만든다 (정적 파일, 리스팅, 업로드, 에러 페이지). 삭제는 `std::remove` 한 번이라 `RequestProcessor`가 직접 한다 | 소켓 I/O |
 | `cgi` | 자식 프로세스 실행, pipe I/O, CGI 출력 → `Response` | 소켓 I/O, 자식 회수 |
 
 의존 방향 (화살표는 "안다"):
@@ -86,10 +86,10 @@ EventLoop → IoHandler, LoopObserver 인터페이스만
 | `autoindex` | server, location | `autoindex on;` | 같음. 기본 off |
 | `return` | location | `return 301 /new/;` | 같음. 코드와 URL을 함께 받는다 |
 | `limit_except` | location | `limit_except GET POST { deny all; }` | 같은 형식. 블록 안에는 `deny all;`만 받는다. GET을 허용하면 HEAD도 허용 (raw/nginx-core-module.md:795) |
-| `upload_store` | location | `upload_store /var/www/uploads;` | **새 지시자**. 있으면 그 location에서 업로드 허용 |
+| `upload_store` | location | `upload_store /var/www/uploads;` | **새 지시자**. 있으면 그 location이 POST를 업로드로 받는다 (POST도 `limit_except`에 있어야 함) |
 | `cgi` | location | `cgi .php /usr/bin/php-cgi;` | **새 지시자**. 확장자와 실행 파일 |
 
-- `limit_except`가 없는 location은 서버가 아는 메서드(GET, HEAD, POST, DELETE)를 모두 허용한다. 막힌 메서드는 405 + `Allow`, 모르는 메서드는 501 → [[concepts/configuration-file]] "라우트 규칙을 응답으로 옮길 때".
+- `limit_except`가 없는 location은 GET과 HEAD만 받는다. POST·DELETE는 `limit_except`에 적어야 열린다 ([[analysis/design-decisions]] 16, 2026-10-17. 그 전에는 모든 메서드를 허용했다). 막힌 메서드는 405 + `Allow`, 모르는 메서드는 501 → [[concepts/configuration-file]] "라우트 규칙을 응답으로 옮길 때".
 - 알 수 없는 지시자, 잘못된 위치의 지시자, 인자 개수가 틀린 지시자는 설정 오류다.
 - 한 location에 `root`와 `alias`가 함께 있으면 설정 오류로 한다. location에 둘 다 없으면 server의 `root`를 물려받는다. `return`이 없는 location이 물려받은 것까지 포함해 `root`·`alias`가 모두 없으면 파일 경로를 만들 수 없으므로 설정 오류다.
 - 정규식 location은 지원하지 않으므로 (raw/subject.md:166) NGINX `alias`의 정규식 관련 규칙은 해당하지 않는다.
@@ -139,7 +139,7 @@ struct LocationConfig {
     std::string                        alias;
     std::vector<std::string>           indexFiles;
     bool                               autoindex;
-    std::set<std::string>              allowedMethods;  // limit_except. 비면 전부 허용
+    std::set<std::string>              allowedMethods;  // limit_except. 없으면 GET, HEAD (결정 16)
     int                                returnCode;      // 0이면 리다이렉트 없음
     std::string                        returnUrl;
     std::string                        uploadStore;     // 비면 업로드 불가
@@ -409,7 +409,7 @@ public:
 - `Router::route` 순서: 경로 정규화(`PathResolver`) → location 선택 → 파일 경로 매핑(`root`면 URI 전체를 붙이고, `alias`면 location prefix를 바꿔 끼운다) → `return` → `limit_except` 검사 → CGI 확장자 → 업로드 POST → DELETE → 파일·디렉토리 → [[concepts/security]] "경로 정규화 절차", [[concepts/configuration-file]] "디렉토리 요청 처리 순서".
 - index 파일을 찾으면 그 경로로 `route`를 다시 부른다(CGI 확장자면 CGI가 된다). 다시 부르는 횟수는 `kMaxInternalRedirects`까지, 넘으면 500 (결정 6).
 - 업로드는 본문 전체가 메모리에 모인 뒤(`client_max_body_size`로 상한, `Content-Length`를 알면 그만큼 `reserve`) 파일 하나를 `open` → `write`(다 쓸 때까지 반복) → `close`로 한 번에 저장한다. 일반 파일이라 `poll()`이 필요 없다 (raw/subject.md:134). 구현이 단순한 쪽으로 정했다 (사용자 결정, 2026-10-16).
-- Handler는 상태가 없는 함수다: `Response StaticHandler::serve(const RouteResult&)`, `UploadHandler::store(const RouteResult&, const Request&)` 등. 인자는 2개 이하.
+- Handler는 상태가 없는 함수다: `serveStaticFile(const RouteResult&, Response&)`, `storeUpload(const RouteResult&, const Request&)` 등. 인자는 2개 이하.
 - `buildStatusPage(status, configuredPages, router)` (`handler/StatusPage`): 설정된 에러 페이지 파일이 있으면 그 파일, 없거나 읽지 못하면 내장 기본 페이지 (raw/subject.md:143). 리다이렉트 응답의 본문도 이것으로 만든다. 4단계 리뷰에서 `ErrorPageBuilder`에서 이름을 바꾸고, Router를 매번 만들지 않고 `RequestProcessor`의 것을 받게 했다.
 - 구현 세부 (단계 4, 2026-10-16, **판단**. 기준은 결정 13의 "요구사항에 부합하고 안전한 쪽"):
   - Router는 3단계에서 `http/`에 만들었던 것을 설계대로 `route/`로 옮긴다. `bodyLimitFor`는 `RequestProcessor`로 옮기고 정규화한 경로로 location을 찾는다. 정규화가 실패하거나 맞는 location이 없는 요청은 기본 상한(1MB)으로 본문을 받은 뒤 라우팅에서 400·404로 답한다(머리 단계에서 따로 끊는 경로를 두지 않아 단순하다).
@@ -418,8 +418,36 @@ public:
   - `Content-Type`: 확장자 표(html, htm, css, js, json, txt, png, jpg, jpeg, gif, svg, ico, pdf). 표에 없으면 `application/octet-stream`. NGINX 문서의 기본값은 `text/plain`이지만 (raw/nginx-core-module.md:386), 모르는 내용을 브라우저가 글자로 해석하지 않게 하는 쪽을 골랐다. RFC도 `Content-Type`이 없을 때 수신자가 이 타입으로 볼 수 있다고 한다 (raw/rfc9110.txt:2944-2949).
   - 디렉토리 목록은 이름만 보인다(크기·시각 없음, [[concepts/configuration-file]] "디렉토리 요청 처리 순서"의 판단). 이름은 HTML 이스케이프하고 링크는 퍼센트 인코딩한다. `.`으로 시작하는 이름도 보이되 `.`과 `..`은 뺀다.
   - 심볼릭 링크가 root 밖을 가리키는지는 확인하지 못한다. 허용 함수(raw/subject.md:113)에 `lstat`·`realpath`·`readlink`가 없다. URI의 `..`는 정규화에서 막는다.
-  - 4단계의 POST·DELETE: 업로드·삭제 처리는 6단계라서, 그 전까지는 정적 리소스가 받지 않는 메서드로 보고 405와 `Allow: GET, HEAD`를 보낸다.
+  - 4단계의 POST·DELETE: 업로드·삭제 처리는 6단계라서, 그 전까지는 정적 리소스가 받지 않는 메서드로 보고 405와 `Allow: GET, HEAD`를 보냈다. 6단계 구현은 아래.
   - `Connection: close`는 5단계(keep-alive)까지 모든 응답에 붙였다. 5단계부터는 닫는 응답에만 붙인다 (5절 구현 세부).
+- 구현 세부 (단계 6, 2026-10-17). 사용자가 정한 것은 [[analysis/design-decisions]] 15~17이고, 나머지는 **판단**이다:
+  - 메서드: `limit_except`가 허용하고 그 location이 답할 수 있는 메서드만 받는다. POST는 `upload_store`가 있어야 답한다. 405의 `Allow`도 같은 기준으로 만든다 (결정 16).
+  - 업로드 요청 검사 (`UploadHandler`, `http/Multipart`):
+    - 요청 `Content-Type`이 없거나 `multipart/form-data`가 아니면 415 (결정 7).
+    - boundary가 없거나, 끝이 공백이 아닌 1~70자의 bchars가 아니면 400 (raw/rfc2046.txt:1200-1214).
+    - 본문이 multipart 문법에 맞지 않으면 400. 첫 구분자나 마지막 구분자가 없을 때, 구분자 줄에 공백 말고 다른 글자가 있을 때, part에 `name`이 있는 `Content-Disposition: form-data`가 없을 때다 (MUST, raw/rfc7578.txt:197-201).
+    - part 헤더는 `Content-Disposition`만 본다. `Content-Type`·`Content-Disposition`·`Content-Transfer-Encoding` 밖의 헤더는 무시해야 한다 (MUST, raw/rfc7578.txt:345-348). part의 `Content-Type`과 `Content-Transfer-Encoding`도 쓰지 않고 내용을 보낸 그대로 저장한다 (**판단**. `Content-Transfer-Encoding`은 보내지 말라는 SHOULD NOT이다, raw/rfc7578.txt:328-329).
+  - parameter 읽기:
+    - RFC 9110 5.6.6 문법으로 읽는다. quoted-string 안의 `\`는 뒤 옥텟으로 바꾼다 (MUST, raw/rfc9110.txt:1789-1792).
+    - 그래서 `filename="C:\\Users\\a.txt"`(구분자마다 `\` 두 개)는 `C:\Users\a.txt`로 풀리고, 마지막 `\` 뒤의 `a.txt`로 저장된다. `filename="C:\Users\a.txt"`(`\` 하나)는 `C:Usersa.txt`로 풀린다. 둘 다 저장 위치 밖으로 나가지 않는다 ([[analysis/test-plan]] F-07).
+    - 브라우저가 파일 이름의 `\`를 어떻게 보내는지는 **미확인**이다. 확인 방법: 이름에 `\`가 든 파일을 브라우저로 올리고 요청을 캡처한다.
+    - 같은 parameter가 두 번 오면 값이 모호하므로 400이다.
+  - 파일 저장:
+    - `filename`이 비어 있지 않은 part만 파일로 본다. 다른 필드와 `filename=""`인 part는 무시하고, 파일이 하나도 없으면 400이다.
+    - 이름은 마지막 `/`나 `\` 뒤만 쓴다 (디렉토리 경로를 쓰지 말 것, raw/rfc7578.txt:215-220). 그 결과가 비었거나 `.`·`..`이면 400이다.
+    - 모든 이름을 쓰기 전에 검사한다. 같은 이름이 있으면 아무것도 저장하지 않는다 (결정 17).
+    - 파일은 `O_CREAT | O_EXCL`, 모드 0644(umask 적용)로 만든다. 쓰기가 실패하면 이 요청이 만든 파일을 `std::remove`로 지우고 500을 보낸다 (결정 15).
+    - 저장 위치가 없거나 디렉토리가 아니면 파일을 만들 수 없어 500이다.
+    - 본문은 메모리에 모은 뒤 쓴다(위 업로드 방식). part 내용은 복사하지 않고 본문 안의 범위로 넘긴다.
+  - 업로드 응답:
+    - 201의 `Location`은 처음 저장한 파일이다. URI는 POST 경로의 디렉토리 + 파일 이름이고, 그 URI가 저장한 파일로 다시 매핑될 때만 붙인다. `upload_store`는 GET으로 닿지 않는 경로일 수 있다.
+    - 201 본문은 저장한 파일의 URI(없으면 이름)를 한 줄씩 적은 `text/plain`이다. 201은 `Location`과 함께, 새 리소스를 가리키며 결과를 설명하는 표현을 보낸다 (SHOULD, raw/rfc9110.txt:4050-4055).
+    - 409 본문에는 충돌한 이름을 적는다 (SHOULD, raw/rfc9110.txt:7655-7657). 설정한 `error_page` 대신 이 본문을 쓴다.
+    - multipart 오류의 400도 다른 400처럼 응답 뒤 연결을 닫는다 (5절).
+  - 삭제:
+    - 일반 파일만 지우고 204를 보낸다 (raw/rfc9110.txt:4235-4236).
+    - 없으면 404이다. 디렉토리와 그 밖의 종류, 그리고 파일이 든 디렉토리에 쓰기·검색 권한(`access(W_OK | X_OK)`)이 없는 경우는 403이다. `std::remove`가 실패하면 500이다.
+    - 경로는 GET과 같이 정규화(결정 2)를 거치므로 root 밖은 지울 수 없다.
 
 ## 8. 응답
 

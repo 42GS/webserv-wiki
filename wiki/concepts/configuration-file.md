@@ -2,7 +2,7 @@
 title: 설정 파일
 type: concept
 sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc9110.txt, raw/nginx-core-module.md, raw/nginx-request-processing.md, raw/posix-bind.md, raw/nginx-index-module.md, raw/nginx-autoindex-module.md, raw/evaluation-sheet.md, raw/rfc3986.txt, raw/nginx-rewrite-module.md, raw/nginx-server-names.md, raw/os-observed-bind.md, raw/nginx-observed-directory.md]
-updated: 2026-10-16
+updated: 2026-10-17
 ---
 
 # 설정 파일
@@ -123,6 +123,7 @@ subject 기능을 NGINX에서는 어떤 지시자로 하는지 정리했다. sub
 ## 라우트 규칙을 응답으로 옮길 때 (RFC 9110)
 
 - **허용 메서드:** 라우트에서 막은 메서드는 405로 응답하고 `Allow`에 허용 메서드 목록을 넣는다 (MUST, raw/rfc9110.txt:4724-4726, raw/rfc9110.txt:7605-7607). 서버가 아예 모르는 메서드는 501이다 (raw/rfc9110.txt:3799-3804).
+  - 목록을 적지 않은 라우트의 기본값은 subject도 평가표도 정하지 않는다 (raw/subject.md:166-167, raw/evaluation-sheet-en.md:73). 이 과제는 GET·HEAD만 받게 했다. POST·DELETE는 적어야 열린다 (사용자 결정, 2026-10-17 → [[analysis/design-decisions]] 16).
 - **redirection:** 설정에 상태 코드를 같이 적게 하는 게 좋다. 영구/임시, 메서드 유지 여부에 따라 301·302·307·308이 갈린다 (raw/rfc9110.txt:7384-7387, raw/rfc9110.txt:7492-7495). `Location`을 보낸다 (raw/rfc9110.txt:7378-7379). 표는 [[concepts/status-codes]].
   - 설정 형식은 NGINX `return`처럼 코드와 URL을 함께 받는다 (예: `return 301 /new/;`, raw/nginx-rewrite-module.md:107, raw/nginx-rewrite-module.md:115).
   - NGINX는 로컬 경로를 scheme·server_name·port로 완전한 URL로 바꿔 보낸다 (raw/nginx-rewrite-module.md:115). RFC 9110은 `Location`에 상대 참조를 허용하므로 (raw/rfc9110.txt:4743-4745) 이 과제는 설정한 경로를 그대로 보낸다 (**판단**). 완전한 URL을 만들려면 Host나 server_name이 필요해 구현이 복잡해진다.

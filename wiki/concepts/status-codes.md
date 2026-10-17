@@ -2,7 +2,7 @@
 title: status code — 상황별 선택
 type: concept
 sources: [raw/rfc9110.txt, raw/rfc9112.txt, raw/rfc3875.txt, raw/nginx-core-module.md, raw/subject.md, raw/evaluation-sheet-en.md, raw/nginx-autoindex-module.md, raw/nginx-index-module.md, raw/iana-http-status-codes.txt, raw/rfc1945.txt, raw/rfc6585.txt, raw/nginx-observed-directory.md, raw/nginx-observed-encoded-slash.md]
-updated: 2026-10-15
+updated: 2026-10-17
 ---
 
 # status code — 상황별 선택
@@ -59,6 +59,9 @@ RFC가 특정 코드를 직접 지정하지 않는 상황은 **판단**으로 �
 | 클라이언트가 제한 시간 안에 요청을 다 보내지 않음 | 408 | raw/rfc9110.txt:7641-7643 | 닫기 전에 에러 응답을 보낼 수 있음 (MAY, raw/rfc9112.txt:1253-1255) → [[concepts/connection-management]]  NGINX는 헤더 전체 수신 시간, 본문 read 간격 기준으로 408을 보낸다 (raw/nginx-core-module.md:317, raw/nginx-core-module.md:347) |
 | chunked 요청을 받지 않기로 한 경우 | 411 | raw/rfc9110.txt:7692-7694, raw/rfc9112.txt:999-1000 | MAY. subject가 un-chunk를 요구하므로(raw/subject.md:179) 이 과제에서는 쓰지 않는다. `Content-Length`도 TE도 없는 요청은 본문 길이 0이다 (raw/rfc9112.txt:980-981) |
 | body가 `client_max_body_size` 초과 | 413 | raw/rfc9110.txt:7710-7714 | 평가 body 제한 테스트 (raw/evaluation-sheet-en.md:70). 남은 본문을 읽지 않으면 응답 후 연결을 닫아야 함 (raw/rfc9112.txt:1374-1377) |
+| 업로드 본문이 multipart 문법에 맞지 않음, boundary가 잘못됨, 파일 part가 없음, 파일 이름이 `.`·`..`·빈 값 | 400 | raw/rfc9110.txt:7543-7546 | **판단**. 클라이언트 오류로 본다 → [[analysis/design]] 7절 "구현 세부 (단계 6)" |
+| 업로드할 파일 이름이 저장 위치에 이미 있음 (한 요청에 같은 이름이 두 번 와도) | 409 | raw/rfc9110.txt:7652-7655 | 사용자 결정 (→ [[analysis/design-decisions]] 17). 충돌 원인을 알 수 있는 내용을 보낸다 (SHOULD, raw/rfc9110.txt:7655-7657) |
+| DELETE 대상이 디렉토리, 또는 서버가 파일을 지울 권한이 없음 | 403 | raw/rfc9110.txt:7571-7572 | **판단**. 일반 파일만 지운다 |
 | 업로드 라우트에 `multipart/form-data`가 아닌 본문 | 415 | raw/rfc9110.txt:7738-7740 | **판단**. 업로드는 multipart만 받는다는 결정에 따름 (→ [[analysis/design-decisions]] 7). `Accept`로 받을 수 있는 형식을 알려 줄 수 있음 (raw/rfc9110.txt:7751-7753) |
 | URI가 너무 김 | 414 | raw/rfc9110.txt:7722-7724, raw/rfc9112.txt:393-395 | MUST  NGINX는 요청줄이 헤더 버퍼 하나보다 크면 414 (raw/nginx-core-module.md:781) |
 | 헤더 한 줄 또는 헤더 전체가 서버 상한보다 큼 | **431** (**판단**) | raw/rfc9110.txt:1568-1570, raw/rfc6585.txt:177-184 | 상한을 넘는 헤더는 적절한 4xx로 응답해야 한다 (MUST, raw/rfc9110.txt:1568-1570). 431은 헤더 전체가 클 때와 한 필드가 클 때 모두 쓰며, 한 필드가 원인이면 본문에 어느 필드인지 적는다 (SHOULD, raw/rfc6585.txt:181-184). NGINX는 헤더 필드 하나가 버퍼 하나보다 크면 400을 보낸다 (raw/nginx-core-module.md:781). 더 구체적인 431을 고르고 응답 후 연결을 닫는다. 상한은 포트 단위 → [[concepts/configuration-file]], [[sources/rfc6585]] |

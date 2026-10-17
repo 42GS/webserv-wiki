@@ -26,6 +26,9 @@ updated: 2026-10-17
 | 12 | CGI 자식은 `execve` 실패 시 `std::exit`, `fork` 전 `access` 검사 | 2026-10-16 | [[concepts/cgi]], [[analysis/design]] 9절 |
 | 13 | `listen`은 `IPv4:port`와 `port`만 받음 | 2026-10-16 | [[concepts/configuration-file]], [[analysis/design]] 3절 |
 | 14 | alias location은 경로 경계에서만 맞춤 | 2026-10-16 | [[concepts/security]], [[analysis/design]] 7절 |
+| 15 | 파일 삭제는 `std::remove` | 2026-10-17 | [[analysis/subject-vs-evaluation]] 1.4절, [[analysis/design]] 7절 |
+| 16 | `limit_except`가 없는 location은 GET·HEAD만 받음 | 2026-10-17 | [[concepts/configuration-file]], [[analysis/design]] 3절 |
+| 17 | 같은 이름의 업로드는 409로 거부 | 2026-10-17 | [[concepts/file-upload]] |
 
 1~3은 앞서 정한 것을 함께 모았다. 근거는 각 관련 페이지에 있다.
 
@@ -118,6 +121,31 @@ updated: 2026-10-17
 - NGINX와 다른 점 (**판단**): NGINX의 prefix location은 `/kapouetX`처럼 경로 중간에서도 맞는다 ([[concepts/configuration-file]] "location 매칭"). 이 과제는 alias일 때만 경계를 요구한다. `root`는 정규화한 URI 전체를 붙이므로 밖으로 나갈 수 없어 그대로 둔다.
 - 함께 고친 것: `index` 값에 `/`가 들어가면 설정 오류로 한다(`index ../secret/s.txt;`도 root 밖 파일을 200으로 보냈다, 실측).
 - 시험: [[analysis/test-plan]] R-20, C-29.
+
+## 15. 파일 삭제는 `std::remove`
+
+- 쟁점: DELETE가 동작해야 하는데 (raw/subject.md:147, raw/evaluation-sheet-en.md:79), 허용 함수 목록에 파일을 지우는 `unlink`·`remove`가 없다 (raw/subject.md:113).
+- 결정 (사용자, 2026-10-17): 결정 12와 같이 51줄("C 함수 사용 허용, C++ 버전 권장", raw/subject.md:51)에 따라 C++98 `<cstdio>`의 `std::remove`를 쓴다.
+- 쓰는 곳: DELETE, 그리고 업로드 쓰기가 중간에 실패했을 때 그 요청이 만든 파일을 지울 때.
+- 디펜스: 51줄과 111~113줄을 함께 보여 주고 해석을 설명한다 → [[analysis/subject-vs-evaluation]] 1.4절.
+
+## 16. `limit_except`가 없는 location은 GET·HEAD만 받음
+
+- 쟁점: 설계 3절은 `limit_except`가 없는 location에서 모든 메서드를 허용했다. DELETE를 구현하면, 설정에서 `limit_except`를 빠뜨린 location의 사이트 파일을 누구나 지울 수 있다.
+- 원문: subject는 라우트마다 받을 메서드 목록을 설정하게 하고 (raw/subject.md:166-167), 평가표는 권한이 있을 때와 없을 때 DELETE를 해 보라고 한다 (raw/evaluation-sheet-en.md:73). 설정이 없을 때의 기본값은 둘 다 정하지 않는다. RFC 9110도 요구가 아니라 설명으로, 서버는 보통 삭제 방법이 정해진 리소스에만 DELETE를 허용한다고 한다 (raw/rfc9110.txt:4213-4215).
+- 결정 (사용자, 2026-10-17): `limit_except`가 없는 location은 GET·HEAD만 받는다. 파일을 바꾸는 POST·DELETE는 `limit_except`에 적어야 열린다.
+- 함께 본 다른 안: 지금처럼 전부 허용(설정을 빠뜨리면 파일이 지워짐), 전부 막기(정적 사이트도 location마다 `limit_except GET`이 필요하고, server `root`로 자동으로 만드는 location `/`가 쓸모없어짐), DELETE는 `upload_store`가 있는 location에서만(허용 규칙이 두 곳에 생김).
+- NGINX와 다른 점: NGINX `limit_except`는 location 안에서 허용할 메서드를 제한하는 지시자다 (raw/nginx-core-module.md:795). 이름과 형식은 같고, 지시자가 없을 때의 기본값만 다르다(결정 11의 `0`과 같은 종류).
+- 함께 정한 것 (**판단**): POST는 `upload_store`가 있는 location만 답한다(7단계에서 CGI가 더해진다). `limit_except`에 POST가 있어도 저장 위치가 없으면 405이고 `Allow`에 넣지 않는다.
+- 시험: [[analysis/test-plan]] C-17, F-09, F-12, D-04.
+
+## 17. 같은 이름의 업로드는 409로 거부
+
+- 근거: RFC 7578은 filename을 해석할 때 받는 쪽의 파일을 실수로 덮어쓰지 않게 하라고 한다 (raw/rfc7578.txt:497-499). 409는 대상 리소스의 현재 상태와 충돌해서 요청을 끝낼 수 없을 때의 코드이고, 사용자가 충돌을 풀고 다시 보낼 수 있는 경우에 쓴다 (raw/rfc9110.txt:7652-7655).
+- 결정 (사용자, 2026-10-17): 저장 위치에 같은 이름이 이미 있으면 409로 거부한다. 다른 이름으로 바꿔 저장하거나 덮어쓰지 않는다. 한 요청 안에 같은 이름이 두 번 와도 409다 (**판단**).
+- 구현: 쓰기 전에 모든 파일 이름을 검사해서, 하나라도 충돌하면 아무것도 저장하지 않는다. 409 본문에는 충돌한 이름을 적는다. 서버는 사용자가 충돌 원인을 알 수 있을 만큼의 내용을 만들어야 한다 (SHOULD, raw/rfc9110.txt:7655-7657). 파일은 `O_EXCL`로 만들어, 검사 뒤에 다른 프로세스가 만든 파일도 덮어쓰지 않는다.
+- 같은 이름으로 다시 올리려면 먼저 DELETE한다(업로드 location에 DELETE를 허용했을 때).
+- 시험: [[analysis/test-plan]] F-08.
 
 ## 아직 정하지 않은 것
 
