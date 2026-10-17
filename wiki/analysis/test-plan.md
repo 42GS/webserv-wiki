@@ -1,7 +1,7 @@
 ---
 title: 테스트 계획
 type: analysis
-sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/nginx-core-module.md, raw/macos-observed-sigpipe-leaks.md, raw/posix-poll.md, raw/design-checks-observed.md, raw/posix-recv.md, raw/rfc9112.txt, raw/rfc9110.txt, raw/rfc6585.txt, raw/rfc1945.txt, raw/rfc3986.txt, raw/rfc2046.txt, raw/rfc7578.txt, raw/rfc3875.txt, raw/rfc6265.txt, raw/posix-exit.md, raw/posix-fcntl.md, raw/os-observed-pipe-poll.md]
+sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/nginx-core-module.md, raw/macos-observed-sigpipe-leaks.md, raw/posix-poll.md, raw/design-checks-observed.md, raw/posix-recv.md, raw/rfc9112.txt, raw/rfc9110.txt, raw/rfc6585.txt, raw/rfc1945.txt, raw/rfc3986.txt, raw/rfc2046.txt, raw/rfc7578.txt, raw/rfc3875.txt, raw/rfc6265.txt, raw/posix-exit.md, raw/posix-fcntl.md, raw/os-observed-pipe-poll.md, raw/efence-observed-ubuntu2204.md]
 updated: 2026-10-18
 ---
 
@@ -95,12 +95,12 @@ updated: 2026-10-18
 | N-04 | `recv`·`send` 반환값 0과 -1을 모두 처리하고, 에러면 클라이언트를 제거한다 | raw/evaluation-sheet-en.md:55-56 | R, I | 코드에 두 경우가 있고, 클라이언트가 끊으면 연결이 정리된다 | 코드 읽기: `src/http/Connection.cpp:70`, `:85`가 0과 -1을 모두 닫기로 처리. `test_connections.py` `test_n04_peer_close_releases_the_socket` (Linux `/proc`에서 서버의 fd 수 확인, macOS에서는 건너뜀) | 있음 |
 | N-05 | 여러 포트에서 서로 다른 server로 응답한다 | raw/subject.md:149, raw/evaluation-sheet-en.md:107 | I | 두 포트에 동시에 요청해 모두 응답 | `test_connections.py` `test_n05_concurrent_clients_on_two_ports` (50개) | 있음. 포트별로 다른 내용은 4단계에서 시험 |
 | N-06 | 다른 프로세스가 이미 쓰는 `interface:port`면 메시지를 내고 끝낸다. 크래시하지 않는다 | raw/evaluation-sheet-en.md:109 | I | 두 번째 프로세스가 `Address already in use`, 종료 코드 1. 첫 프로세스는 계속 응답 | `test_startup.py` `test_n06_second_instance_on_same_port_fails_cleanly` | 있음 |
-| N-07 | 클라이언트가 요청 도중·응답 도중 끊어도 서버는 계속 동작한다 (`SIGPIPE`로 죽지 않음) | raw/subject.md:46, raw/subject.md:129 | I | 끊은 뒤 새 요청에 응답 | `test_connections.py` `test_n07_*` 2개 (요청 도중 끊김, 응답 전 RST) | 부족: `SIGPIPE` 무시를 지워도 테스트가 실패하지 않았다. 상대가 닫은 TCP 연결에 `send`하면 1회차는 성공하고 2회차에 프로세스가 끝났다는 실측이 있다 (raw/macos-observed-sigpipe-leaks.md:114-117, [[sources/macos-observed-sigpipe-leaks]]). 고정 응답은 `send` 1번에 끝나므로 2회차가 없다. 4단계에서 끊긴 연결에 여러 번 보내는 큰 응답으로 시험 |
+| N-07 | 클라이언트가 요청 도중·응답 도중 끊어도 서버는 계속 동작한다 (`SIGPIPE`로 죽지 않음) | raw/subject.md:46, raw/subject.md:129 | U, I | 끊은 뒤 새 요청에 응답. `SIGPIPE`는 무시, `SIGCHLD`는 기본 동작 | `test_connections.py` `test_n07_*` 3개 (요청 도중 끊김, 응답 전 RST, 8MB 응답 도중 FIN으로 떠남), `signals_test.cpp` `n07_sigpipeIsIgnoredAndSigchldLeftAlone` | 있음 (2026-10-18). `SIGPIPE` 무시를 지우면 단위 테스트가 실패한다. 통합 테스트로는 일으킬 수 없었다: 상대가 RST를 보내면 서버가 `POLLERR`·`POLLHUP`을 먼저 보고 `send` 없이 닫아, 두 번째 `send`(raw/macos-observed-sigpipe-leaks.md:114-117)가 생기지 않는다(macOS·Ubuntu 모두 확인). `SIGPIPE`는 poll과 send 사이, CGI pipe write의 짧은 경쟁에서만 생길 수 있다 (**판단**) |
 | N-08 | 요청이 무한히 매달리지 않는다: 머리가 끝나지 않은 연결은 헤더 타임아웃 뒤 닫힌다 | raw/subject.md:139 | I | 30초 뒤 연결이 닫힌다 (3단계부터는 408) | `test_connections.py` `test_n08_unfinished_head_gets_408` (느린 테스트, 약 30초) | 있음. 3단계부터 408 |
 | N-09 | 머리가 상한을 넘으면 연결을 닫는다 (3단계부터는 431) | 설계 12절 `kMaxHeaderBytes` | I | 16384바이트를 넘게 보내면 닫힌다 | `test_connections.py` `test_n09_oversized_head_gets_431` | 있음. 3단계부터 431 |
-| N-10 | `SIGINT`·`SIGTERM`이면 모든 fd와 메모리를 정리하고 정상 종료한다 | 설계 10절. 누수 검사 raw/evaluation-sheet-en.md:25 | I, M | 종료 코드 0. valgrind "All heap blocks were freed" | `test_startup.py` `test_n10_*` 2개 (종료 코드). valgrind는 단계 2에서 손으로 확인 | 부족: valgrind 확인 기록이 커밋 메시지뿐. 8단계에서 절차로 남긴다 |
-| N-11 | `siege -b`로 빈 페이지 GET availability 99.5% 초과 | raw/evaluation-sheet-en.md:114 | M | 99.5% 초과 | 없음 (단계 2에서 100% 확인, 기록은 커밋 메시지·대화뿐) | 부족: 8단계에서 절차로 남긴다 |
-| N-12 | 계속 돌려도 메모리가 끝없이 늘지 않고 매달린 연결이 없다 | raw/evaluation-sheet-en.md:115-117 | M | 장시간 siege 동안 메모리 일정 | 8단계 | 나중 |
+| N-10 | `SIGINT`·`SIGTERM`이면 모든 fd와 메모리를 정리하고 정상 종료한다 | 설계 10절. 누수 검사 raw/evaluation-sheet-en.md:25 | I, M | 종료 코드 0. valgrind 오류·누수 0, 열린 fd는 표준 3개 | `test_startup.py` `test_n10_*` 2개, `test_cgi.py` `test_g20_*` 2개. 8절 절차로 통합 테스트 전체의 서버를 valgrind에서 SIGINT로 끈다 | 있음 (2026-10-18, 8절) |
+| N-11 | `siege -b`로 빈 페이지 GET availability 99.5% 초과 | raw/evaluation-sheet-en.md:114 | M | 99.5% 초과 | 8절 절차 (siege 4.0.7, `-b -c 50`) | 확인 (2026-10-18): 정적 5분 1,355,986건, 정적·CGI·404 혼합 3분 105,100건, 둘 다 availability 100%, 실패 0 |
+| N-12 | 계속 돌려도 메모리가 끝없이 늘지 않고 매달린 연결이 없다 | raw/evaluation-sheet-en.md:115-117 | M | 장시간 siege 동안 메모리 일정 | 8절 절차 (30초마다 RSS·fd·자식 수) | 확인 (2026-10-18): 두 실행 내내 RSS 1.7~2.7MB, 끝난 뒤 fd 4개(시작과 같음)·CGI 자식 0개 |
 | N-13 | 시계: 시계 파일의 수정 시각을 현재 시각으로 쓴다. 시작 때 실패하면 시작하지 않는다 | [[analysis/design-decisions]] 10, 설계 4절 "시계" | U, I | 갱신 성공 시 값이 0보다 크고 줄지 않는다. 쓸 수 없는 경로면 `refresh()`가 false | `clock_test.cpp` 2개, `test_startup.py` `test_n13_unusable_clock_file_stops_startup` | 있음 |
 | N-14 | 이벤트 루프: 처리 중 `unwatch`는 그 바퀴 끝에 반영. `onEvent` 예외는 그 handler의 `onFailure()`로 | 설계 4절 | U | pipe fd와 가짜 handler로 확인 | `event_loop_test.cpp` 3개 | 있음 |
 | N-15 | IPv4 주소 변환 (listen 주소 → `sockaddr_in`). 접속한 주소 → 문자열은 7단계에서 다시 | 설계 (구현 세부) | U | 네트워크 바이트 순서 | `parsesIpv4`, `buildsSockaddrInNetworkOrder` (`tests/unit/socket_address_test.cpp`) | 있음 |
@@ -113,7 +113,7 @@ updated: 2026-10-18
 | N-22 | 메모리가 부족해도 크래시하지 않는다 | raw/subject.md:46 | R, M | 할당 실패가 예외로 오면 그 연결만 정리 | 코드 읽기: `Server::adopt`가 생성 실패를 잡고, `onEvent` 예외는 `onFailure`로 간다 (N-14). 다만 Ubuntu 컨테이너에서 메모리가 바닥나면 `bad_alloc` 없이 프로세스가 강제 종료됐다 (raw/design-checks-observed.md:119-123) | 부족: 예외가 오지 않는 경우는 본문 상한(결정 11)으로만 막는다 |
 | N-24 | 헤더 수신 타임아웃은 받기 시작한 때부터 잰다. 바이트를 조금씩 계속 보내도 연장되지 않는다 (본문·전송은 무입력·무진행 기준) | raw/subject.md:139, 설계 12절 | I | 5초마다 1바이트씩 보내도 약 30초 뒤 408 | `test_connections.py` `test_n24_trickled_head_still_times_out` (느린 테스트, 5초마다 1바이트) | 있음 |
 | N-25 | 이벤트 처리 밖(타임아웃 점검, poll 목록 만들기)에서 난 예외도 프로세스를 비정상 종료시키지 않는다. 연결 하나에서 나면 그 연결만 닫고, 그 밖이면 원인을 출력하고 종료 코드 1 | raw/subject.md:46, raw/evaluation-sheet-en.md:24 | R | `Server::afterIteration`이 연결마다 예외를 잡고, `main`이 마지막으로 잡는다 | 코드 읽기 + 예외 주입 실험 2026-10-17: 타임아웃 점검에서 던지면 그 연결만 닫히고 새 요청은 200, poll 처리에서 던지면 `webserv: stopped: ...`와 종료 코드 1 | 확인 |
-| N-23 | 평가자가 `valgrind`·`leaks`·`e_fence`로 돌려도 오류·누수가 없다. `e_fence`에서는 heap 경계 오류가 곧 크래시 | raw/evaluation-sheet-en.md:25, [[concepts/resilience]] "SIGINT·SIGTERM과 누수 검사" | M | valgrind 오류 0, "All heap blocks were freed" | 단계 2에서 valgrind만 손으로 확인 | 나중 (8단계 절차) |
+| N-23 | 평가자가 `valgrind`·`leaks`·`e_fence`로 돌려도 오류·누수가 없다. `e_fence`에서는 heap 경계 오류가 곧 크래시 | raw/evaluation-sheet-en.md:25, [[concepts/resilience]] "SIGINT·SIGTERM과 누수 검사" | M | valgrind 오류 0, still reachable까지 누수 0. e_fence에서 크래시 없음 | 8절 절차: 단위 테스트와 통합 테스트 전체를 valgrind와 e_fence 아래에서 | 확인 (2026-10-18, Ubuntu 22.04 컨테이너). macOS `leaks`는 평가 환경이 아니고 SIGINT 종료를 검사하지 못해 (raw/macos-observed-sigpipe-leaks.md:224-226) 쓰지 않는다 |
 
 - N-01~N-03은 0점 조건이다 (raw/evaluation-sheet-en.md:53, raw/subject.md:136, raw/evaluation-sheet-en.md:57). 테스트가 통과해도 지켰다는 증거가 되지 않으므로, 단계마다 코드 경로를 읽어 확인하고 결과를 이 페이지에 적는다.
 
@@ -256,7 +256,41 @@ CGI는 `G-`로 쓴다 (`C-`는 설정). 통합 테스트는 `test_cgi.py`이고,
 
 일부러 틀리게 바꾼 확인 (2026-10-18): fd 닫기 생략, 시간 초과 없앰, `Status` 무시, 스크립트 `Content-Length` 통과, 리다이렉트 상한 없앰, `chdir` 생략, 본문 쓰기 생략, `CONTENT_LENGTH` 생략, 스크립트 메서드 검사 생략, 출력 상한 없앰(macOS), 회수 생략, 연결 삭제 때 kill 생략, 종료 때 reaper의 kill·wait 생략(Ubuntu)이 모두 해당 테스트를 실패시켰다. 처음에는 스크립트 `Content-Length` 통과(G-07이 헤더를 dict로 읽음), 메서드 검사 생략(설정이 모든 메서드를 허용), reaper의 kill 생략(G-20의 루프 스크립트는 연결 삭제 때 이미 죽음)을 잡지 못해 테스트를 고쳤다.
 
-## 8단계 이후 (단계를 시작할 때 채운다)
+## 8. 안정성 점검
 
-- 8. 안정성: [[concepts/resilience]] "요구 목록"
+읽은 위키: [[analysis/implementation-plan]] 8단계, [[concepts/resilience]] (요구 목록, 시그널, 누수 검사), [[concepts/testing]] siege 절, 이 페이지 2절의 N-07·N-10~N-12·N-22·N-23, [[sources/efence-observed-ubuntu2204]], [[sources/valgrind-observed-sigint]].
+2절의 남은 줄(N-07, N-10, N-11, N-12, N-23)은 그 자리에서 고쳤다. 이 절은 절차와 코드 리뷰 결과다.
+
+### 절차 (Ubuntu 22.04 컨테이너)
+
+- valgrind로 통합 테스트 전체: `WEBSERV_WRAPPER="valgrind --quiet --error-exitcode=99 --leak-check=full --show-leak-kinds=all --errors-for-leak-kinds=all --track-fds=yes --log-file=/vg/%p.log" python3 -m unittest discover -s tests/integration`. 하네스는 각 서버를 SIGINT로 끄고 종료 코드 0을 요구하므로, 오류나 누수(still reachable 포함)가 있으면 그 테스트가 실패한다. 기록 파일의 fd 목록에서 표준 3개 말고 보이는 하나는 valgrind 자신의 기록 파일이다(부모에게서 상속).
+- e_fence로 단위·통합 테스트 전체: `LD_PRELOAD=libefence.so.0.0 ./run_tests`, `WEBSERV_WRAPPER="env LD_PRELOAD=libefence.so.0.0" python3 -m unittest discover -s tests/integration`. `-lefence`로 빌드한 바이너리에는 `libefence`가 링크되지 않았다 (raw/efence-observed-ubuntu2204.md:389-395) → [[sources/efence-observed-ubuntu2204]]. 이미지에 `electric-fence` 2.2.6을 설치해 썼다. CGI 자식은 서버가 만든 환경만 받으므로 `LD_PRELOAD`가 넘어가지 않는다.
+- siege: 서버를 띄우고 30초마다 `/proc/<pid>`에서 RSS·fd 수·자식 수를 적으며, siege를 포그라운드로 돌린다(백그라운드에서 멈춘 적이 있다, K-11). siege 4.0.7은 설정 파일이 없으면 요약을 JSON으로 낸다(소문자 키). 최장 응답 5.91초의 원인은 **미확인**(확인: 같은 부하에서 `ss -ltn`으로 listen 큐 넘침 확인).
+- 시간 기준이 있는 테스트는 감쌌을 때 10배까지 늦어도 되게 했다 (`WRAPPER_SLOWDOWN`). F-16이 valgrind에서 2.78초 걸려 2초 기준을 넘었다.
+
+### 결과 (2026-10-18)
+
+| 점검 | 결과 |
+|---|---|
+| valgrind, 통합 테스트 103개 | 시간 기준 하나(F-16, 위)만 실패하고 모두 통과. 서버 기록 133개 모두 오류 0, 누수 0 |
+| e_fence, 단위 102개 | 모두 통과 |
+| e_fence, 통합 테스트 103개 | 모두 통과 (건너뜀 11개는 느린 테스트와 root 권한 시험) |
+| siege 정적 5분 (`-b -c 50`, 빈 페이지) | 1,355,986건, availability 100%, 실패 0, 최장 5.91초 |
+| siege 혼합 3분 (정적·100KB 파일·Python CGI·404) | 105,100건, availability 100%, 실패 0, 최장 1.00초 |
+| 서버 상태 (30초마다) | RSS 1.7~2.7MB에서 늘지 않음. 끝난 뒤 fd 4개, CGI 자식 0개, SIGINT로 exit 0 |
+
+### 코드 리뷰 (안정성)
+
+| # | 위치 | 문제 | 처리 |
+|---|---|---|---|
+| R1 | `CgiProcess::runChild` | `fork` 뒤 자식에서 예외(`bad_alloc`)가 나면 서버 코드로 풀려 나가 자식이 두 번째 서버처럼 같은 소켓을 처리한다 | 자식 코드 전체를 잡아 `std::exit(1)` (webserv `d4ce794`) |
+| R2 | `~CgiProcess` | `reaper_.adopt`의 `push_back`이 던지면 소멸자에서 예외가 나가 `std::terminate`될 수 있다 | 잡아서 `SIGKILL` 후 그 자리에서 `waitpid` |
+| R3 | `ChildReaper::reap` | 매 바퀴 vector를 할당하는데, 연결별 예외 처리 밖이라 실패하면 서버가 끝난다 | 할당 없이 제자리에서 지운다 |
+| R4 | `ResponseStream`, CGI 응답 | CGI 출력(최대 16MB)이 `Response` 복사와 직렬화로 몇 배가 된다 | 기록만. 동시 CGI 수 × 16MB × 몇 배의 메모리 (**판단**) |
+| R5 | `Listener::onEvent` | fd가 다 차서 `accept`가 실패하면 listen 소켓이 계속 읽기 가능이라 루프가 쉬지 않고 돈다(멈추지는 않고 fd가 풀리면 다시 받는다) | 기록만. 평가 PC의 fd 한도는 **미확인**(확인: `ulimit -n`). 컨테이너는 20480 |
+
+R1~R3은 실패를 만들 방법이 없어 코드 읽기로 확인했다(2026-10-18).
+
+## 9단계 (단계를 시작할 때 채운다)
+
 - 9. README·시연 설정

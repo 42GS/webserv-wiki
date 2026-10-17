@@ -554,6 +554,11 @@ CgiOutput parseCgiOutput(const std::string& output);   // RESPONSE, LOCAL_REDIRE
 | 소켓 I/O -1·0 | 그 연결만 닫는다 |
 
 - 예외는 설정 파싱과 요청 처리 내부에서만 던진다. 서버 프로세스는 어떤 요청에도 끝나지 않아야 한다 (raw/evaluation-sheet-en.md:24).
+- 8단계 리뷰에서 더한 규칙 (2026-10-18, **판단**):
+  - `fork` 뒤 자식에서는 모든 예외를 잡아 `std::exit(1)`로 끝낸다. 풀려 나가면 자식이 서버 코드로 돌아가 같은 소켓을 처리하는 두 번째 서버가 된다.
+  - 소멸자에서는 예외를 내보내지 않는다. `~CgiProcess`는 reaper에 넘기지 못하면 그 자리에서 `SIGKILL` 후 기다린다.
+  - 연결별 예외 처리 밖에서 매 바퀴 도는 코드(`ChildReaper::reap`)는 할당하지 않는다.
+  - 결과와 점검 절차는 [[analysis/test-plan]] 8절.
 
 ## 12. 상수 (초기값, 시험하며 조정)
 
