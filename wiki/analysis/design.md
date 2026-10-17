@@ -1,8 +1,8 @@
 ---
 title: webserv 설계 (클래스·인터페이스)
 type: analysis
-sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/nginx-core-module.md, raw/design-checks-observed.md, raw/cpp-core-guidelines.md, raw/google-cpp-style-guide.md, raw/rfc9110.txt, raw/rfc9112.txt, raw/siegerc.in, raw/rfc2046.txt, raw/rfc7578.txt, raw/posix-remove.md, raw/fs-observed-remove-name-length.md]
-updated: 2026-10-17
+sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/nginx-core-module.md, raw/design-checks-observed.md, raw/cpp-core-guidelines.md, raw/google-cpp-style-guide.md, raw/rfc9110.txt, raw/rfc9112.txt, raw/siegerc.in, raw/rfc2046.txt, raw/rfc7578.txt, raw/posix-remove.md, raw/fs-observed-remove-name-length.md, raw/rfc3875.txt]
+updated: 2026-10-18
 ---
 
 # webserv 설계 (클래스·인터페이스)
@@ -26,13 +26,13 @@ src/
             SharedSettings  ConfigValues  ConfigLimits  ConfigLoader  ConfigError  ServerConfig  BuildContext
   core/     EventLoop  IoHandler  Server  Listener  ListenContext  SocketAddress  ChildReaper  Signals  Clock
             HttpDate  Limits
-  fs/       FileInfo  FileReader  FileWriter
+  fs/       FileInfo  FilePath  FileReader  FileWriter
   http/     Connection  Request  RequestParser  HeaderMap  Response  ResponseStream  StatusCodes  StatusText
             MimeTypes  Methods  HeaderNames  Hex  Ascii  FieldSyntax  Multipart
   app/      RequestProcessor  ProcessOutcome
   route/    Router  RouteResult  PathResolver
   handler/  StaticHandler  AutoindexHandler  UploadHandler  DeleteHandler  StatusPage
-  cgi/      CgiProcess  CgiContext  CgiEnv  CgiPipe  CgiOutputParser  CgiObserver
+  cgi/      CgiProcess  CgiPipes  CgiEnv  CgiOutput
 tests/                Python 테스트 스크립트
 ```
 
@@ -237,7 +237,7 @@ public:
 | `CgiPipe` (입력·출력) | 그 `CgiProcess` | `CgiProcess` 소멸 시 (먼저 `unwatch`) |
 | 끝난 자식의 pid | `ChildReaper` | `waitpid`로 회수되면 |
 
-- 소유자가 하나뿐이라 C++98에서도 해제 경로가 분명하다. 다른 객체는 참조만 갖고, 수명이 더 긴 쪽만 참조한다(`Connection` → `ServerConfig`, `CgiProcess` → `CgiObserver`인 자기 `Connection`).
+- 소유자가 하나뿐이라 C++98에서도 해제 경로가 분명하다. 다른 객체는 참조만 갖고, 수명이 더 긴 쪽만 참조한다(`Connection` → `ServerConfig`, `CgiProcess` → 자기 `Connection`이 가진 요청의 본문).
 - `Server`는 `LoopObserver`를 구현한다. `afterIteration`에서 연결 타임아웃 점검 → 닫힌 연결 삭제 → `ChildReaper::reap()`를 차례로 한다. `Listener`가 `accept`하면 `Server::adopt(fd, ...)`로 `Connection`을 넘긴다.
 
 ```cpp
@@ -266,7 +266,7 @@ public:
 ```
 READ_HEAD ──머리 완성──▶ READ_BODY ──본문 완성──▶ (RequestProcessor) ─┬─▶ WRITE ──다 보냄──┬─ keep-alive ─▶ READ_HEAD
     │                        │                                      │                  └─ close ──────▶ DRAIN 또는 CLOSED
-    │                        │                                      └─▶ WAIT_CGI ──onCgiFinished──▶ WRITE
+    │                        │                                      └─▶ WAIT_CGI ──followCgi(출력 끝)──▶ WRITE
     └──── 파싱 에러·크기 초과 ────┴──────────▶ (에러 응답) WRITE → DRAIN → CLOSED
 ```
 
@@ -279,17 +279,16 @@ READ_HEAD ──머리 완성──▶ READ_BODY ──본문 완성──▶ (R
 | `DRAIN` | `POLLIN` | 무입력·총 시간 상한 (닫기) |
 
 ```cpp
-class Connection : public IoHandler, public CgiObserver {
+class Connection : public IoHandler {
 public:
-    Connection(int fd, const ListenContext& where, IoRegistry& registry, ChildReaper& reaper);
+    Connection(int fd, const ListenContext& where, const CgiServices& services, time_t now);
     ~Connection();                               // CGI가 남아 있으면 kill 후 reaper에 넘김
     int   fd() const;
     short wantedEvents() const;
     void  onEvent(short revents);
     void  onFailure();                           // 예외 등 → CLOSED
-    void  checkTimeout(time_t now);
+    void  checkTimeout(time_t now);              // WAIT_CGI면 followCgi()
     bool  isClosed() const;
-    void  onCgiFinished(const Response& res);    // CgiObserver
 private:
     enum State { READ_HEAD, READ_BODY, WAIT_CGI, WRITE, DRAIN, CLOSED };
     void  receiveOnce();                         // recv 1번
@@ -373,18 +372,21 @@ public:
 
 ```cpp
 struct ProcessOutcome {
-    enum Kind { RESPONSE, CGI };
+    enum Kind { RESPONSE, CGI, LOCAL_REDIRECT };
     Kind        kind;
     Response    response;          // RESPONSE
     CgiProcess* cgi;               // CGI. 소유권이 호출자에게 넘어감
+    Request     redirect;          // LOCAL_REDIRECT: 대신 답할 요청
 };
 
 class RequestProcessor {
 public:
-    explicit RequestProcessor(const ListenContext& where);
+    RequestProcessor(const ListenContext& where, const CgiServices& services);
     size_t         bodyLimitFor(const Request& req) const;
-    ProcessOutcome process(const Request& req, IoRegistry& registry, CgiObserver& observer);
-    Response       errorResponse(int status) const;    // buildStatusPage 사용
+    ProcessOutcome process(const Request& req, time_t now) const;     // 응답 또는 시작한 CGI
+    ProcessOutcome afterCgi(const Request& req, const CgiProcess& cgi, time_t now) const;  // 응답 또는 local redirect
+    Response       statusResponse(int status, const Request& req, time_t now) const;      // 504 등
+    Response       errorResponse(int status, const std::string& method, time_t now) const;  // 파서 오류·408
 };
 
 struct RouteResult {
@@ -393,8 +395,10 @@ struct RouteResult {
     const LocationConfig* location;
     std::string           fsPath;      // root 매핑 결과 (STATIC_FILE, DIRECTORY_LISTING, DELETE)
     std::string           uploadStore; // UPLOAD: 저장할 디렉토리
-    std::string           scriptPath;  // CGI
-    std::string           pathInfo;    // CGI
+    std::string           interpreter; // CGI: "cgi" 지시자의 프로그램
+    std::string           scriptName;  // CGI: 스크립트 URI 경로 (디코딩)
+    std::string           pathInfo;    // CGI: 스크립트 뒤 경로 (디코딩)
+    std::string           pathTranslated;  // CGI: pathInfo의 매핑
     int                   status;      // REDIRECT, ERROR
 };
 
@@ -481,38 +485,57 @@ public:
 
 ## 9. CGI
 
-```cpp
-struct CgiContext {                 // CGI 실행에 필요한 값 묶음
-    const Request&       request;
-    const RouteResult&   route;
-    const ListenContext& where;     // 서버 이름·포트, 원격 주소
-};
+7단계 구현 (2026-10-18). 처음 설계의 `CgiObserver`(완료 콜백)와 `CgiContext`는 만들지 않았다. 아래 "구현 세부"에 이유가 있다.
 
-class CgiObserver {
-public:
-    virtual ~CgiObserver() {}
-    virtual void onCgiFinished(const Response& res) = 0;
+```cpp
+struct CgiServices { IoRegistry& registry; ChildReaper& reaper; };   // 모든 CGI가 쓰는 것
+
+struct CgiLaunch {                      // 실행할 것
+    std::string interpreter;            // "cgi" 지시자의 프로그램 (절대 경로)
+    std::string directory;              // 스크립트 디렉토리 (chdir)
+    std::string scriptFile;             // 프로그램 인자인 스크립트 파일 이름
+    std::vector<std::string> environment;  // buildCgiEnvironment()
 };
 
 class CgiProcess {
 public:
-    CgiProcess(const CgiContext& ctx, IoRegistry& registry, CgiObserver& observer);
-    ~CgiProcess();                  // pipe unwatch·close
-    bool  start();                  // pipe, fork, execve. 실패하면 false → 500
-    void  checkTimeout(time_t now); // 넘으면 kill(SIGKILL) 후 observer에 504
-    pid_t releaseChild();           // 회수 책임을 ChildReaper로 넘김
+    CgiProcess(const CgiLaunch& launch, const std::string& body, const CgiServices& services);
+    ~CgiProcess();                  // pipe 닫기. 출력이 안 끝난 자식은 SIGKILL. pid는 reaper로
+    bool start(time_t now);         // pipe, fork, execve. 실패하면 false → 500
+    bool isDone() const;            // 출력 EOF
+    bool failed() const;            // 읽기 오류, 출력 상한 초과 → 502
+    const std::string& output() const;
+    bool hasTimedOut(time_t now) const;   // kCgiTimeout 안에 출력이 안 끝남 → 504
 private:
-    void  onOutputClosed();         // EOF → CgiOutputParser → observer에 응답(또는 502)
-    // CgiPipe stdin_, stdout_ (값으로 보유), pid_t pid_, std::string output_, time_t startedAt_
+    CgiStdin*  stdin_;              // IoHandler: 본문을 write
+    CgiStdout* stdout_;             // IoHandler: EOF까지 read
 };
+
+std::vector<std::string> buildCgiEnvironment(const Request&, const RouteResult& script, const ListenContext&);
+CgiOutput parseCgiOutput(const std::string& output);   // RESPONSE, LOCAL_REDIRECT, INVALID
 ```
 
-- `CgiEnv`가 메타변수 배열을 만든다. php-cgi용 `REDIRECT_STATUS`·`SCRIPT_FILENAME`을 넣고 `REDIRECT_URL`은 넣지 않는다 → [[concepts/cgi]] "메타변수".
-- `fork` 전: `access`로 스크립트와 실행 파일을 확인한다(없으면 404, 권한이 없으면 403). 표준 출력·에러를 flush한다 (결정 12).
-- 자식: `dup2`로 표준 입출력 연결 → 필요 없는 fd 모두 `close` → 스크립트 디렉토리로 `chdir` → `execve`. 실패하면 `std::exit(1)` (결정 12). 부모는 출력 없이 EOF를 받으므로 502가 된다.
-- 출력 pipe는 `POLLHUP`만 와도 `read`해서 0(EOF)을 확인한다. 입력 pipe는 본문을 다 쓰면 닫는다 → [[concepts/cgi]] "1. 호출 절차".
-- 판정은 종료 코드가 아니라 출력으로 한다: 형식이 맞으면 그 응답, 아니면 502, 타임아웃이면 504 → [[concepts/cgi]] "5. 실패 처리".
-- `CgiProcess`는 `waitpid`를 하지 않는다. 출력이 끝났거나 `kill`한 자식의 pid를 `ChildReaper`에 넘기고, 회수는 `ChildReaper`가 바퀴마다 `WNOHANG`으로 한다. `Connection`이 먼저 닫혀도 같은 경로로 회수된다.
+- 흐름: `RequestProcessor::process`가 CGI 결정을 받으면 `startCgi`(검사 → 환경 → `CgiProcess::start`)를 하고 `ProcessOutcome::CGI`를 돌려준다. `Connection`은 `WAIT_CGI`로 가서, 루프 한 바퀴마다 `checkTimeout`에서 `followCgi()`로 확인한다. 끝났으면 `afterCgi`가 출력을 응답(또는 local redirect)으로 바꾸고, 시간을 넘었으면 504.
+- `CgiEnv`가 메타변수를 만든다. php-cgi용 `REDIRECT_STATUS`·`SCRIPT_FILENAME`을 넣고 `REDIRECT_URL`은 넣지 않는다 → [[concepts/cgi]] "메타변수".
+- `fork` 전: 스크립트를 읽을 수 없으면 403, 프로그램이 없으면 404, 실행할 수 없으면 403 (결정 12). 표준 출력·에러를 flush한다 (결정 12).
+- 자식: `dup2`로 표준 입출력 연결 → 상속받은 fd(3 이상)를 모두 `close` → 스크립트 디렉토리로 `chdir` → `SIGPIPE`를 기본 동작으로 → `execve(프로그램, [프로그램, 스크립트 파일 이름], 환경)`. 실패하면 `std::exit(1)` (결정 12). 부모는 출력 없이 EOF를 받으므로 502가 된다.
+- 출력 pipe는 `POLLHUP`만 와도 `read`해서 0(EOF)을 확인한다. 입력 pipe는 본문을 다 쓰거나 `POLLERR`·`POLLHUP`이면 닫는다 → [[concepts/cgi]] "1. 호출 절차".
+- 판정은 종료 코드가 아니라 출력으로 한다: 형식이 맞으면 그 응답, 아니면 502, 타임아웃이면 504 → [[concepts/cgi]] "5. 실패 처리". 종료 상태를 읽지 않으므로 `waitpid` 매크로를 쓰지 않는다 → [[analysis/subject-vs-evaluation]] 1.9절.
+- `CgiProcess`는 `waitpid`를 하지 않는다. 출력이 끝났거나 `kill`한 자식의 pid를 `ChildReaper`에 넘기고, 회수는 `Server::afterIteration`이 바퀴마다 `ChildReaper::reap()`(`WNOHANG`)으로 한다. `Connection`이 먼저 닫혀도 같은 경로로 회수된다. 서버가 끝날 때 `ChildReaper` 소멸자가 남은 자식을 `SIGKILL`하고 기다린다(`main`에서 `Server`보다 먼저 선언해 더 오래 산다).
+- 구현 세부 (단계 7, 2026-10-18, **판단**. 시험은 [[analysis/test-plan]] 7절):
+  - 스크립트 찾기: location 뒤 경로를 앞에서부터 조각 단위로 보고, 마지막 조각이 `cgi` 확장자로 끝나며 일반 파일인 첫 앞부분을 스크립트로, 나머지를 `PATH_INFO`로 본다. 서버는 경로의 앞부분을 스크립트로 정하고 나머지는 스크립트가 해석한다 (raw/rfc3875.txt:457-464). 확장자와 같은 이름의 디렉토리는 스크립트가 아니다.
+  - 메서드: 스크립트 경로로 온 요청은 `limit_except`가 허용한 메서드면 모두 스크립트에 넘긴다(DELETE 포함, 스크립트가 `REQUEST_METHOD`를 보고 처리). 막힌 메서드의 `Allow`는 `limit_except`의 메서드다. 업로드·삭제의 `answers()` 규칙은 스크립트가 아닐 때만 쓴다. 그래서 6단계 OOP 리뷰 4번(시그니처 변경)은 필요 없어졌다.
+  - 경로 변수: 자식은 스크립트 디렉토리에서 실행되고 `getcwd()`는 허용 함수가 아니다 (raw/subject.md:113). 그래서 `SCRIPT_FILENAME`은 스크립트 경로가 절대 경로가 아니면 파일 이름만 넣고, `PATH_TRANSLATED`(SHOULD)는 매핑 결과가 절대 경로일 때만 넣는다. 위키의 php-cgi 실측은 절대 경로로만 했다. 상대 이름과 스크립트 인자를 함께 줘도 Ubuntu 22.04의 php-cgi가 GET·POST를 처리했다 ([[analysis/test-plan]] G-17).
+  - `cgi` 지시자의 프로그램이 절대 경로가 아니면 설정 오류다. `chdir` 뒤라 상대 경로를 찾을 수 없다.
+  - 상속 fd 닫기: `FD_CLOEXEC`를 쓸 수 없어 (1.11절) 자식에서 허용 함수 `opendir`·`readdir`로 `/dev/fd`를 읽어 3 이상을 닫는다. Ubuntu 컨테이너의 열 수 있는 fd 한도가 20480이라 번호를 차례로 모두 닫는 것보다 낫다(2026-10-18 `ulimit -n`).
+  - 출력: 스크립트의 `Content-Length`·`Transfer-Encoding`·`Connection`·`Date`는 버리고 서버 값을 쓴다. 스크립트가 연결에 영향을 주는 헤더를 보내면 서버는 지울 수 있고 서버 헤더와의 충돌을 해결해야 한다 (SHOULD, raw/rfc3875.txt:1493-1498). 204·304는 본문을 버리고 304에는 `Content-Length`를 보내지 않는다 (raw/rfc9110.txt:7042-7043, raw/rfc9110.txt:7477-7478, raw/rfc9110.txt:3232-3236). `Status`의 reason phrase는 쓰지 않고 서버의 것을 보낸다. 1xx `Status`는 502.
+  - 출력은 스크립트가 `Content-Length`를 줘도 EOF까지 읽는다. subject는 "`Content-Length`가 없으면 EOF가 끝"이라고 하지만 (raw/subject.md:180), RFC 3875는 EOF까지 모두 읽어야 한다고 한다 (MUST, raw/rfc3875.txt:1521-1524).
+  - 출력 상한 `kMaxCgiOutputBytes`(16MB): 출력은 응답 전에 메모리에 모으므로 끝없이 출력하는 스크립트가 시간 초과까지 메모리를 키울 수 있다. 넘으면 자식을 죽이고 502.
+  - local redirect: 다시 처리할 메서드를 RFC가 정하지 않는다 (raw/rfc3875.txt:1310-1312). 원래 요청이 HEAD면 HEAD, 아니면 본문 없는 GET으로, `Host`만 옮겨 처리한다. 반복은 `kMaxInternalRedirects`(10)까지, 넘으면 500 (결정 6).
+  - 완료 확인: 완료 콜백 대신 `Connection::checkTimeout`(루프 한 바퀴마다, 이벤트 분배 밖)에서 확인한다. 끝난 프로세스를 그 pipe의 `onEvent` 안에서 지우는 일이 없고, 인터페이스가 하나 줄어든다. 응답이 늦어지는 시간은 그 바퀴의 끝까지다.
+  - 클라이언트 끊김: `WAIT_CGI` 동안 소켓은 이벤트 0으로 poll한다. RST로 끊기면 `POLLHUP`·`POLLERR`로 알고 연결을 닫아 스크립트를 죽인다. 정상 종료(FIN)는 알 수 없어서 스크립트가 끝나거나 CGI 시간 초과(10초)가 지난 뒤 정리된다(2026-10-18 Ubuntu 컨테이너에서 확인). 시간 상한이 있으므로 hang은 아니다.
+  - 출력은 끝냈지만 계속 도는 스크립트는 죽이지 않고 reaper에 넘긴다(마무리 중일 수 있음). 서버가 끝날 때 reaper가 죽인다.
+  - `Connection` 생성자는 `(fd, where, services, now)`다. `ListenContext`에 원격 주소와 로컬 주소·포트를 다시 넣었다 (`REMOTE_ADDR`, `SERVER_NAME`, `SERVER_PORT`). 로컬 주소는 `getsockname`, 문자열은 `ntohl`로 직접 만든다 (1.7절).
 
 ## 10. 시그널
 
@@ -547,7 +570,9 @@ private:
 | `kBodyTimeout` | 30초 (무입력 기준) | |
 | `kSendTimeout` | 30초 (무진행 기준) | |
 | `kKeepAliveTimeout` | 15초 | 요청 첫 바이트를 기다리는 시간 (새 연결 포함) |
-| `kCgiTimeout` | 10초 | 무한 루프 스크립트 시연 |
+| `kCgiTimeout` | 10초 | 무한 루프 스크립트 시연. 넘으면 504 |
+| `kMaxCgiOutputBytes` | 16MB | 메모리에 모으는 CGI 출력 상한. 넘으면 502 |
+| `kPipeIoSize` | 65536 | CGI pipe의 `read`·`write` 1번 크기 |
 | `kDrainIdle` / `kDrainTotal` | 1초 / 5초 | 413 실측에서 쓴 값 |
 | `kMaxInternalRedirects` | 10 | NGINX와 같음 |
 | `kDefaultMaxBodySize` | 1MB | NGINX 기본값 `1m`과 같음 |
@@ -568,8 +593,8 @@ private:
 |---|---|
 | SRP | `Connection`은 I/O·상태만, 처리 조율은 `RequestProcessor`, 본문 출처는 `ResponseStream`, 자식 회수는 `ChildReaper` |
 | 리소스 해제 | 모든 객체에 소유자가 하나 (4절 표). `EventLoop`는 소유하지 않는다 |
-| DIP·낮은 결합도 | `EventLoop`는 `IoHandler`·`LoopObserver`만 안다. `cgi`는 `IoRegistry`·`CgiObserver` 인터페이스만 안다 |
-| 파라미터 4개 이하 | `ListenContext`, `CgiContext`로 묶었다 |
+| DIP·낮은 결합도 | `EventLoop`는 `IoHandler`·`LoopObserver`만 안다. `cgi`는 이벤트 루프를 `IoRegistry` 인터페이스로만 안다 (`ChildReaper`는 구체 클래스) |
+| 파라미터 4개 이하 | `ListenContext`, `CgiServices`, `CgiLaunch`로 묶었다 |
 | 높은 응집도·YAGNI | 공용 `util/`과 로그 모듈을 두지 않는다 |
 | 매직 넘버 금지 | 12절 상수. 의미가 바로 옆에서 보이는 값은 리터럴로 쓴다 (1절) |
 
@@ -581,6 +606,6 @@ private:
 ## 14. 정해야 할 것
 
 - 상수 값은 평가를 통과하는 범위에서 시험하며 조정한다 (사용자 결정, 2026-10-16).
-- 7단계(CGI) 설계 때 다시 볼 것 (6단계 OOP 리뷰, 2026-10-17 사용자 동의):
-  - `Connection`은 상태를 보고 갈라지는 메서드가 5개다(`wantedEvents`, `onEvent`, `checkTimeout`, `hasTimedOut`, `receiveOnce`). CGI 출력 대기 상태가 생기면 모두 고쳐야 한다. State 패턴으로 바꿀지 정한다.
-  - Router의 `answers(location, method)`는 "POST는 `upload_store`가 있어야 답한다"를 안다. CGI 확장자면 POST를 받게 되면 경로도 필요해 시그니처를 바꾼다.
+- 7단계(CGI) 설계 때 다시 볼 것 (6단계 OOP 리뷰, 2026-10-17 사용자 동의). 7단계 결과 (2026-10-18):
+  - `Connection`의 상태 분기: `WAIT_CGI`를 더하며 고친 곳은 `checkTimeout`(맨 앞에서 `followCgi`로 넘김)과 `hasTimedOut`(항상 false) 두 곳이었다. `wantedEvents`·`onEvent`·`receiveOnce`는 기존 분기로 맞았다. 그래서 State 패턴으로 바꾸지 않았다 (**판단**).
+  - Router의 `answers(location, method)`: 스크립트를 메서드 검사 전에 찾게 해서 시그니처를 바꿀 필요가 없었다 (9절 구현 세부).

@@ -2,7 +2,7 @@
 title: webserv 개요
 type: overview
 sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc9110.txt, raw/rfc1945.txt]
-updated: 2026-10-17
+updated: 2026-10-18
 ---
 
 # webserv 개요
@@ -62,6 +62,6 @@ C++98로 HTTP 서버를 만드는 42 과제. 실행은 `./webserv [configuration
 - 42 EvalHub 원문이 intra 현재 평가표와 같은지 → [[sources/evaluation-sheet-en]]
 - 허용 함수 목록이 `exit` 같은 표준 라이브러리에도 적용되는지 (CGI 자식 종료, 파일 삭제). `std::exit`(결정 12)과 `std::remove`(결정 15)를 쓰기로 했고 디펜스에서 설명한다. 시각은 허용 함수로 얻는다(결정 10) → [[analysis/subject-vs-evaluation]]
 - Ubuntu 평가에서 `fcntl()`(subject상 "For macOS only" 절) 사용이 인정되는지 → [[concepts/io-multiplexing]]
-- read/write 외 함수(`poll`, `bind`)의 errno를 봐도 되는지, `waitpid` 매크로를 써도 되는지, `/dev/urandom` 읽기가 `poll()` 예외인지, `FD_CLOEXEC`를 위해 `F_SETFD`를 써도 되는지 → [[analysis/subject-vs-evaluation]]
+- read/write 외 함수(`poll`, `bind`)의 errno를 봐도 되는지, `waitpid` 매크로를 써도 되는지, `/dev/urandom` 읽기가 `poll()` 예외인지, `FD_CLOEXEC`를 위해 `F_SETFD`를 써도 되는지 → [[analysis/subject-vs-evaluation]]. CGI 구현(2026-10-18)은 `waitpid` 매크로와 `F_SETFD`를 쓰지 않아 이 두 질문을 피한다
 - 쿠키·세션 보너스를 CGI 예제로 보여 주는 것을 평가자가 "웹 서버의 세션 시스템"으로 인정할지 → [[analysis/design-decisions]] 8
 

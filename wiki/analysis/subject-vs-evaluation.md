@@ -2,7 +2,7 @@
 title: subject vs 평가표 — 차이와 모순
 type: analysis
 sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/evaluation-sheet.md, raw/rfc9110.txt, raw/rfc9112.txt, raw/rfc3875.txt, raw/nginx-core-module.md, raw/posix-poll.md, raw/posix-waitpid.md, raw/posix-bind.md, raw/posix-exit.md, raw/nginx-autoindex-module.md, raw/rfc6265.txt, raw/posix-fcntl.md, raw/rfc1945.txt, raw/os-observed-pipe-poll.md, raw/nginx-src-ngx_http_request.c, raw/nginx-src-ngx_socket.h, raw/close-after-413-observed.md, raw/siegerc.in]
-updated: 2026-10-17
+updated: 2026-10-18
 ---
 
 # subject vs 평가표 — 차이와 모순
@@ -65,6 +65,7 @@ subject는 "허용된 syscall/라이브러리 호출" 목록을 준다 (raw/subj
 - RFC 3875: `REMOTE_ADDR`는 클라이언트 네트워크 주소로 MUST (raw/rfc3875.txt:836-837).
 - subject: 주소를 문자열로 바꾸는 `inet_ntoa`·`inet_ntop`가 허용 함수 목록에 없다. `ntohl`은 있다 (raw/subject.md:113).
 - 판단: `accept`로 받은 주소를 `ntohl`로 바꾼 뒤 점 표기 문자열을 직접 만든다. 모순이라기보다 구현 제약이다. → [[concepts/cgi]]
+- 구현 (2026-10-18): `formatIpv4`(core/SocketAddress)로 만든다. 로컬 주소(`SERVER_NAME`)는 허용 함수 `getsockname`으로 얻는다 → [[analysis/design]] 9절.
 
 ### 1.8 read/write 외 함수의 errno 확인 (질문)
 
@@ -79,6 +80,7 @@ subject는 "허용된 syscall/라이브러리 호출" 목록을 준다 (raw/subj
 - POSIX: `waitpid`가 돌려준 status는 `WIFEXITED`, `WEXITSTATUS`, `WIFSIGNALED`, `WTERMSIG` 같은 매크로로 해석한다 (raw/posix-waitpid.md:72-92).
 - subject: 매크로·헬퍼 사용을 명시적으로 허용한 것은 `poll()`과 그 동등 함수뿐이다 (raw/subject.md:138). `waitpid`는 허용 함수지만 (raw/subject.md:113) 그 매크로에 대한 언급은 없다.
 - 판단 보류 (**미확인**). 매크로 없이도 CGI 처리는 가능하다. 성공 여부는 CGI 출력 형식으로 판단하고 (→ [[concepts/cgi]] 5절), status는 로그용으로만 쓴다.
+- 구현 (2026-10-18): 종료 상태를 읽지 않으므로 매크로를 쓰지 않는다. 이 질문은 구현에서 생기지 않는다 → [[analysis/design]] 9절.
 
 ### 1.10 `/dev/urandom` 읽기와 poll() 예외 (질문)
 
@@ -92,7 +94,7 @@ subject는 "허용된 syscall/라이브러리 호출" 목록을 준다 (raw/subj
 - subject: `fcntl()`은 `F_SETFL`, `O_NONBLOCK`, `FD_CLOEXEC`로만 사용 가능 (raw/subject.md:155-157).
 - **`F_GETFL` 없음:** POSIX는 플래그를 `F_GETFL`로 읽고 수정한 뒤 쓰라고 권한다. 잊는 것이 흔한 실수이고, 구현이 기본으로 다른 플래그를 켜 두는 경우도 있다고 한다 (raw/posix-fcntl.md:391). 허용 목록으로는 `F_SETFL`에 `O_NONBLOCK`만 주는 방법뿐이다.
 - **`FD_CLOEXEC`에는 `F_SETFD`가 필요:** `FD_CLOEXEC`는 파일 상태 플래그가 아니라 fd 플래그라서 `F_SETFD`로 설정한다 (raw/posix-fcntl.md:50-52). `F_SETFD`는 허용 목록에 없다. 그래서 목록의 `F_SETFL`과 `FD_CLOEXEC`는 함께 쓸 수 없는 조합이다 (**판단**, raw/posix-fcntl.md:58-60).
-- 판단: non-blocking은 `fcntl(fd, F_SETFL, O_NONBLOCK)`로 한다. `FD_CLOEXEC` 대신 CGI 자식에서 `execve` 전에 필요 없는 fd를 `close`한다 → [[concepts/cgi]]. `F_SETFD`를 써도 되는지는 **미확인**(평가자 합의).
+- 판단: non-blocking은 `fcntl(fd, F_SETFL, O_NONBLOCK)`로 한다. `FD_CLOEXEC` 대신 CGI 자식에서 `execve` 전에 필요 없는 fd를 `close`한다 → [[concepts/cgi]]. 구현 (2026-10-18): 자식에서 허용 함수 `opendir`·`readdir`로 `/dev/fd`를 읽어 3 이상을 닫는다 → [[analysis/design]] 9절. `F_SETFD`를 써도 되는지는 **미확인**(평가자 합의).
 
 ### 1.12 POSIX `poll()` vs macOS 실측
 
@@ -155,7 +157,7 @@ subject·평가표 해석에 관한 질문만 모았다. 동작 확인이 필요
 - 42 EvalHub 원문이 intra의 현재 평가표와 같은지 → [[sources/evaluation-sheet-en]]
 - 허용 함수 목록이 `exit` 등 표준 라이브러리에도 적용되는지 (CGI 자식 종료, 파일 삭제, 1.4절). `std::exit`(결정 12)과 `std::remove`(결정 15)를 쓰기로 했다(51줄 근거). 시각은 허용 함수로 얻어 `<ctime>`은 쓰지 않는다
 - read/write 외 함수(`poll`, `bind`)의 실패 원인을 errno로 봐도 되는지 (1.8절)
-- `waitpid` 상태 매크로를 써도 되는지 (1.9절)
+- `waitpid` 상태 매크로를 써도 되는지 (1.9절). 구현은 매크로를 쓰지 않아 이 질문을 피한다
 - 세션 식별자용 `/dev/urandom` 읽기가 `poll()` 예외에 들어가는지 (1.10절). 보너스를 CGI 예제로 하기로 해 서버 구현에는 필요 없다
-- `FD_CLOEXEC`를 위해 `F_SETFD`를 써도 되는지 (1.11절)
+- `FD_CLOEXEC`를 위해 `F_SETFD`를 써도 되는지 (1.11절). 구현은 `F_SETFD` 대신 자식에서 fd를 닫아 이 질문을 피한다
 - `fcntl()` 허용이 "For macOS only" 절(raw/subject.md:153-157)에 있는데, Ubuntu 평가에서도 인정되는지. 허용 함수 목록(raw/subject.md:113)에는 있다 → [[concepts/io-multiplexing]]

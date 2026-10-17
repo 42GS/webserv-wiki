@@ -1,8 +1,8 @@
 ---
 title: 테스트 계획
 type: analysis
-sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/nginx-core-module.md, raw/macos-observed-sigpipe-leaks.md, raw/posix-poll.md, raw/design-checks-observed.md, raw/posix-recv.md, raw/rfc9112.txt, raw/rfc9110.txt, raw/rfc6585.txt, raw/rfc1945.txt, raw/rfc3986.txt, raw/rfc2046.txt, raw/rfc7578.txt]
-updated: 2026-10-17
+sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/nginx-core-module.md, raw/macos-observed-sigpipe-leaks.md, raw/posix-poll.md, raw/design-checks-observed.md, raw/posix-recv.md, raw/rfc9112.txt, raw/rfc9110.txt, raw/rfc6585.txt, raw/rfc1945.txt, raw/rfc3986.txt, raw/rfc2046.txt, raw/rfc7578.txt, raw/rfc3875.txt, raw/rfc6265.txt, raw/posix-exit.md, raw/posix-fcntl.md, raw/os-observed-pipe-poll.md]
+updated: 2026-10-18
 ---
 
 # 테스트 계획
@@ -225,8 +225,38 @@ updated: 2026-10-17
 
 일부러 틀리게 바꾼 확인 (2026-10-17): 통합 테스트 20개 변이(리뷰 뒤 추가한 빈 줄 찾기 범위·파일 수 상한·이름 길이 상한 포함, 쓰기 실패 무시, CRLF를 내용에 포함, 미디어 타입 검사 제거, 경로 버리기 제거, 기존 이름·겹치는 이름 검사 제거, 저장 위치 없는 POST 허용, 기본 허용에 POST·DELETE 추가, `std::remove` 생략, 디렉토리 삭제 허용, 권한 검사 제거, `Location` 매핑 검사 제거, 빈 `filename` 저장, 파일 없음 허용, 없는 파일 404 제거, DELETE 분기 제거, 409 본문의 이름 제거)와 단위 테스트 10개 변이(quoted-pair 처리, 같은 parameter 검사, padding 건너뛰기, preamble 찾기, boundary 길이·끝 공백, 마지막 구분자, 값 뒤 글자, disposition 두 번, `limit_except`가 기본값을 비우지 않음)가 모두 해당 테스트를 실패시켰다.
 
-## 7단계 이후 (단계를 시작할 때 채운다)
+## 7. CGI
 
-- 7. CGI: GET·POST, chunked 본문, 실행 디렉토리, 무한 루프(504), 에러 스크립트(502)
+읽은 위키: [[analysis/implementation-plan]] 7단계, [[concepts/cgi]], [[analysis/design]] 4·5·9·10·12·14절, [[analysis/design-decisions]] 6·12, [[analysis/subject-vs-evaluation]] 1.4·1.7·1.9·1.11, [[concepts/security]] 2절, [[concepts/resilience]] 시그널 처리, [[sources/php-cgi-observed-env]]. 위키에 없던 선택은 [[analysis/design]] 9절 "구현 세부 (단계 7)"에 적는다.
+CGI는 `G-`로 쓴다 (`C-`는 설정). 통합 테스트는 `test_cgi.py`이고, 스크립트는 테스트를 돌리는 Python(`sys.executable`)으로 실행한다. `php-cgi`는 Ubuntu 22.04 컨테이너에만 있다.
+
+| ID | 요구사항 | 근거 | 수준 | 기대 결과 | 현재 테스트 | 상태 |
+|---|---|---|---|---|---|---|
+| G-01 | 메타변수: 요청 전체와 인자가 CGI에 보인다. `PATH_INFO`는 디코딩, `QUERY_STRING`은 그대로, 같은 헤더는 `, `로 합치고, `Authorization`·`Content-Length`·`Content-Type`은 `HTTP_`로 넘기지 않는다 | raw/subject.md:178, raw/rfc3875.txt:1044-1046, raw/rfc3875.txt:1052-1055, [[concepts/cgi]] 2절 | U, I | 변수 값 표 그대로 | `cgi_test.cpp` `g01_metaVariables`·`g01_addressAndPathText`, `router_test.cpp` `g01_g09_g10_scripts`, `test_cgi.py` `test_g01_*` | 있음 |
+| G-02 | POST 본문은 스크립트의 표준 입력으로, `CONTENT_LENGTH`·`CONTENT_TYPE`과 함께 | raw/evaluation-sheet-en.md:90, raw/rfc3875.txt:1073-1075, raw/rfc3875.txt:636-639 | I | 본문과 길이가 그대로 | `test_cgi.py` `test_g02_*` | 있음 |
+| G-03 | chunked 본문은 해제해 넘기고 `CONTENT_LENGTH`를 다시 계산한다 (MUST) | raw/subject.md:179, raw/rfc3875.txt:1093-1097 | I | 해제한 7바이트와 `CONTENT_LENGTH=7` | `test_cgi.py` `test_g03_*` | 있음 |
+| G-04 | 스크립트는 자기 디렉토리에서 실행된다 | raw/subject.md:181, raw/evaluation-sheet-en.md:89, raw/rfc3875.txt:1565-1566 | I | 상대 경로 파일을 읽는다 | `test_cgi.py` `test_g04_*` | 있음 |
+| G-05 | 무한 루프 스크립트: 다른 요청은 그동안 처리되고, 10초 뒤 504 | raw/evaluation-sheet-en.md:91-93, raw/rfc3875.txt:1255-1258, 설계 12절 | I | 다른 GET이 2초 안에 200, 루프는 10초 이상 뒤 504 | `test_cgi.py` `test_g05_*` (약 11초) | 있음 |
+| G-06 | 출력이 CGI 응답이 아니면(출력 없이 종료, 헤더 아닌 줄, `Content-Type` 없는 문서 등) 502 | raw/rfc3875.txt:1295-1296, [[concepts/cgi]] 5절 | U, I | 502, 서버는 계속 응답 | `cgi_test.cpp` `g06_invalidOutputs`, `test_cgi.py` `test_g06_*` | 있음 |
+| G-07 | `Status`는 상태 코드로, `Set-Cookie` 여러 줄은 그대로, 스크립트의 `Content-Length`·`Date`·`Connection`·`Transfer-Encoding`은 버린다(서버 값과 충돌, SHOULD 해결). 204·304는 본문을 버린다 | raw/rfc3875.txt:1295-1299, raw/rfc3875.txt:1496-1498, raw/rfc6265.txt:315-319, raw/rfc9110.txt:7042-7043, raw/rfc9110.txt:7477-7478 | U, I | 418, `Set-Cookie` 2줄, `Content-Length`·`Date` 1줄씩 | `cgi_test.cpp` `g07_documentResponse`, `test_cgi.py` `test_g07_*` | 있음 |
+| G-08 | local redirect는 그 경로를 다시 처리하고(GET), client redirect는 302 (MUST). 자기 자신으로의 반복은 내부 리다이렉트 상한 뒤 500 | raw/rfc3875.txt:1310-1312, raw/rfc3875.txt:1324-1326, [[analysis/design-decisions]] 6 | U, I | 다른 스크립트의 출력, 302 + `Location`, 500 | `cgi_test.cpp` `g08_redirects`, `test_cgi.py` `test_g08_*` | 있음 |
+| G-09 | index 파일이 CGI 확장자면 CGI로 실행 | [[analysis/design-decisions]] 6 | U, I | `/cgi/`가 `index.py`의 출력 | `router_test.cpp` `g01_g09_g10_scripts`, `test_cgi.py` `test_g09_*` | 있음 |
+| G-10 | 스크립트는 `limit_except`가 허용한 메서드를 모두 받고(DELETE도 스크립트가 처리), 막힌 메서드는 405 + `Allow`. `cgi`가 없는 location의 `.py`는 실행하지 않고 파일로 보낸다 | 설계 9절, [[analysis/design-decisions]] 16 | U, I | DELETE가 스크립트에 가고 파일은 남는다. GET만 허용한 location의 POST는 405 + `Allow: GET, HEAD` | `router_test.cpp` `g01_g09_g10_scripts`, `test_cgi.py` `test_g10_*` | 있음 |
+| G-11 | HEAD에는 본문을 보내지 않는다 (MUST discard) | raw/rfc3875.txt:1143-1145 | I | `Content-Length`는 GET 값, 본문 0바이트 | `test_cgi.py` `test_g11_*` | 있음 |
+| G-12 | 큰 입력(3MB)과 출력(300KB)이 그대로 오간다. 출력이 16MB를 넘으면 502 | 설계 12절 `kMaxCgiOutputBytes` | I | 바이트 일치, 넘으면 502 | `test_cgi.py` `test_g12_*` | 있음 |
+| G-13 | 본문을 읽지 않고 끝나는 스크립트에도 서버가 멈추거나 죽지 않는다 | [[concepts/cgi]] 1절 "입력 pipe", [[concepts/resilience]] SIGPIPE | I | 512KB 본문에도 200 | `test_cgi.py` `test_g13_*` | 있음 |
+| G-14 | CGI 응답 뒤에도 연결을 유지한다(출력을 모은 뒤 `Content-Length`를 붙인다) | raw/rfc9112.txt:1372-1374 | I | 같은 연결에서 두 번 200 | `test_cgi.py` `test_g14_*` | 있음 |
+| G-15 | 끝난 자식은 `waitpid(WNOHANG)`으로 회수해 좀비가 남지 않는다 | raw/posix-exit.md:58-64, [[concepts/cgi]] "자식 회수" | I | 요청 3개 뒤 서버의 자식 0개 (Linux `/proc`) | `test_cgi.py` `test_g15_*` | 있음 |
+| G-16 | 스크립트가 도는 중 클라이언트가 RST로 끊으면 스크립트를 죽이고 회수한다 | 설계 4절 소유 관계 | I | 끊은 뒤 서버의 자식 0개 (Linux) | `test_cgi.py` `test_g16_*` | 있음 |
+| G-17 | `php-cgi`로 GET·POST | raw/subject.md:182, [[concepts/cgi]] "php-cgi가 추가로 요구하는 변수" | I | `php GET hi`, `php POST data` | `test_cgi.py` `test_g17_*` (`/usr/bin/php-cgi`가 있을 때, Ubuntu 컨테이너) | 있음 |
+| G-18 | `cgi` 지시자의 프로그램은 절대 경로여야 한다 (스크립트 디렉토리에서 실행하므로) | 설계 9절 | U | 설정 오류 | `config_test.cpp` `rejectsBadLocationDirectives` | 있음 |
+| G-19 | 스크립트는 서버의 다른 fd(다른 클라이언트 소켓 등)를 물려받지 않는다 | raw/posix-fcntl.md:52, [[analysis/subject-vs-evaluation]] 1.11 | I | 스크립트의 `/dev/fd`에 0·1·2와 목록용 하나뿐 | `test_cgi.py` `test_g19_*` | 있음 |
+| G-20 | SIGINT로 서버를 끄면 실행 중인 스크립트와 출력을 끝내고도 남은 스크립트를 모두 끝내고 회수한다 | [[concepts/resilience]] 시그널 처리, 설계 10절 | I | exit 0, 스크립트 프로세스가 남지 않음 (Linux) | `test_cgi.py` `test_g20_*` 2개 | 있음 |
+| G-21 | 출력 pipe는 `POLLHUP`만 와도 `read()`해서 EOF를 확인한다 | raw/os-observed-pipe-poll.md:178, raw/os-observed-pipe-poll.md:193 | R | 코드 읽기 | `CgiStdout::onEvent` | 확인 (2026-10-18). `POLLIN` 없이 닫게 바꿔도 Ubuntu에서 G-12가 통과해 테스트로는 구별되지 않는다 |
+
+일부러 틀리게 바꾼 확인 (2026-10-18): fd 닫기 생략, 시간 초과 없앰, `Status` 무시, 스크립트 `Content-Length` 통과, 리다이렉트 상한 없앰, `chdir` 생략, 본문 쓰기 생략, `CONTENT_LENGTH` 생략, 스크립트 메서드 검사 생략, 출력 상한 없앰(macOS), 회수 생략, 연결 삭제 때 kill 생략, 종료 때 reaper의 kill·wait 생략(Ubuntu)이 모두 해당 테스트를 실패시켰다. 처음에는 스크립트 `Content-Length` 통과(G-07이 헤더를 dict로 읽음), 메서드 검사 생략(설정이 모든 메서드를 허용), reaper의 kill 생략(G-20의 루프 스크립트는 연결 삭제 때 이미 죽음)을 잡지 못해 테스트를 고쳤다.
+
+## 8단계 이후 (단계를 시작할 때 채운다)
+
 - 8. 안정성: [[concepts/resilience]] "요구 목록"
 - 9. README·시연 설정
