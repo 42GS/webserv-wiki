@@ -42,6 +42,7 @@ updated: 2026-10-17
 | [[sources/design-checks-observed]] | 설계 확인 실측 — 파일 `stat` 수정 시각이 `time()`과 일치, 메모리 고갈 시 `bad_alloc` 없이 `Killed`, 자식 `std::exit`이 flush 안 된 부모 버퍼를 다시 출력 | `raw/design-checks-observed.md` |
 | [[sources/close-after-413-observed]] | 413 뒤 연결 종료 실측(Ubuntu 22.04·macOS) — 바로 close는 macOS에서 reset·curl 실패, 읽고 버리다 close는 12/12 응답 수신(`shutdown`과 차이 없음) | `raw/close-after-413-observed.md` |
 | [[sources/efence-observed-ubuntu2204]] | Electric Fence 2.2.6 실측(Ubuntu 22.04) — 누수 보고 없음, heap 1바이트 초과가 segfault, `-lefence` 링크는 효과 없고 `LD_PRELOAD`만 동작 | `raw/efence-observed-ubuntu2204.md` |
+| [[sources/ubuntu2204-observed-nofile]] | Ubuntu 22.04 systemd 패키지의 기본 fd 한도 — `DefaultLimitNOFILE=1024:524288`(soft 1024), `limits.conf`에 `nofile` 없음 | `raw/ubuntu2204-observed-nofile.md` |
 | [[sources/ubuntu2204-observed-tools]] | Ubuntu 22.04(평가 PC) 실측 — php 8.1·valgrind 3.18·Python 3.10·siege 4.0.7, `siege -C` 값, php-cgi·valgrind 결과 동일, siege 4.0.7과 master 차이 | `raw/ubuntu2204-observed-tools.md` |
 | [[sources/fs-observed-remove-name-length]] | 파일 시스템 실측(macOS·Ubuntu) — `std::remove`는 빈 디렉토리도 지움(비지 않으면 -1), 이름 상한 Ubuntu 255바이트·macOS는 글자 수 | `raw/fs-observed-remove-name-length.md` |
 | [[sources/posix-remove]] | POSIX `remove()` — 파일이면 `unlink`, 디렉토리면 `rmdir`과 같음 (ISO C 밖의 확장) | `raw/posix-remove.md` |

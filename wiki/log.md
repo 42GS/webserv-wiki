@@ -527,3 +527,8 @@
 ## [2026-10-18] query | 8단계 남은 두 가지 수정
 - 갱신: [[analysis/test-plan]] 8절 R4·R5, N-26·G-22 신설, [[analysis/design]] 11절
 - 메모: 처음에 기록만 했던 두 가지를 사용자 지적("그전에 저거 고쳐야 하지 않을까?")으로 고쳤다 (webserv `6b4ffc2`). (1) fd가 다 차 `accept`가 실패하면 listen 소켓이 계속 읽기 가능해 루프가 쉬지 않고 돌았다(fd 한도 16 실험에서 CPU 10% 초과). listener를 멈추고 연결이 닫히거나 1초가 지나면 다시 poll한다. 처음 고친 형태(다음 바퀴에 바로 재개)는 여전히 돌아서 다시 고쳤다. (2) CGI 출력이 약 4벌 복사되던 것을 `swap`으로 옮겨, 15MB 출력의 최대 메모리 증가가 63MB에서 약 31MB가 됐다. 두 테스트 모두 고치기 전 코드에서 실패한다. Ubuntu 통합 105(느린 테스트 포함), valgrind 감싼 실행 오류 0, siege 60초 availability 100%.
+
+## [2026-10-18] ingest | Ubuntu 22.04 기본 fd 한도 실측
+- 생성: raw/ubuntu2204-observed-nofile.md, [[sources/ubuntu2204-observed-nofile]]
+- 갱신: [[analysis/test-plan]] 8절 R5, [[index]]
+- 메모: 사용자 질문("ulimit ubuntu 22.04 기본값을 알 수 있지 않나")에 답하려고, 깨끗한 `ubuntu:22.04`에 systemd 패키지를 설치해 설정 파일을 읽었다. `DefaultLimitNOFILE=1024:524288`(컴파일 기본값), `limits.conf`에 `nofile` 없음. 개발 컨테이너의 20480은 Docker가 정한 값이다. 평가 PC 셸이 이 값을 물려받는지는 미확인으로 남겼다.

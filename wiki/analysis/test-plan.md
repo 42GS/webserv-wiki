@@ -1,7 +1,7 @@
 ---
 title: 테스트 계획
 type: analysis
-sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/nginx-core-module.md, raw/macos-observed-sigpipe-leaks.md, raw/posix-poll.md, raw/design-checks-observed.md, raw/posix-recv.md, raw/rfc9112.txt, raw/rfc9110.txt, raw/rfc6585.txt, raw/rfc1945.txt, raw/rfc3986.txt, raw/rfc2046.txt, raw/rfc7578.txt, raw/rfc3875.txt, raw/rfc6265.txt, raw/posix-exit.md, raw/posix-fcntl.md, raw/os-observed-pipe-poll.md, raw/efence-observed-ubuntu2204.md]
+sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/nginx-core-module.md, raw/macos-observed-sigpipe-leaks.md, raw/posix-poll.md, raw/design-checks-observed.md, raw/posix-recv.md, raw/rfc9112.txt, raw/rfc9110.txt, raw/rfc6585.txt, raw/rfc1945.txt, raw/rfc3986.txt, raw/rfc2046.txt, raw/rfc7578.txt, raw/rfc3875.txt, raw/rfc6265.txt, raw/posix-exit.md, raw/posix-fcntl.md, raw/os-observed-pipe-poll.md, raw/efence-observed-ubuntu2204.md, raw/ubuntu2204-observed-nofile.md]
 updated: 2026-10-18
 ---
 
@@ -289,7 +289,7 @@ CGI는 `G-`로 쓴다 (`C-`는 설정). 통합 테스트는 `test_cgi.py`이고,
 | R2 | `~CgiProcess` | `reaper_.adopt`의 `push_back`이 던지면 소멸자에서 예외가 나가 `std::terminate`될 수 있다 | 잡아서 `SIGKILL` 후 그 자리에서 `waitpid` |
 | R3 | `ChildReaper::reap` | 매 바퀴 vector를 할당하는데, 연결별 예외 처리 밖이라 실패하면 서버가 끝난다 | 할당 없이 제자리에서 지운다 |
 | R4 | CGI 출력 → 응답 | 출력(최대 16MB)이 pipe 버퍼, `substr`, `CgiOutput` 복사, `ProcessOutcome` 복사로 약 4벌이 됐다. 메모리가 바닥나면 예외 없이 프로세스가 끝난다 (raw/design-checks-observed.md:119-123) | 본문을 `swap`으로 옮긴다 (webserv `6b4ffc2`). 15MB 출력 하나의 최대 메모리 증가가 63MB에서 약 31MB로 줄었다(G-22). 남은 한 벌은 전송 버퍼 |
-| R5 | `Listener::onEvent` | fd가 다 차서 `accept`가 실패하면 listen 소켓이 계속 읽기 가능이라 루프가 쉬지 않고 돈다 | `accept`가 실패하면 listener를 멈추고, 연결이 닫히거나 1초가 지나면 다시 poll한다 (`6b4ffc2`, N-26). 원인은 errno로 가리지 않는다 (1.8절). 평가 PC의 fd 한도는 **미확인**(확인: `ulimit -n`). 컨테이너는 20480 |
+| R5 | `Listener::onEvent` | fd가 다 차서 `accept`가 실패하면 listen 소켓이 계속 읽기 가능이라 루프가 쉬지 않고 돈다 | `accept`가 실패하면 listener를 멈추고, 연결이 닫히거나 1초가 지나면 다시 poll한다 (`6b4ffc2`, N-26). 원인은 errno로 가리지 않는다 (1.8절). Ubuntu 22.04 systemd 패키지의 기본 한도는 soft 1024 (raw/ubuntu2204-observed-nofile.md:16) → [[sources/ubuntu2204-observed-nofile]]. 평가 PC 셸의 실제 값은 **미확인**(확인: `ulimit -n`). 개발 컨테이너는 Docker 기본 20480 |
 
 R1~R3은 실패를 만들 방법이 없어 코드 읽기로 확인했다(2026-10-18). R4·R5는 처음에 기록만 하려다 사용자 지적으로 고쳤다. 고친 뒤 siege 60초(`-b -c 50`)가 323,246건, availability 100%였다.
 감싼 실행(`WEBSERV_WRAPPER`)에서는 측정 테스트 N-26(감싸는 도구도 fd가 필요)과 G-22(도구의 메모리가 서버 것으로 잡힘)를 건너뛴다.
