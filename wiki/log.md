@@ -532,3 +532,7 @@
 - 생성: raw/ubuntu2204-observed-nofile.md, [[sources/ubuntu2204-observed-nofile]]
 - 갱신: [[analysis/test-plan]] 8절 R5, [[index]]
 - 메모: 사용자 질문("ulimit ubuntu 22.04 기본값을 알 수 있지 않나")에 답하려고, 깨끗한 `ubuntu:22.04`에 systemd 패키지를 설치해 설정 파일을 읽었다. `DefaultLimitNOFILE=1024:524288`(컴파일 기본값), `limits.conf`에 `nofile` 없음. 개발 컨테이너의 20480은 Docker가 정한 값이다. 평가 PC 셸이 이 값을 물려받는지는 미확인으로 남겼다.
+
+## [2026-10-18] query | 9단계 README와 시연 준비
+- 갱신: [[analysis/test-plan]] 9절(E-01~E-09, R-18·F-14), [[concepts/build-and-submission]]
+- 메모: 평가표 항목 순서로 시연 자료를 만들었다 (webserv `83f413c`): 정적 사이트, 사용자 404, 목록, alias route, 리다이렉트, 업로드·폼 페이지, CGI 스크립트(GET, POST, 메타변수, 상대 경로, 에러, 무한 루프, 본문 반향, 쿠키 세션, PHP), 설정 3개, README. `test_demo.py`가 저장소의 설정 그대로(포트만 바꿈) 확인한다. Ubuntu 통합 115(느린 테스트 포함) 통과. 처음에 무한 루프 시연 테스트가 소켓 기본 타임아웃(5초)에 걸려 고쳤다. README의 AI 사용 문단과 브라우저 확인은 사용자 몫으로 남겼다.

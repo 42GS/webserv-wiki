@@ -294,6 +294,23 @@ CGI는 `G-`로 쓴다 (`C-`는 설정). 통합 테스트는 `test_cgi.py`이고,
 R1~R3은 실패를 만들 방법이 없어 코드 읽기로 확인했다(2026-10-18). R4·R5는 처음에 기록만 하려다 사용자 지적으로 고쳤다. 고친 뒤 siege 60초(`-b -c 50`)가 323,246건, availability 100%였다.
 감싼 실행(`WEBSERV_WRAPPER`)에서는 측정 테스트 N-26(감싸는 도구도 fd가 필요)과 G-22(도구의 메모리가 서버 것으로 잡힘)를 건너뛴다.
 
-## 9단계 (단계를 시작할 때 채운다)
+## 9. README와 시연 준비
 
-- 9. README·시연 설정
+읽은 위키: [[analysis/implementation-plan]] 9단계, [[concepts/build-and-submission]], [[concepts/bonus]], [[concepts/testing]] 시연 준비, [[concepts/cgi]] 6절(Python 스크립트), raw/evaluation-sheet-en.md:33-130(평가 항목 전체).
+시연 자료는 webserv `83f413c`: `www/`, `www2/`, `conf/default.conf`·`ports.conf`·`same-port.conf`, README. `test_demo.py`는 저장소의 설정을 포트만 바꿔 저장소 루트에서 띄운다.
+
+| ID | 요구사항 | 근거 | 수준 | 기대 결과 | 현재 테스트 | 상태 |
+|---|---|---|---|---|---|---|
+| E-01 | 같은 `interface:port`의 두 사이트는 설정 오류(virtual host 미구현). 여러 interface·port에 서로 다른 사이트 | raw/evaluation-sheet-en.md:107-108, [[analysis/design-decisions]] 4 | I | `same-port.conf`는 `duplicate listen`, 종료 코드 1. `ports.conf`는 주소마다 다른 사이트 | `test_demo.py` `test_e01_*` 2개 (`127.0.0.2`는 Linux만) | 있음 |
+| E-02 | 정적 웹사이트(HTML, CSS, 그림) | raw/subject.md:145, raw/evaluation-sheet-en.md:99 | I | 200과 알맞은 `Content-Type` | `test_e02_static_site` | 있음 |
+| E-03 | 설정 항목: 디렉토리 목록, 다른 디렉토리로의 route와 그 index, 리다이렉트, 바꾼 404 페이지, 권한 없는 DELETE, 다른 포트의 사이트 | raw/evaluation-sheet-en.md:69-73, raw/evaluation-sheet-en.md:100-102 | I | 200·301·404(사용자 페이지)·405 | `test_e03_configuration_features` | 있음 |
+| E-04 | 평가표의 본문 크기 시험 명령 (`Content-Type: plain/text`, 짧은 본문과 긴 본문) | raw/evaluation-sheet-en.md:70 | I | 짧으면 CGI가 받은 본문을 돌려주고, 64바이트를 넘으면 413 | `test_e04_body_limit` | 있음 |
+| E-05 | 업로드한 파일을 다시 받고 지운다 | raw/evaluation-sheet-en.md:82 | I | 201 → 200(같은 내용) → 204 → 404 | `test_e05_upload_get_delete` (지우지 못하면 정리 단계에서 지운다) | 있음 |
+| E-06 | CGI: GET, POST, 상대 경로, 메타변수, 에러 스크립트 502, 무한 루프 504 | raw/evaluation-sheet-en.md:88-93 | I | 각 결과 | `test_e06_cgi`, `test_e06_infinite_loop` (느린 테스트) | 있음 |
+| E-07 | 쿠키·세션 (보너스): 식별자만 쿠키에, 모르는 식별자는 새로 발급, 로그아웃은 과거 날짜 `Expires` | raw/evaluation-sheet-en.md:126, raw/subject.md:215, [[concepts/bonus]] 세션 | I | 방문 수 1 → 2, 위조한 식별자는 새 세션, 로그아웃 쿠키 만료 | `test_e07_cookie_session` | 있음. 식별자는 Python `secrets`로 만든다. 스크립트 언어의 난수 기능이 허용 함수 목록의 대상인지는 결정 8의 **미확인** 그대로 |
+| E-08 | 여러 CGI (보너스): Python과 PHP | raw/subject.md:216, raw/evaluation-sheet-en.md:130 | I | PHP 페이지 200 | `test_e08_php` (`/usr/bin/php-cgi`가 있을 때) | 있음 |
+| E-09 | README: 이탤릭 첫 줄, Description·Instructions·Resources, AI를 어떤 작업·부분에 썼는지 | raw/evaluation-sheet-en.md:35-44, raw/subject.md:196-207 | I, M | 형식은 B-06. 내용은 사람이 읽는다 | `test_readme.py` (형식). README의 curl 명령은 2026-10-18 macOS에서 실행해 적힌 결과를 확인(`loop.py`, PHP, siege 제외) | 형식 있음. "Use of AI" 내용은 사용자 확인 필요 |
+| R-18, F-14 | 브라우저로 정적 사이트를 끝까지 보고, 폼으로 업로드한 파일을 다시 받는다. 네트워크 탭의 요청·응답 헤더 | raw/evaluation-sheet-en.md:97-103, raw/evaluation-sheet-en.md:82 | M | 페이지, 404, 목록, 리다이렉트가 보이고 업로드한 파일이 같다 | 없음 (브라우저 필요) | 나중: 사용자가 브라우저로 확인 |
+
+- 시연 자료의 판단: 사이트 루트는 `limit_except` 없이 읽기 전용(결정 16)이고, 업로드한 `.py`는 `cgi`가 없는 `/upload/`에 저장되어 실행되지 않는다 ([[analysis/design-decisions]] 7). 본문 크기 시험은 평가표 명령이 `plain/text` 본문이라 업로드(415)가 아닌 본문을 돌려주는 CGI(`/limit/echo.py`, 상한 64바이트)로 보인다.
+- `127.0.0.2`는 Ubuntu 22.04 컨테이너에서 바로 bind되고 macOS에서는 `Can't assign requested address`였다(2026-10-18 실행). 평가는 Ubuntu에서 한다.
