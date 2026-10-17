@@ -114,6 +114,7 @@ updated: 2026-10-18
 | N-24 | 헤더 수신 타임아웃은 받기 시작한 때부터 잰다. 바이트를 조금씩 계속 보내도 연장되지 않는다 (본문·전송은 무입력·무진행 기준) | raw/subject.md:139, 설계 12절 | I | 5초마다 1바이트씩 보내도 약 30초 뒤 408 | `test_connections.py` `test_n24_trickled_head_still_times_out` (느린 테스트, 5초마다 1바이트) | 있음 |
 | N-25 | 이벤트 처리 밖(타임아웃 점검, poll 목록 만들기)에서 난 예외도 프로세스를 비정상 종료시키지 않는다. 연결 하나에서 나면 그 연결만 닫고, 그 밖이면 원인을 출력하고 종료 코드 1 | raw/subject.md:46, raw/evaluation-sheet-en.md:24 | R | `Server::afterIteration`이 연결마다 예외를 잡고, `main`이 마지막으로 잡는다 | 코드 읽기 + 예외 주입 실험 2026-10-17: 타임아웃 점검에서 던지면 그 연결만 닫히고 새 요청은 200, poll 처리에서 던지면 `webserv: stopped: ...`와 종료 코드 1 | 확인 |
 | N-23 | 평가자가 `valgrind`·`leaks`·`e_fence`로 돌려도 오류·누수가 없다. `e_fence`에서는 heap 경계 오류가 곧 크래시 | raw/evaluation-sheet-en.md:25, [[concepts/resilience]] "SIGINT·SIGTERM과 누수 검사" | M | valgrind 오류 0, still reachable까지 누수 0. e_fence에서 크래시 없음 | 8절 절차: 단위 테스트와 통합 테스트 전체를 valgrind와 e_fence 아래에서 | 확인 (2026-10-18, Ubuntu 22.04 컨테이너). macOS `leaks`는 평가 환경이 아니고 SIGINT 종료를 검사하지 못해 (raw/macos-observed-sigpipe-leaks.md:224-226) 쓰지 않는다 |
+| N-26 | fd가 다 차 `accept`가 실패해도 루프가 쉬지 않고 돌지 않고, fd가 풀리면 다시 받는다 | raw/subject.md:139, 8절 R5 | I | fd 한도 16인 서버에 32개 연결: 2초 동안 CPU 10% 미만, 연결을 닫으면 200 | `test_connections.py` `test_n26_*` (Linux) | 있음. 고치기 전에는 10%를 넘어 실패 |
 
 - N-01~N-03은 0점 조건이다 (raw/evaluation-sheet-en.md:53, raw/subject.md:136, raw/evaluation-sheet-en.md:57). 테스트가 통과해도 지켰다는 증거가 되지 않으므로, 단계마다 코드 경로를 읽어 확인하고 결과를 이 페이지에 적는다.
 
@@ -253,6 +254,7 @@ CGI는 `G-`로 쓴다 (`C-`는 설정). 통합 테스트는 `test_cgi.py`이고,
 | G-19 | 스크립트는 서버의 다른 fd(다른 클라이언트 소켓 등)를 물려받지 않는다 | raw/posix-fcntl.md:52, [[analysis/subject-vs-evaluation]] 1.11 | I | 스크립트의 `/dev/fd`에 0·1·2와 목록용 하나뿐 | `test_cgi.py` `test_g19_*` | 있음 |
 | G-20 | SIGINT로 서버를 끄면 실행 중인 스크립트와 출력을 끝내고도 남은 스크립트를 모두 끝내고 회수한다 | [[concepts/resilience]] 시그널 처리, 설계 10절 | I | exit 0, 스크립트 프로세스가 남지 않음 (Linux) | `test_cgi.py` `test_g20_*` 2개 | 있음 |
 | G-21 | 출력 pipe는 `POLLHUP`만 와도 `read()`해서 EOF를 확인한다 | raw/os-observed-pipe-poll.md:178, raw/os-observed-pipe-poll.md:193 | R | 코드 읽기 | `CgiStdout::onEvent` | 확인 (2026-10-18). `POLLIN` 없이 닫게 바꿔도 Ubuntu에서 G-12가 통과해 테스트로는 구별되지 않는다 |
+| G-22 | 큰 CGI 출력이 응답이 되며 여러 번 복사되지 않는다 | 8절 R4 | I | 15MB 출력 하나에 최대 메모리 증가가 출력의 2.5배 미만 | `test_cgi.py` `test_g22_*` (Linux `VmHWM`) | 있음. 고치기 전 코드에서는 63MB 증가로 실패. 본문을 `swap` 대신 한 번 복사하게 바꾸면 그 복사가 잠깐만 있어 통과한다 (이 테스트는 약 4배로 돌아가는 것을 잡는다) |
 
 일부러 틀리게 바꾼 확인 (2026-10-18): fd 닫기 생략, 시간 초과 없앰, `Status` 무시, 스크립트 `Content-Length` 통과, 리다이렉트 상한 없앰, `chdir` 생략, 본문 쓰기 생략, `CONTENT_LENGTH` 생략, 스크립트 메서드 검사 생략, 출력 상한 없앰(macOS), 회수 생략, 연결 삭제 때 kill 생략, 종료 때 reaper의 kill·wait 생략(Ubuntu)이 모두 해당 테스트를 실패시켰다. 처음에는 스크립트 `Content-Length` 통과(G-07이 헤더를 dict로 읽음), 메서드 검사 생략(설정이 모든 메서드를 허용), reaper의 kill 생략(G-20의 루프 스크립트는 연결 삭제 때 이미 죽음)을 잡지 못해 테스트를 고쳤다.
 
@@ -286,10 +288,11 @@ CGI는 `G-`로 쓴다 (`C-`는 설정). 통합 테스트는 `test_cgi.py`이고,
 | R1 | `CgiProcess::runChild` | `fork` 뒤 자식에서 예외(`bad_alloc`)가 나면 서버 코드로 풀려 나가 자식이 두 번째 서버처럼 같은 소켓을 처리한다 | 자식 코드 전체를 잡아 `std::exit(1)` (webserv `d4ce794`) |
 | R2 | `~CgiProcess` | `reaper_.adopt`의 `push_back`이 던지면 소멸자에서 예외가 나가 `std::terminate`될 수 있다 | 잡아서 `SIGKILL` 후 그 자리에서 `waitpid` |
 | R3 | `ChildReaper::reap` | 매 바퀴 vector를 할당하는데, 연결별 예외 처리 밖이라 실패하면 서버가 끝난다 | 할당 없이 제자리에서 지운다 |
-| R4 | `ResponseStream`, CGI 응답 | CGI 출력(최대 16MB)이 `Response` 복사와 직렬화로 몇 배가 된다 | 기록만. 동시 CGI 수 × 16MB × 몇 배의 메모리 (**판단**) |
-| R5 | `Listener::onEvent` | fd가 다 차서 `accept`가 실패하면 listen 소켓이 계속 읽기 가능이라 루프가 쉬지 않고 돈다(멈추지는 않고 fd가 풀리면 다시 받는다) | 기록만. 평가 PC의 fd 한도는 **미확인**(확인: `ulimit -n`). 컨테이너는 20480 |
+| R4 | CGI 출력 → 응답 | 출력(최대 16MB)이 pipe 버퍼, `substr`, `CgiOutput` 복사, `ProcessOutcome` 복사로 약 4벌이 됐다. 메모리가 바닥나면 예외 없이 프로세스가 끝난다 (raw/design-checks-observed.md:119-123) | 본문을 `swap`으로 옮긴다 (webserv `6b4ffc2`). 15MB 출력 하나의 최대 메모리 증가가 63MB에서 약 31MB로 줄었다(G-22). 남은 한 벌은 전송 버퍼 |
+| R5 | `Listener::onEvent` | fd가 다 차서 `accept`가 실패하면 listen 소켓이 계속 읽기 가능이라 루프가 쉬지 않고 돈다 | `accept`가 실패하면 listener를 멈추고, 연결이 닫히거나 1초가 지나면 다시 poll한다 (`6b4ffc2`, N-26). 원인은 errno로 가리지 않는다 (1.8절). 평가 PC의 fd 한도는 **미확인**(확인: `ulimit -n`). 컨테이너는 20480 |
 
-R1~R3은 실패를 만들 방법이 없어 코드 읽기로 확인했다(2026-10-18).
+R1~R3은 실패를 만들 방법이 없어 코드 읽기로 확인했다(2026-10-18). R4·R5는 처음에 기록만 하려다 사용자 지적으로 고쳤다. 고친 뒤 siege 60초(`-b -c 50`)가 323,246건, availability 100%였다.
+감싼 실행(`WEBSERV_WRAPPER`)에서는 측정 테스트 N-26(감싸는 도구도 fd가 필요)과 G-22(도구의 메모리가 서버 것으로 잡힘)를 건너뛴다.
 
 ## 9단계 (단계를 시작할 때 채운다)
 

@@ -558,6 +558,8 @@ CgiOutput parseCgiOutput(const std::string& output);   // RESPONSE, LOCAL_REDIRE
   - `fork` 뒤 자식에서는 모든 예외를 잡아 `std::exit(1)`로 끝낸다. 풀려 나가면 자식이 서버 코드로 돌아가 같은 소켓을 처리하는 두 번째 서버가 된다.
   - 소멸자에서는 예외를 내보내지 않는다. `~CgiProcess`는 reaper에 넘기지 못하면 그 자리에서 `SIGKILL` 후 기다린다.
   - 연결별 예외 처리 밖에서 매 바퀴 도는 코드(`ChildReaper::reap`)는 할당하지 않는다.
+  - `accept`가 실패하면 listener를 멈춘다(`wantedEvents` 0). `Server::afterIteration`이 연결이 닫혔거나 1초가 지났을 때 다시 켠다. fd가 다 찬 동안 루프가 쉬지 않고 도는 것을 막는다.
+  - 큰 CGI 출력은 pipe 버퍼에서 응답까지 `swap`으로 옮겨 복사하지 않는다 (`CgiProcess::takeOutput`, `parseCgiOutput`이 인자의 본문을 가져감).
   - 결과와 점검 절차는 [[analysis/test-plan]] 8절.
 
 ## 12. 상수 (초기값, 시험하며 조정)
