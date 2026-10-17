@@ -498,3 +498,7 @@
 ## [2026-10-17] ingest | POSIX rmdir()
 - 생성: raw/posix-rmdir.md, raw/posix-rmdir.source.html, [[sources/posix-rmdir]]
 - 메모: `std::remove`가 디렉토리에 대해 `rmdir()`과 같다는 POSIX 문장을 따라가며 받았다. 빈 디렉토리만 지우고, 비어 있지 않으면 실패하며 바뀌지 않는다. `pandoc/opengroup-body.lua`로 처음 변환한 페이지이고, 원본 HTML 본문 전체를 직접 대조했다.
+
+## [2026-10-17] ingest | POSIX remove()
+- 생성: raw/posix-remove.md, raw/posix-remove.source.html, [[sources/posix-remove]]
+- 메모: 6단계 리뷰 5번(DELETE 검사와 `std::remove` 사이의 틈)을 사용자가 정하기 전에 동작을 확인하려고 받았다. 디렉토리가 아니면 `unlink`, 디렉토리면 `rmdir`과 같다(CX, ISO C 밖의 POSIX 확장). 원본 HTML 본문 전체를 직접 대조했다.
