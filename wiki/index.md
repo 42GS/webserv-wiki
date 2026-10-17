@@ -43,6 +43,7 @@ updated: 2026-10-17
 | [[sources/close-after-413-observed]] | 413 뒤 연결 종료 실측(Ubuntu 22.04·macOS) — 바로 close는 macOS에서 reset·curl 실패, 읽고 버리다 close는 12/12 응답 수신(`shutdown`과 차이 없음) | `raw/close-after-413-observed.md` |
 | [[sources/efence-observed-ubuntu2204]] | Electric Fence 2.2.6 실측(Ubuntu 22.04) — 누수 보고 없음, heap 1바이트 초과가 segfault, `-lefence` 링크는 효과 없고 `LD_PRELOAD`만 동작 | `raw/efence-observed-ubuntu2204.md` |
 | [[sources/ubuntu2204-observed-tools]] | Ubuntu 22.04(평가 PC) 실측 — php 8.1·valgrind 3.18·Python 3.10·siege 4.0.7, `siege -C` 값, php-cgi·valgrind 결과 동일, siege 4.0.7과 master 차이 | `raw/ubuntu2204-observed-tools.md` |
+| [[sources/posix-rmdir]] | POSIX `rmdir()` — 빈 디렉토리만 지움, 비어 있지 않으면 실패하고 그대로 | `raw/posix-rmdir.md` |
 | [[sources/posix-exit]] | POSIX `_Exit()` — 프로세스 종료의 결과(좀비, fd 닫힘, 자식 입양) | `raw/posix-exit.md` |
 | [[sources/nginx-index-module]] | NGINX index 모듈 — `/`로 끝나는 요청, 파일 목록 순서, 내부 리다이렉트 | `raw/nginx-index-module.md` |
 | [[sources/nginx-autoindex-module]] | NGINX autoindex 모듈 — index가 없을 때 리스팅, 기본 off, 형식 | `raw/nginx-autoindex-module.md` |

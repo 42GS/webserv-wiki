@@ -494,3 +494,7 @@
 - 생성: `pandoc/opengroup-body.lua`
 - 갱신: CLAUDE.md "웹 문서 받기"
 - 메모: POSIX `remove()`를 받기 전에 사용자와 방법을 정했다(pandoc 3.10 + 새 필터). 남기는 범위는 예전 `tools/posix_wrap.py`로 받은 POSIX 페이지와 같다(내비게이션 다음 저작권 줄부터 "return to top of page" 직전까지).
+
+## [2026-10-17] ingest | POSIX rmdir()
+- 생성: raw/posix-rmdir.md, raw/posix-rmdir.source.html, [[sources/posix-rmdir]]
+- 메모: `std::remove`가 디렉토리에 대해 `rmdir()`과 같다는 POSIX 문장을 따라가며 받았다. 빈 디렉토리만 지우고, 비어 있지 않으면 실패하며 바뀌지 않는다. `pandoc/opengroup-body.lua`로 처음 변환한 페이지이고, 원본 HTML 본문 전체를 직접 대조했다.
