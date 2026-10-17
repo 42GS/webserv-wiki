@@ -34,7 +34,7 @@ C++98 `<cstdio>`의 `std::remove`로 DELETE를 구현한다 ([[analysis/design-d
 
 - DELETE의 라우터는 일반 파일인지 확인한 뒤에만 `std::remove`를 부른다 ([[analysis/design]] 7절). 그 사이에 다른 프로세스가 같은 경로를 빈 디렉토리로 바꾸면 `remove`는 `rmdir`처럼 그 디렉토리를 지운다 (raw/posix-remove.md:35). 비어 있지 않은 디렉토리는 지워지지 않는다 → [[sources/posix-rmdir]].
 - macOS와 Ubuntu 22.04에서 실제로 이렇게 동작했다: 빈 디렉토리는 지워지고, 비어 있지 않은 디렉토리는 -1로 남았다(실측) → [[sources/fs-observed-remove-name-length]].
-- 이 틈을 막을지는 사용자가 정한다(2026-10-17 보류) → [[analysis/design-decisions]] 15.
+- 사용자는 이 틈을 그대로 두기로 했다 (2026-10-17) → [[analysis/design-decisions]] 15.
 
 ## 관련
 

@@ -450,7 +450,7 @@ public:
     - 일반 파일만 지우고 204를 보낸다 (raw/rfc9110.txt:4235-4236).
     - 없으면 404이다. 디렉토리와 그 밖의 종류, 그리고 파일이 든 디렉토리에 쓰기·검색 권한(`access(W_OK | X_OK)`)이 없는 경우는 403이다. `std::remove`가 실패하면 500이다.
     - 경로는 GET과 같이 정규화(결정 2)를 거치므로 root 밖은 지울 수 없다.
-    - 일반 파일인지 검사한 뒤 `std::remove`를 부르기 전에 다른 프로세스가 그 경로를 빈 디렉토리로 바꾸면 지워진다 (`remove`는 디렉토리면 `rmdir`, raw/posix-remove.md:35). 막을지는 보류 → [[analysis/design-decisions]] 15.
+    - 일반 파일인지 검사한 뒤 `std::remove`를 부르기 전에 다른 프로세스가 그 경로를 빈 디렉토리로 바꾸면 지워진다 (`remove`는 디렉토리면 `rmdir`, raw/posix-remove.md:35). 그대로 두기로 했다 (사용자 결정) → [[analysis/design-decisions]] 15.
 
 ## 8. 응답
 
