@@ -511,3 +511,7 @@
 ## [2026-10-17] query | DELETE 검사와 삭제 사이의 틈
 - 갱신: [[analysis/design-decisions]] 15, [[analysis/design]] 7절, [[sources/posix-remove]]
 - 메모: 리뷰 5번을 사용자가 "그대로 둔다"로 정했다. 다른 프로세스가 빈 디렉토리로 바꾼 경우에만 생기고, 비지 않은 디렉토리는 지워지지 않는다.
+
+## [2026-10-17] query | 6단계 OOP 리뷰
+- 갱신: [[analysis/design]] 1·2절(DeleteHandler), 7절 `RouteResult`, 14절(7단계에서 다시 볼 것)
+- 메모: 사용자 요청으로 OOP 중심 리뷰를 했다. 고친 것 (webserv `3385e7e`): `RouteResult`에 UPLOAD 전용 `uploadStore`를 두어 `fsPath`의 뜻을 하나로 했다. 삭제를 `RequestProcessor`에서 `handler/DeleteHandler`로 옮겨 응답은 모두 handler가 만든다. `planFiles`가 "계속"을 201로 알리던 것을 "실패 없음"으로 바꿨다. `Server::openListeners`의 새 Listener를 `std::auto_ptr`로 지켜 `push_back` 실패 때 새지 않게 했다. `Connection`의 상태 분기 5곳과 `Router::answers`의 시그니처는 7단계 설계 때 다시 본다. 설정 구조체를 다루는 Router 안의 함수는 설계 13절의 의도한 예외라 그대로 둔다. macOS·Ubuntu 단위 95(valgrind 오류 0), 통합 82 통과.

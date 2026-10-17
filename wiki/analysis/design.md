@@ -31,7 +31,7 @@ src/
             MimeTypes  Methods  HeaderNames  Hex  Ascii  FieldSyntax  Multipart
   app/      RequestProcessor  ProcessOutcome
   route/    Router  RouteResult  PathResolver
-  handler/  StaticHandler  AutoindexHandler  UploadHandler  StatusPage
+  handler/  StaticHandler  AutoindexHandler  UploadHandler  DeleteHandler  StatusPage
   cgi/      CgiProcess  CgiContext  CgiEnv  CgiPipe  CgiOutputParser  CgiObserver
 tests/                Python 테스트 스크립트
 ```
@@ -53,7 +53,7 @@ tests/                Python 테스트 스크립트
 | `app` | 완성된 요청 하나를 받아 응답 또는 CGI 실행으로 바꾼다 (Router → Handler 조율) | 소켓 I/O |
 | `route` | 요청 + 설정 → 처리 방식 결정 (경로 정규화, location 선택, 메서드 검사) | 실제 처리 |
 | `fs` | 파일 종류·크기·권한 확인, 작은 일반 파일 읽기, 새 파일 쓰기 (config·route·handler가 같이 씀) | 경로 결정, 응답 |
-| `handler` | 결정된 방식대로 응답을 만든다 (정적 파일, 리스팅, 업로드, 에러 페이지). 삭제는 `std::remove` 한 번이라 `RequestProcessor`가 직접 한다 | 소켓 I/O |
+| `handler` | 결정된 방식대로 응답을 만든다 (정적 파일, 리스팅, 업로드, 삭제, 에러 페이지) | 소켓 I/O |
 | `cgi` | 자식 프로세스 실행, pipe I/O, CGI 출력 → `Response` | 소켓 I/O, 자식 회수 |
 
 의존 방향 (화살표는 "안다"):
@@ -391,7 +391,8 @@ struct RouteResult {
     enum Kind { STATIC_FILE, DIRECTORY_LISTING, REDIRECT, UPLOAD, DELETE, CGI, ERROR };
     Kind                  kind;
     const LocationConfig* location;
-    std::string           fsPath;      // root 매핑 결과
+    std::string           fsPath;      // root 매핑 결과 (STATIC_FILE, DIRECTORY_LISTING, DELETE)
+    std::string           uploadStore; // UPLOAD: 저장할 디렉토리
     std::string           scriptPath;  // CGI
     std::string           pathInfo;    // CGI
     int                   status;      // REDIRECT, ERROR
@@ -579,4 +580,7 @@ private:
 
 ## 14. 정해야 할 것
 
-- 없음. 상수 값은 평가를 통과하는 범위에서 시험하며 조정한다 (사용자 결정, 2026-10-16).
+- 상수 값은 평가를 통과하는 범위에서 시험하며 조정한다 (사용자 결정, 2026-10-16).
+- 7단계(CGI) 설계 때 다시 볼 것 (6단계 OOP 리뷰, 2026-10-17 사용자 동의):
+  - `Connection`은 상태를 보고 갈라지는 메서드가 5개다(`wantedEvents`, `onEvent`, `checkTimeout`, `hasTimedOut`, `receiveOnce`). CGI 출력 대기 상태가 생기면 모두 고쳐야 한다. State 패턴으로 바꿀지 정한다.
+  - Router의 `answers(location, method)`는 "POST는 `upload_store`가 있어야 답한다"를 안다. CGI 확장자면 POST를 받게 되면 경로도 필요해 시그니처를 바꾼다.
