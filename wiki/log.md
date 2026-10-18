@@ -543,3 +543,6 @@
 
 ## [2026-10-18] query | 가독성 정리 (6~8단계 코드)
 - 메모: 사용자 요청으로 6~8단계에서 늘어난 코드를 정리했다 (webserv 커밋 메시지 참조). Router의 `Allow` 목록 반복을 하나로 합치고 스크립트 찾기 반복문을 조각 경계 순회로 다시 썼다. `routePath`의 CGI·정적 파일 처리를 도우미로 뺐다. RequestProcessor의 상태 페이지 반복을 `statusOutcome`으로, `startCgi`를 검사·준비·시작으로 나눴다. 업로드 쓰기의 뒤집힌 흐름을 바로잡고, CGI 시작의 pipe 처리를 나눴다. 동작은 바꾸지 않았다(단위 102, Ubuntu 통합 115 통과). 위키의 설계 내용은 바뀌지 않아 log만 남긴다.
+
+## [2026-10-18] query | 빈 줄로 코드 덩어리 나누기
+- 메모: 사용자 요청으로 `webserv/src` 전체에서 긴 함수 안의 검사·준비·본 작업·결과 사이에 빈 줄을 넣었다 (webserv 커밋 ceb26f0, 34개 파일, 빈 줄 161개). 기준은 Google C++ Style Guide의 Vertical Whitespace다: 빈 줄은 아껴 쓰고 블록 처음·끝에는 넣지 않으며, 글의 문단처럼 가까운 덩어리를 나눌 때 쓴다 (raw/google-cpp-style-guide.md:3494, raw/google-cpp-style-guide.md:3496). 짧은 함수와 연달아 오는 검사문은 그대로 두었다(**판단**). RequestProcessor의 중복 주석 2줄을 지웠다. 동작 변화 없음(단위 102, Ubuntu 통합 115 통과·2 건너뜀). 위키 설계 내용은 바뀌지 않아 log만 남긴다.
