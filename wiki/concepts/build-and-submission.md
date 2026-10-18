@@ -36,7 +36,7 @@ updated: 2026-10-18
 3. Instructions — 컴파일·설치·실행 (raw/subject.md:202)
 4. Resources — 참고 자료와 **AI를 어떤 작업·어떤 부분에 썼는지** (raw/subject.md:203)
 
-- 현재 README (webserv `83f413c`): 세 절과 시연 명령, 참고 자료, AI 사용 문단이 있다. AI 사용 문단은 초안이라 사용자가 확인한다 → [[analysis/test-plan]] E-09.
+- 현재 README (webserv `83f413c`): 세 절과 시연 명령, 참고 자료, AI 사용 문단이 있다. AI 사용 문단은 사용자가 확인했다 (2026-10-18) → [[analysis/test-plan]] E-09.
 
 ## AI 사용 규칙 (subject III)
 

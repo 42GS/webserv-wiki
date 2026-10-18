@@ -309,8 +309,8 @@ R1~R3은 실패를 만들 방법이 없어 코드 읽기로 확인했다(2026-10
 | E-06 | CGI: GET, POST, 상대 경로, 메타변수, 에러 스크립트 502, 무한 루프 504 | raw/evaluation-sheet-en.md:88-93 | I | 각 결과 | `test_e06_cgi`, `test_e06_infinite_loop` (느린 테스트) | 있음 |
 | E-07 | 쿠키·세션 (보너스): 식별자만 쿠키에, 모르는 식별자는 새로 발급, 로그아웃은 과거 날짜 `Expires` | raw/evaluation-sheet-en.md:126, raw/subject.md:215, [[concepts/bonus]] 세션 | I | 방문 수 1 → 2, 위조한 식별자는 새 세션, 로그아웃 쿠키 만료 | `test_e07_cookie_session` | 있음. 식별자는 Python `secrets`로 만든다. 스크립트 언어의 난수 기능이 허용 함수 목록의 대상인지는 결정 8의 **미확인** 그대로 |
 | E-08 | 여러 CGI (보너스): Python과 PHP | raw/subject.md:216, raw/evaluation-sheet-en.md:130 | I | PHP 페이지 200 | `test_e08_php` (`/usr/bin/php-cgi`가 있을 때) | 있음 |
-| E-09 | README: 이탤릭 첫 줄, Description·Instructions·Resources, AI를 어떤 작업·부분에 썼는지 | raw/evaluation-sheet-en.md:35-44, raw/subject.md:196-207 | I, M | 형식은 B-06. 내용은 사람이 읽는다 | `test_readme.py` (형식). README의 curl 명령은 2026-10-18 macOS에서 실행해 적힌 결과를 확인(`loop.py`, PHP, siege 제외) | 형식 있음. "Use of AI" 내용은 사용자 확인 필요 |
-| R-18, F-14 | 브라우저로 정적 사이트를 끝까지 보고, 폼으로 업로드한 파일을 다시 받는다. 네트워크 탭의 요청·응답 헤더 | raw/evaluation-sheet-en.md:97-103, raw/evaluation-sheet-en.md:82 | M | 페이지, 404, 목록, 리다이렉트가 보이고 업로드한 파일이 같다 | 없음 (브라우저 필요) | 나중: 사용자가 브라우저로 확인 |
+| E-09 | README: 이탤릭 첫 줄, Description·Instructions·Resources, AI를 어떤 작업·부분에 썼는지 | raw/evaluation-sheet-en.md:35-44, raw/subject.md:196-207 | I, M | 형식은 B-06. 내용은 사람이 읽는다 | `test_readme.py` (형식). README의 curl 명령은 2026-10-18 macOS에서 실행해 적힌 결과를 확인(`loop.py`, PHP, siege 제외) | 형식 있음. 내용은 사용자가 확인 (2026-10-18) |
+| R-18, F-14 | 브라우저로 정적 사이트를 끝까지 보고, 폼으로 업로드한 파일을 다시 받는다. 네트워크 탭의 요청·응답 헤더 | raw/evaluation-sheet-en.md:97-103, raw/evaluation-sheet-en.md:82 | M | 페이지, 404, 목록, 리다이렉트가 보이고 업로드한 파일이 같다 | 사용자가 브라우저로 확인 (2026-10-18) | 확인 |
 
 - 시연 자료의 판단: 사이트 루트는 `limit_except` 없이 읽기 전용(결정 16)이고, 업로드한 `.py`는 `cgi`가 없는 `/upload/`에 저장되어 실행되지 않는다 ([[analysis/design-decisions]] 7). 본문 크기 시험은 평가표 명령이 `plain/text` 본문이라 업로드(415)가 아닌 본문을 돌려주는 CGI(`/limit/echo.py`, 상한 64바이트)로 보인다.
 - `127.0.0.2`는 Ubuntu 22.04 컨테이너에서 바로 bind되고 macOS에서는 `Can't assign requested address`였다(2026-10-18 실행). 평가는 Ubuntu에서 한다.
