@@ -2,7 +2,7 @@
 title: CGI
 type: concept
 sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc3875.txt, raw/rfc9112.txt, raw/rfc9110.txt, raw/posix-poll.md, raw/posix-signal-h.md, raw/posix-waitpid.md, raw/posix-bind.md, raw/posix-exit.md, raw/php-cgi-force-redirect.md, raw/php-ini-core.md, raw/rfc6265.txt, raw/posix-fcntl.md, raw/pep-0594.md, raw/os-observed-pipe-poll.md, raw/php-src-cgi_main.c, raw/php-cgi-observed-env.md, raw/ubuntu2204-observed-tools.md, raw/design-checks-observed.md]
-updated: 2026-10-18
+updated: 2026-10-22
 ---
 
 # CGI
@@ -118,6 +118,7 @@ RFC 3875 목록에 없는 비표준 변수다. 이 과제에서 CGI로 `php-cgi`
 ### Status
 
 - 형식: `Status: 3자리코드 SP reason-phrase` (raw/rfc3875.txt:1447-1450).
+  - 구현은 값의 앞뒤 공백을 지운 뒤 보므로 `Status: 404`처럼 SP와 reason-phrase가 없는 값도 받는다 (**판단**, 2026-10-22 주석 점검에서 기록). reason-phrase는 비어도 되지만(`*TEXT`) 문법상 SP는 있어야 한다.
 - 없으면 200 (raw/rfc3875.txt:1295-1296, raw/rfc3875.txt:1452-1453).
 - `Status`는 스크립트의 처리 결과를 나타내는 3자리 코드다 (raw/rfc3875.txt:1443-1445). 서버는 이 값을 HTTP 상태줄의 코드로 쓴다 (**판단**). 응답이 응답 프로토콜 버전에 맞도록 출력을 고쳐야 한다 (MUST, raw/rfc3875.txt:1297-1299).
 

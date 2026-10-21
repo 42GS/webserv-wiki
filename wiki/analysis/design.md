@@ -2,7 +2,7 @@
 title: webserv 설계 (클래스·인터페이스)
 type: analysis
 sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/nginx-core-module.md, raw/design-checks-observed.md, raw/cpp-core-guidelines.md, raw/google-cpp-style-guide.md, raw/rfc9110.txt, raw/rfc9112.txt, raw/siegerc.in, raw/rfc2046.txt, raw/rfc7578.txt, raw/posix-remove.md, raw/fs-observed-remove-name-length.md, raw/rfc3875.txt]
-updated: 2026-10-18
+updated: 2026-10-22
 ---
 
 # webserv 설계 (클래스·인터페이스)
@@ -411,7 +411,7 @@ public:
 ```
 
 - `RequestProcessor::process`: `Router::route` → `RouteResult::Kind`에 따라 Handler 하나를 부른다. CGI면 `CgiProcess`를 만들어 `start`한 뒤 넘긴다. HEAD는 결과 `Response`의 본문 전송만 끈다 (결정 5).
-- `Router::route` 순서: 경로 정규화(`PathResolver`) → location 선택 → 파일 경로 매핑(`root`면 URI 전체를 붙이고, `alias`면 location prefix를 바꿔 끼운다) → `return` → `limit_except` 검사 → CGI 확장자 → 업로드 POST → DELETE → 파일·디렉토리 → [[concepts/security]] "경로 정규화 절차", [[concepts/configuration-file]] "디렉토리 요청 처리 순서".
+- `Router::route` 순서: 경로 정규화(`PathResolver`) → location 선택 → 파일 경로 매핑(`root`면 URI 전체를 붙이고, `alias`면 location prefix를 바꿔 끼운다) → `return` → CGI 확장자 → `limit_except` 검사 → 업로드 POST → DELETE → 파일·디렉토리 → [[concepts/security]] "경로 정규화 절차", [[concepts/configuration-file]] "디렉토리 요청 처리 순서". 스크립트를 `limit_except` 검사보다 먼저 찾는 것은 두 경우의 메서드 기준이 달라서다: 스크립트는 `limit_except`가 허용한 메서드면 받고(아래 9절 "메서드"), 다른 경로는 그 location이 답할 수 있어야 한다(`answers()`, 아래 "메서드"). 2026-10-22 주석 점검에서 7단계 구현 뒤 이 줄의 순서가 코드와 달라진 것을 찾아 고쳤다.
 - index 파일을 찾으면 그 경로로 `route`를 다시 부른다(CGI 확장자면 CGI가 된다). 다시 부르는 횟수는 `kMaxInternalRedirects`까지, 넘으면 500 (결정 6).
 - 업로드는 본문 전체가 메모리에 모인 뒤(`client_max_body_size`로 상한, `Content-Length`를 알면 그만큼 `reserve`) 파일 하나를 `open` → `write`(다 쓸 때까지 반복) → `close`로 한 번에 저장한다. 일반 파일이라 `poll()`이 필요 없다 (raw/subject.md:134). 구현이 단순한 쪽으로 정했다 (사용자 결정, 2026-10-16).
 - Handler는 상태가 없는 함수다: `serveStaticFile(const RouteResult&, Response&)`, `storeUpload(const RouteResult&, const Request&)` 등. 인자는 2개 이하.

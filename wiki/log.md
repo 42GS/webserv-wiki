@@ -546,3 +546,7 @@
 
 ## [2026-10-18] query | 빈 줄로 코드 덩어리 나누기
 - 메모: 사용자 요청으로 `webserv/src` 전체에서 긴 함수 안의 검사·준비·본 작업·결과 사이에 빈 줄을 넣었다 (webserv 커밋 ceb26f0, 34개 파일, 빈 줄 161개). 기준은 Google C++ Style Guide의 Vertical Whitespace다: 빈 줄은 아껴 쓰고 블록 처음·끝에는 넣지 않으며, 글의 문단처럼 가까운 덩어리를 나눌 때 쓴다 (raw/google-cpp-style-guide.md:3494, raw/google-cpp-style-guide.md:3496). 짧은 함수와 연달아 오는 검사문은 그대로 두었다(**판단**). RequestProcessor의 중복 주석 2줄을 지웠다. 동작 변화 없음(단위 102, Ubuntu 통합 115 통과·2 건너뜀). 위키 설계 내용은 바뀌지 않아 log만 남긴다.
+
+## [2026-10-22] query | 코드 주석 점검 (src·include)
+- 갱신: [[analysis/design]] 7절 `Router::route` 순서(CGI 확장자를 `limit_except` 검사 앞으로, 7단계 구현과 맞춤), [[concepts/cgi]] 3절 Status(구현이 SP 없는 `Status: 404`도 받는다는 **판단** 기록).
+- 메모: 사용자 요청으로 `webserv/include`·`webserv/src` 46개 파일의 주석을 코드와 원문에 대조했다 (webserv 커밋 811d14a). 기준은 [[analysis/design]] 1절 주석 규칙과 Google C++ Style Guide Comments 절(raw/google-cpp-style-guide.md:2553-2760). 주석 속 RFC 3875·7578·2046·3986·9110·9112·1945 절, subject 줄, 설계 결정 번호, 위키 절 인용을 원문에서 확인했다. 고친 것: 줄바꿈이 깨진 한국어 설명 18곳과 한 줄 주석 1곳, 사실과 다른 주석(services "참조로 보관", coversPath 조건, 위치가 틀린 주석, RFC 9112 11.1·RFC 9110 6.6.1·RFC 3875 4.1.6을 원문보다 세게 쓴 곳, 0.0.0.0 겹침의 근거, `kMaxCgiOutputBytes`의 설계 절 번호, pipe/fcntl/fork 실패 목록), 번역 누락, 인용 표기 통일, .cpp에서 헤더 문서를 되풀이한 곳. 동작 변화 없음. 코드 쪽 문제 두 건(STATIC_FILE·CGI에서 읽지 않는 `urlPath`를 채움, CGI 클라이언트 리다이렉트+본문 경로에서 본문이 복사됨)은 사용자에게 물었다. `tests/`의 주석은 아직 점검하지 않았다. Signals.cpp의 `std::signal()` 실패 조건은 **미확인**(POSIX signal() 페이지가 raw에 없음).
