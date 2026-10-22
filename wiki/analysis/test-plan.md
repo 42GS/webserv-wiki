@@ -2,7 +2,7 @@
 title: 테스트 계획
 type: analysis
 sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/nginx-core-module.md, raw/macos-observed-sigpipe-leaks.md, raw/posix-poll.md, raw/design-checks-observed.md, raw/posix-recv.md, raw/rfc9112.txt, raw/rfc9110.txt, raw/rfc6585.txt, raw/rfc1945.txt, raw/rfc3986.txt, raw/rfc2046.txt, raw/rfc7578.txt, raw/rfc3875.txt, raw/rfc6265.txt, raw/posix-exit.md, raw/posix-fcntl.md, raw/os-observed-pipe-poll.md, raw/efence-observed-ubuntu2204.md, raw/ubuntu2204-observed-nofile.md]
-updated: 2026-10-18
+updated: 2026-10-22
 ---
 
 # 테스트 계획
@@ -45,7 +45,7 @@ updated: 2026-10-18
 | B-03 | `c++ -Wall -Wextra -Werror`로 컴파일되고, `-std=c++98`을 더해도 컴파일된다 | raw/subject.md:49-50 | I | macOS·Ubuntu 모두 `make re` 성공 | `test_build.py` `test_b01_b03_rules_build_and_clean`이 컴파일 명령의 플래그를 확인 (느린 테스트) | 있음. Ubuntu 빌드는 컨테이너에서 돌린다 |
 | B-04 | C++ 버전이 있으면 C 헤더 대신 쓴다. 외부 라이브러리·Boost 금지 | raw/subject.md:51-52 | R | `.h` 헤더는 C++ 버전이 없는 POSIX 헤더뿐. 링크에 `-l` 없음 | 코드 읽기 2026-10-16: `.h`는 `arpa/inet.h`, `fcntl.h`, `netinet/in.h`, `poll.h`, `sys/socket.h`, `sys/stat.h`, `unistd.h`뿐 | 확인. 단계마다 다시 본다 |
 | B-08 | 허용 함수 목록에 없는 C 함수(`memset`·`strchr`·`strlen`·`<cctype>` 등)를 쓰지 않는다. 시스템 호출은 목록 안의 것만. 목록이 표준 라이브러리에도 적용되는지는 **미확인**이라 엄격한 쪽을 따른다 | raw/subject.md:111-113, raw/subject.md:51, [[analysis/subject-vs-evaluation]] 1.4 | R, U | 호출하는 외부 함수 목록이 허용 목록 안 | 코드 읽기 2026-10-17: 시스템 호출은 목록 안의 것만. C 함수는 `strerror`(목록 안)만 남는다. 문자 판별·숫자 해석은 `http/Ascii`가 C++ 표준 라이브러리(`find_first_not_of`, `<locale>`의 `std::tolower`)와 범위 비교로 한다. 구조체 초기화는 값 초기화. `ascii_test.cpp` 3개 | 있음 |
-| B-05 | 다른 웹 서버를 `execve`하지 않는다 | raw/subject.md:128 | R | `execve`는 CGI 실행에만 | 아직 `execve` 없음 | 나중 (7단계) |
+| B-05 | 다른 웹 서버를 `execve`하지 않는다 | raw/subject.md:128 | R | `execve`는 CGI 실행에만 | 코드 읽기 2026-10-22: `execve`는 `src/cgi/CgiProcess.cpp:226` 한 곳이고, CGI 자식에서 `cgi` 지시자의 프로그램을 실행한다 | 확인 |
 | B-06 | README: 저장소 루트, 영어, 첫 줄 이탤릭 정해진 문구, Description·Instructions·Resources(AI 사용 포함). 하나라도 없으면 0점 | raw/subject.md:196-207, raw/evaluation-sheet-en.md:35-44 | I, M | 형식은 테스트, 내용은 9단계에 읽어서 확인 | `test_readme.py` 2개 (첫 줄 형식, 세 절) | 있음(형식). 내용은 9단계. 첫 줄 login은 `yoshin, jyoo` (사용자 확인, 2026-10-16) |
 | B-07 | 제출 파일 종류: `Makefile`, `*.{h, hpp}`, `*.cpp`, `*.tpp`, `*.ipp`, 설정 파일 | raw/subject.md:105 | M | 제출할 파일을 고른다 | — | 나중. 제출 때 파일을 따로 추린다(사용자, 2026-10-16). 그 전까지 저장소에 테스트·도구 파일을 둔다 |
 
@@ -145,7 +145,7 @@ updated: 2026-10-18
 | P-18 | CL만큼 오기 전에 끊기거나 타임아웃이면 불완전한 요청. 머리·본문 수신 타임아웃이면 408 후 닫기(MAY). 첫 바이트 전이면 그냥 닫기(5단계부터 15초, K-08) | raw/rfc9112.txt:973-978, raw/rfc9112.txt:1253-1255, raw/rfc9110.txt:7641-7643, 설계 5절 | I | 408 후 닫힘 (느린 테스트) | `test_requests.py` `test_p18_*` 2개 (본문 도중 408, 아무것도 안 보낸 연결은 응답 없이 닫힘), `test_connections.py` `test_n08_unfinished_head_gets_408` (모두 느린 테스트) | 있음 |
 | P-19 | 오류 응답의 상태줄 `HTTP-version SP status-code SP reason-phrase`, 문법 오류 뒤에는 연결을 닫는다(SHOULD) | raw/rfc9112.txt:652, raw/rfc9112.txt:690-693, raw/rfc9112.txt:319-324 | I | 상태줄과 `Connection: close`, 그 뒤 닫힘 | `test_requests.py` `test_p19_error_response_format_and_close` | 있음. 오류 응답 본문은 임시(코드와 reason phrase). 에러 페이지는 4단계 |
 | P-21 | 파서 비용이 입력 길이에 비례한다. 작은 chunk가 많아도 recv 1번 처리가 루프를 오래 붙잡지 않는다 | raw/subject.md:148 (항상 가용). 파서 비용과 잇는 것은 **판단** | M | 1바이트 chunk 6MB 처리 CPU 시간 | 측정 (scratch 벤치마크, 최적화 없는 빌드): 1바이트 chunk 6MB가 1.6초 → 0.2초 (2026-10-16) | 확인. 테스트로 남기지 않음(시간 측정은 기계마다 다르다) |
-| P-20 | telnet·curl로 시연할 수 있다 | raw/evaluation-sheet-en.md:77 | M | 시연 절차 | 없음 | 나중 (9단계) |
+| P-20 | telnet·curl로 시연할 수 있다 | raw/evaluation-sheet-en.md:77 | M | 시연 절차 | README의 curl 명령 (E-09, 2026-10-18 실행) | curl은 확인. telnet 시연 자료는 없음 |
 
 ## 4. 라우팅, 정적 파일, 응답
 
@@ -170,7 +170,7 @@ updated: 2026-10-18
 | R-15 | 2xx·3xx·4xx 응답에 `Date` (MUST, 시계가 있으므로). 형식은 IMF-fixdate | raw/rfc9110.txt:2313-2317, raw/rfc9110.txt:1855-1858, raw/rfc9110.txt:1873-1895, [[analysis/design-decisions]] 10 | U, I | `Sun, 06 Nov 1994 08:49:37 GMT` 형식 | `http_date_test.cpp` `r15_formatsImfFixdate`, `test_static.py` `test_r15_responses_carry_date` | 있음 |
 | R-16 | 큰 파일은 나눠 읽어 보낸다. 루프를 멈추지 않는다 | raw/subject.md:134, raw/evaluation-sheet-en.md:59, 설계 8절 | I | 10MB 파일이 그대로 도착 | `response_stream_test.cpp` `r16_streamsLargeFileInPieces`, `test_static.py` `test_r16_large_file_arrives_intact` (10MB) | 있음 |
 | R-17 | 여러 포트에서 서로 다른 사이트 | raw/subject.md:149, raw/evaluation-sheet-en.md:107 | I | 포트마다 다른 root의 내용 | `test_static.py` `test_r17_ports_serve_different_sites` | 있음 |
-| R-18 | 정적 웹사이트를 브라우저로 끝까지 본다 | raw/subject.md:145, raw/evaluation-sheet-en.md:99 | M | 시연용 `www/` | 없음 | 나중 (9단계 시연 자료와 함께) |
+| R-18 | 정적 웹사이트를 브라우저로 끝까지 본다 | raw/subject.md:145, raw/evaluation-sheet-en.md:99 | M | 시연용 `www/` | 사용자가 브라우저로 확인 (2026-10-18, 9단계 표 R-18·F-14 행) | 확인 |
 | R-20 | alias를 쓰는 location은 떼고 남은 경로가 비었거나 `/`로 시작할 때만 그 location의 파일로 본다. 아니면 404 ([[analysis/design-decisions]] 14) | raw/rfc9110.txt:8560-8565, [[concepts/security]] 1절 | U, I | `location /kapouet { alias www/; }`에서 `/kapouet../secret/s.txt`가 404 | `router_test.cpp` `r20_aliasCoversOnlyWholeSegments`, `test_static.py` `test_r20_alias_cannot_reach_outside` | 있음. 고치기 전에는 alias 밖 파일이 200 |
 | R-21 | HEAD 요청에는 오류 응답(파서 오류, 408)에도 본문을 보내지 않는다 (MUST NOT) | raw/rfc9110.txt:3987-3988 | I | HEAD에 413: 헤더만 오고 본문 0바이트 | `test_requests.py` `test_r21_head_error_has_no_body` | 있음 |
 | R-19 | 4단계에서 POST·DELETE는 정적 리소스에 대해 405 (업로드·삭제는 6단계) | 설계 7절 순서 | I | 405 + `Allow` | `router_test.cpp` `r05_r19_*`, `test_static.py` `test_r05_r19_*`, `test_requests.py` P-16·P-17 (POST가 405) | 있음. 6단계부터는 `upload_store`가 없는 location의 POST와 `limit_except`에 없는 DELETE가 405다 (F-09, F-12, D-04) |
@@ -222,7 +222,7 @@ updated: 2026-10-18
 | D-06 | 서버가 바꿀 수 없는 디렉토리 안의 파일 DELETE는 403 | raw/rfc9110.txt:7571-7572 | I | 403, 파일 그대로 (컨테이너는 root라 macOS에서만 의미 있음) | `test_upload.py` `test_d06_*` (root면 건너뜀) | 있음 |
 | F-15 | 한 요청의 파일은 5개까지, 넘으면 413이고 아무것도 저장하지 않는다 | [[analysis/design-decisions]] 18, raw/rfc9110.txt:7710-7712 | I | 6개는 413, 5개는 201 | `test_upload.py` `test_f15_*` | 있음 |
 | F-16 | multipart 파싱은 본문 크기에 비례하는 시간 안에 끝난다 (루프를 멈추지 않음) | raw/subject.md:139, 6단계 코드 리뷰 | U, I | 빈 줄 없는 part 약 1만 개인 1MB 본문이 2초 안에 400. 헤더가 구분자 CRLF에서 끝나는 part도 받는다 | `multipart_test.cpp` `f04_headersEndingAtTheDelimiter`, `test_upload.py` `test_f16_*` | 있음. 고치기 전 8.24초 |
-| F-14 | 브라우저 폼으로 올린 파일을 다시 받는다 | raw/evaluation-sheet-en.md:82 | M | 같은 파일 | 없음 | 나중 (9단계 시연 자료와 함께) |
+| F-14 | 브라우저 폼으로 올린 파일을 다시 받는다 | raw/evaluation-sheet-en.md:82 | M | 같은 파일 | 사용자가 브라우저로 확인 (2026-10-18, 9단계 표 R-18·F-14 행) | 확인 |
 
 일부러 틀리게 바꾼 확인 (2026-10-17): 통합 테스트 20개 변이(리뷰 뒤 추가한 빈 줄 찾기 범위·파일 수 상한·이름 길이 상한 포함, 쓰기 실패 무시, CRLF를 내용에 포함, 미디어 타입 검사 제거, 경로 버리기 제거, 기존 이름·겹치는 이름 검사 제거, 저장 위치 없는 POST 허용, 기본 허용에 POST·DELETE 추가, `std::remove` 생략, 디렉토리 삭제 허용, 권한 검사 제거, `Location` 매핑 검사 제거, 빈 `filename` 저장, 파일 없음 허용, 없는 파일 404 제거, DELETE 분기 제거, 409 본문의 이름 제거)와 단위 테스트 10개 변이(quoted-pair 처리, 같은 parameter 검사, padding 건너뛰기, preamble 찾기, boundary 길이·끝 공백, 마지막 구분자, 값 뒤 글자, disposition 두 번, `limit_except`가 기본값을 비우지 않음)가 모두 해당 테스트를 실패시켰다.
 
