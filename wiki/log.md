@@ -554,3 +554,7 @@
 ## [2026-10-22] query | 테스트 주석 점검 (tests/)
 - 갱신: [[analysis/test-plan]] B-05(`execve`는 `CgiProcess.cpp:226` 한 곳, 확인), P-20(README curl 명령으로 확인, telnet 시연 자료 없음), R-18·F-14(9단계 표의 브라우저 확인과 맞춤). 모두 7·9단계 뒤 갱신이 빠져 "나중"으로 남아 있던 행이다.
 - 메모: 사용자 요청으로 `webserv/tests`의 단위(C++)·통합(Python) 테스트 32개 파일의 주석을 코드·위키·원문과 대조했다 (webserv 커밋 82acd80). 고친 것: 상수를 TestConstants.hpp로 옮긴 뒤 남은 주석 4곳, 4·6·7단계 전에 쓴 채 남은 주석(POST 405의 이유, SIGPIPE 테스트 설명, router 테스트 디렉토리 목록), 큰 응답 테스트가 실제로는 SIGPIPE까지 가지 않는다는 점(N-07 기록과 맞춤), 다른 상수 위에 있던 BINARY 주석, 모듈 설명의 N-26 누락. `test_connections.py`의 `unittest.main()`이 `DescriptorLimitTest` 정의보다 앞에 있어 파일을 직접 실행하면 그 테스트가 빠지던 것을 옮겼다. 동작 변화 없음(단위 102, Ubuntu 통합 115 통과). 테스트 코드 주석은 영어 한 줄 주석이라 [[analysis/design]] 1절의 Doxygen·한국어 병기 형식과 다르다. 이 형식을 테스트에도 적용할지 사용자에게 물었다.
+
+## [2026-10-23] query | urlPath 정리, CGI 리다이렉트 복사, 테스트 주석 형식
+- 갱신: [[analysis/design]] 1절 주석 규칙(테스트 코드에도 같은 형식, Python은 docstring과 `#` 주석에 한국어 병기, `test_*` 메서드에는 docstring 없음), [[analysis/test-plan]] G-22(리다이렉트 경로 측정 추가)·8절 R4(리다이렉트 경로 복사 수정과 측정 결과).
+- 메모: 2026-10-22 주석 점검에서 물었던 세 가지를 사용자가 정했다. (1) STATIC_FILE·CGI 결정에서 읽지 않는 `urlPath` 대입과 `staticFile()`의 `path` 매개변수를 지웠다 (webserv `a311675`). (2) CGI 클라이언트 리다이렉트+문서 경로의 본문 복사를 없앴다 (webserv `8f8dc8a`). 고치기 전에 "이 경로는 일반 경로보다 본문이 1~2벌 더 메모리에 올라간다"고 **판단**해 보고했는데, Ubuntu에서 재 보니 최대 메모리 증가는 고치기 전·후 모두 출력의 2.0배로 문서 경로와 같았다. 그 판단은 틀렸고, 복사는 최대 메모리가 아니라 시간만 늘렸다. (3) `webserv/tests` 32개 파일 주석을 src와 같은 Doxygen·한국어 병기 형식으로 바꿨다 (webserv `60401ad`). 단위 102 통과(macOS, Ubuntu), Ubuntu 통합 116개 통과(`WEBSERV_SLOW_TESTS=1`, root라 2개 건너뜀).
