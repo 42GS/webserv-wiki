@@ -1,8 +1,8 @@
 ---
 title: 연결 관리 — keep-alive, 종료, 타임아웃
 type: concept
-sources: [raw/rfc9112.txt, raw/subject.md, raw/evaluation-sheet-en.md, raw/nginx-core-module.md, raw/siegerc.in, raw/rfc9110.txt, raw/rfc1945.txt, raw/posix-recv.md, raw/nginx-src-ngx_http_request.c, raw/nginx-src-ngx_socket.h, raw/close-after-413-observed.md]
-updated: 2026-10-17
+sources: [raw/rfc9112.txt, raw/subject.md, raw/evaluation-sheet-en.md, raw/nginx-core-module.md, raw/siegerc.in, raw/rfc9110.txt, raw/rfc1945.txt, raw/posix-recv.md, raw/nginx-src-ngx_http_request.c, raw/nginx-src-ngx_socket.h, raw/close-after-413-observed.md, raw/ubuntu2204-observed-tools.md]
+updated: 2026-10-25
 ---
 
 # 연결 관리 — keep-alive, 종료, 타임아웃
@@ -24,7 +24,7 @@ HTTP/1.1은 기본이 persistent connection이다. 구현은 이를 지원하는
 - 연결을 유지하려면 모든 메시지가 자체 길이 정보(`Content-Length` 또는 chunked)를 가져야 한다 (raw/rfc9112.txt:1372-1374). 응답에 길이를 넣지 않으면 연결 종료로 끝을 알려야 하므로 유지할 수 없다 (raw/rfc9112.txt:983-986).
 
 > [!note] siege와 keep-alive
-> 평가는 `siege -b`로 availability 99.5% 초과, 무한 실행을 요구한다 (raw/evaluation-sheet-en.md:114, raw/evaluation-sheet-en.md:117). siege 기본 설정 템플릿은 `connection = close`다 (raw/siegerc.in:268). 기본 설정이라면 **요청마다 새 연결**이 생기므로, 연결 재사용보다 `accept`와 응답 후 종료 처리가 중요하다 (**판단**). 설치된 설정 파일이 템플릿과 같은지는 **미확인**이다. 어느 쪽이든 위 판단 규칙을 지키면 된다. Availability가 무엇을 재는지는 [[concepts/testing]] siege 절.
+> 평가는 `siege -b`로 availability 99.5% 초과, 무한 실행을 요구한다 (raw/evaluation-sheet-en.md:114, raw/evaluation-sheet-en.md:117). siege 기본 설정 템플릿은 `connection = close`다 (raw/siegerc.in:268). 기본 설정이라면 **요청마다 새 연결**이 생기므로, 연결 재사용보다 `accept`와 응답 후 종료 처리가 중요하다 (**판단**). Ubuntu 22.04 apt 패키지(siege 4.0.7)의 설정도 `connection: close`였다 (raw/ubuntu2204-observed-tools.md:165) → [[sources/ubuntu2204-observed-tools]]. 평가 PC의 설정은 **미확인**이다. 어느 쪽이든 위 판단 규칙을 지키면 된다. Availability가 무엇을 재는지는 [[concepts/testing]] siege 절.
 
 ## 요청 본문을 다 읽지 않고 응답할 때 (413 등)
 
@@ -69,7 +69,7 @@ HTTP/1.1은 기본이 persistent connection이다. 구현은 이를 지원하는
 > 본문을 끝까지 보내는 클라이언트에 대해서는 서버가 10MB를 모두 읽어 버렸다 (raw/close-after-413-observed.md:240-244). 버리는 단계에는 무입력 시간과 총 시간의 상한을 둔다 (**판단**, 시험 서버는 1초·5초).
 >
 > NGINX의 `lingering_close`가 이 방식이다. 연결을 완전히 닫기 전에 클라이언트가 더 보내는 데이터를 기다려 처리한다. 기본값 `on`은 휴리스틱으로 클라이언트가 더 보낼 것 같다고 볼 때만 기다리고, `always`는 항상 기다린다 (raw/nginx-core-module.md:888-890). 기다리는 동안 온 데이터는 읽고 버린다 (raw/nginx-core-module.md:908). 데이터가 `lingering_timeout`(기본 5s) 동안 안 오면 닫고, 오면 읽어 버린 뒤 다시 기다린다. 이 반복은 `lingering_time`(기본 30s)을 넘지 않는다 (raw/nginx-core-module.md:903, raw/nginx-core-module.md:917, raw/nginx-core-module.md:922). 기다리지 않고 바로 닫는 `off`는 "프로토콜을 깨므로 보통은 쓰지 말라"고 한다 (raw/nginx-core-module.md:892).
-> NGINX 1.30.6 소스를 보면 lingering close에 들어갈 때 `shutdown(fd, SHUT_WR)`로 쓰기 쪽을 먼저 닫는다 (raw/nginx-src-ngx_http_request.c:3693-3698, raw/nginx-src-ngx_socket.h:15, raw/nginx-src-ngx_socket.h:66). 즉 RFC 9112의 half-close 방식 그대로다 → [[sources/nginx-src-lingering-close]]. 과제에서는 `shutdown` 없이 "읽고 버리다가 `close()`"까지만 따라 할 수 있고, FIN은 `close()` 때 나간다 (**판단**).
+> NGINX 1.30.6 소스를 보면 lingering close에 들어갈 때 `shutdown(fd, SHUT_WR)`로 쓰기 쪽을 먼저 닫는다 (raw/nginx-src-ngx_http_request.c:3693-3697, raw/nginx-src-ngx_socket.h:15, raw/nginx-src-ngx_socket.h:66). 즉 RFC 9112의 half-close 방식 그대로다 → [[sources/nginx-src-lingering-close]]. 과제에서는 `shutdown` 없이 "읽고 버리다가 `close()`"까지만 따라 할 수 있고, FIN은 `close()` 때 나간다 (**판단**).
 > 이 lingering 단계도 non-blocking이어야 하므로 읽기는 `poll()`을 거친다 → [[concepts/io-multiplexing]].
 
 ## 관련

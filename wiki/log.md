@@ -558,3 +558,17 @@
 ## [2026-10-23] query | urlPath 정리, CGI 리다이렉트 복사, 테스트 주석 형식
 - 갱신: [[analysis/design]] 1절 주석 규칙(테스트 코드에도 같은 형식, Python은 docstring과 `#` 주석에 한국어 병기, `test_*` 메서드에는 docstring 없음), [[analysis/test-plan]] G-22(리다이렉트 경로 측정 추가)·8절 R4(리다이렉트 경로 복사 수정과 측정 결과).
 - 메모: 2026-10-22 주석 점검에서 물었던 세 가지를 사용자가 정했다. (1) STATIC_FILE·CGI 결정에서 읽지 않는 `urlPath` 대입과 `staticFile()`의 `path` 매개변수를 지웠다 (webserv `a311675`). (2) CGI 클라이언트 리다이렉트+문서 경로의 본문 복사를 없앴다 (webserv `8f8dc8a`). 고치기 전에 "이 경로는 일반 경로보다 본문이 1~2벌 더 메모리에 올라간다"고 **판단**해 보고했는데, Ubuntu에서 재 보니 최대 메모리 증가는 고치기 전·후 모두 출력의 2.0배로 문서 경로와 같았다. 그 판단은 틀렸고, 복사는 최대 메모리가 아니라 시간만 늘렸다. (3) `webserv/tests` 32개 파일 주석을 src와 같은 Doxygen·한국어 병기 형식으로 바꿨다 (webserv `60401ad`). 단위 102 통과(macOS, Ubuntu), Ubuntu 통합 116개 통과(`WEBSERV_SLOW_TESTS=1`, root라 2개 건너뜀).
+
+## [2026-10-25] lint | 전체 점검 (3회차, 구현 뒤)
+- 범위: 2회차 점검(커밋 894c2bf, 2026-10-15) 뒤 바뀐 문장과 새 페이지 전부(analysis 5개, concept 변경분 11개, 새 source 18개, overview·index·wishlist), 구조 점검은 전체. 인용은 원문 줄을 열어 직접 대조했고, 인용 옆에 원문을 띄워 주는 표시용 스크립트만 썼다. 처음 쓴 표시 스크립트가 Python `splitlines()`로 RFC 파일의 form feed도 줄 끝으로 세어 `.txt` 줄 번호를 밀어 보여서, `\n`으로만 나누게 고친 뒤 다시 봤다(그 전 sed 대조는 영향 없음).
+- 구조: 깨진 위키링크 없음, inbound 없는 페이지는 log뿐, index가 모든 페이지를 담음, 표 칸 수 어긋남 없음. test-plan이 가리키는 테스트 이름은 모두 있음.
+- 인용 범위 (문장 단위로): rfc3875 1521-1524→1521-1523, 1310-1312→1310-1314, 636-639→637-640; rfc9112 880-889→880-888, 1398-1403→1399-1404; rfc9110 3243-3246→3243-3245 (test-plan, http-features); rfc3986 689-691→689-692; nginx 소스 3693-3698→3693-3697 (빈 줄로 끝남, 3곳); siege-observed 15-17→16-18; nginx-core-module 355→356 (`1m` 줄, design-decisions·design).
+- 원문보다 강한 주장: design-decisions 9 "평가자가 NGINX와 비교하며 볼 수 있다"(subject 186은 학생이 비교해 볼 수 있다는 뜻) → 고침.
+- 오래된 주장 (코드와 대조):
+  - design: 코드 블록 9곳을 헤더에 맞춤 (`EventLoop(Clock&)`·`run(LoopObserver&)`, `Server` 생성자·`openListeners(error)`·`~Server`, `ChildReaper::killAndReapAll` 대신 소멸자, `Connection` private 멤버, `Request::persistent`, `RequestParser::hasStarted`, `RouteResult`(location 없음, redirectTo·allow·urlPath), `Router::locationFor`·`mapToFile`, `Response::keepAlive`, `ResponseStream`의 bool 반환, `CgiProcess::takeOutput`, `parseCgiOutput(std::string&)`). `ConfigParser::parse`→`loadConfigFile`, `Signals::`→`signals::`, 10절 종료 순서는 소멸자 순서로, handler 인자 "2개 이하"→3개 이하, 12절에 `kMaxArgc`, 1절 tests/ 설명, `ListenContext` 주소(7단계에서 다시 넣음).
+  - test-plan: 2절 코드 줄 번호 10곳(가독성 정리 뒤 밀림)을 2026-10-25 코드로 다시 읽어 고침. `fcntl` 호출이 CGI pipe 2곳을 더해 4곳임을 N-17에 반영, N-02·N-03에 CGI pipe `read`·`write` 추가. "0~2단계만 자세히", "4·7·8·9단계에서" 같은 진행 전 문구 9곳 정리 (C-26, C-27, N-05, N-15, N-21, P-19, K-11, B-06, 진행 방식).
+  - design-decisions 16: "7단계에서 CGI가 더해진다" → 스크립트 경로는 `limit_except`가 허용한 메서드를 모두 넘긴다(코드 위치).
+  - implementation-plan: 구조도의 `ResponseBuilder`(없는 클래스)와 "EventLoop가 전송" 정리, 진행 상황(0~9단계 완료) 추가.
+  - overview·resilience: `error_page`를 내부 리다이렉트로 적은 곳 — 구현은 파일을 직접 읽어 보내 반복 상한 대상이 아니다. overview에 구현 완료와 빠진 source 6개 추가. index의 test-plan·implementation-plan 요약.
+  - connection-management: siege 설정 **미확인**을 Ubuntu 22.04 패키지 실측으로 좁힘(평가 PC는 여전히 미확인).
+- 남은 **미확인**은 모두 평가 PC나 평가자에게 확인할 것(설정·버전·`ulimit -n`, 허용 함수 해석)이거나 측정하지 않은 것(siege 최장 응답 5.91초 원인, 브라우저의 `\` 전송)이라 그대로 둔다. `src/core/Signals.cpp`의 "`std::signal()`은 잘못된 시그널 번호일 때만 실패한다" 주석은 원문으로 확인하지 않았고 위키에는 없다.

@@ -2,14 +2,14 @@
 title: siege 실측 (Ubuntu 22.04, siege 4.0.7) — 응답 없는 서버, 요청 헤더, -b와 -d
 type: source
 sources: [raw/siege-observed-ubuntu2204.md, raw/siege-sock.c, raw/evaluation-sheet-en.md]
-updated: 2026-10-15
+updated: 2026-10-25
 ---
 
 # siege 실측 (Ubuntu 22.04, siege 4.0.7) — 응답 없는 서버, 요청 헤더, `-b`와 `-d`
 
 원본: `raw/siege-observed-ubuntu2204.md`. 평가 PC와 같은 Ubuntu 22.04 이미지의 apt 패키지 siege 4.0.7을, 같은 컨테이너에 띄운 Python 테스트 서버에 대해 실행한 출력을 그대로 담았다 (2026-10-15, raw/siege-observed-ubuntu2204.md:3-4).
 
-- 테스트 서버 `srv.py`는 두 모드다. `echo`는 요청 헤더를 출력하고 200으로 답한 뒤 닫는다. `silent`는 요청을 읽기만 하고 답하지 않은 채 소켓을 열어 둔다 (raw/siege-observed-ubuntu2204.md:15-17).
+- 테스트 서버 `srv.py`는 두 모드다. `echo`는 요청 헤더를 출력하고 200으로 답한 뒤 닫는다. `silent`는 요청을 읽기만 하고 답하지 않은 채 소켓을 열어 둔다 (raw/siege-observed-ubuntu2204.md:16-18).
 - 받은 목적: [[sources/siege-sock]]의 판단 2건과 **미확인**(응답 대기에 timeout이 실제로 걸리는지, `O_NDELAY`와 `O_NONBLOCK`이 같은지), [[concepts/testing]]의 **미확인**(부하 요청의 `Connection: close`, `-b`와 `-d`).
 
 ## 결과

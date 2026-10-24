@@ -2,7 +2,7 @@
 title: 설계 결정 목록
 type: analysis
 sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/posix-remove.md, raw/posix-rmdir.md, raw/fs-observed-remove-name-length.md, raw/rfc9110.txt, raw/rfc9112.txt, raw/rfc3875.txt, raw/rfc6265.txt, raw/rfc7578.txt, raw/nginx-core-module.md, raw/nginx-request-processing.md, raw/nginx-index-module.md, raw/nginx-rewrite-module.md, raw/design-checks-observed.md]
-updated: 2026-10-17
+updated: 2026-10-25
 ---
 
 # 설계 결정 목록
@@ -75,8 +75,8 @@ updated: 2026-10-17
 
 ## 9. 설정 파일은 NGINX 문법
 
-- 근거: subject는 NGINX 설정의 `server` 섹션을 참고해도 된다고 한다 (raw/subject.md:161). 평가자가 NGINX와 비교하며 볼 수 있다 (raw/subject.md:186).
-- 구현: `server { ... }`, `location 경로 { ... }` 블록, `지시자 인자 ...;` 형식, `#` 주석. NGINX에 같은 기능의 지시자가 있으면 그 이름과 인자 형식을 쓴다 (`listen`, `root`, `index`, `autoindex`, `error_page`, `client_max_body_size`, `return`). 크기는 NGINX처럼 `1m` 같은 단위를 받는다 (기본값 표기 `client_max_body_size 1m;`, raw/nginx-core-module.md:355). 지시자 목록과 세부는 [[analysis/design]] 3절.
+- 근거: subject는 NGINX 설정의 `server` 섹션을 참고해도 된다고 한다 (raw/subject.md:161). 특정 동작이 궁금하면 NGINX와 비교해 볼 수 있다고도 한다 (raw/subject.md:186).
+- 구현: `server { ... }`, `location 경로 { ... }` 블록, `지시자 인자 ...;` 형식, `#` 주석. NGINX에 같은 기능의 지시자가 있으면 그 이름과 인자 형식을 쓴다 (`listen`, `root`, `index`, `autoindex`, `error_page`, `client_max_body_size`, `return`). 크기는 NGINX처럼 `1m` 같은 단위를 받는다 (기본값 표기 `client_max_body_size 1m;`, raw/nginx-core-module.md:356). 지시자 목록과 세부는 [[analysis/design]] 3절.
 - NGINX에 없는 기능(업로드 저장 위치, 확장자별 CGI 실행)은 새 지시자를 만든다 (**판단**).
 - 허용 메서드는 NGINX `limit_except METHOD ... { deny all; }` 형식으로 받고, 블록 안에는 `deny all;`만 허용한다 (2026-10-16 사용자 선택).
 - `root`와 `alias`를 둘 다 지원한다 (2026-10-16 사용자 선택). `root`는 NGINX처럼 URI 전체를 붙이고 (raw/nginx-core-module.md:1516), subject 예시의 매핑(raw/subject.md:169)은 `alias`로 쓴다 (raw/nginx-core-module.md:132-140) → [[concepts/configuration-file]] "subject 예시는 NGINX alias 방식".
@@ -92,7 +92,7 @@ updated: 2026-10-17
 ## 11. `client_max_body_size` 상한 100MB
 
 - 근거: 본문은 메모리에 모은 뒤 저장한다(업로드 단순 방식). 메모리가 바닥나면 `std::bad_alloc` 대신 프로세스가 강제로 끝났다 (raw/design-checks-observed.md:119-123). 서버가 끝나면 0점이다 (raw/evaluation-sheet-en.md:24).
-- 구현: 설정의 `client_max_body_size`가 100MB를 넘거나 0(NGINX에서는 검사 안 함)이면 설정 오류로 시작하지 않는다. 0의 의미만 NGINX와 다르다. `Content-Length`를 알면 그 크기만큼 `reserve`해 문자열이 두 배로 커지는 것을 피한다. chunked 본문은 해제한 크기로 상한을 검사한다.
+- 구현: 설정의 `client_max_body_size`가 100MB를 넘거나 0(NGINX에서는 검사 안 함, raw/nginx-core-module.md:361)이면 설정 오류로 시작하지 않는다. 0의 의미만 NGINX와 다르다. `Content-Length`를 알면 그 크기만큼 `reserve`해 문자열이 두 배로 커지는 것을 피한다. chunked 본문은 해제한 크기로 상한을 검사한다.
 - 남는 위험 (**판단**): 동시 업로드 수 × 상한만큼 메모리가 필요하다. 평가의 업로드 시험은 작은 파일이다.
 
 ## 12. CGI 자식 종료: `std::exit` + `fork` 전 `access` 검사
@@ -139,7 +139,7 @@ updated: 2026-10-17
 - 결정 (사용자, 2026-10-17): `limit_except`가 없는 location은 GET·HEAD만 받는다. 파일을 바꾸는 POST·DELETE는 `limit_except`에 적어야 열린다.
 - 함께 본 다른 안: 지금처럼 전부 허용(설정을 빠뜨리면 파일이 지워짐), 전부 막기(정적 사이트도 location마다 `limit_except GET`이 필요하고, server `root`로 자동으로 만드는 location `/`가 쓸모없어짐), DELETE는 `upload_store`가 있는 location에서만(허용 규칙이 두 곳에 생김).
 - NGINX와 다른 점: NGINX `limit_except`는 location 안에서 허용할 메서드를 제한하는 지시자다 (raw/nginx-core-module.md:795). 이름과 형식은 같고, 지시자가 없을 때의 기본값만 다르다(결정 11의 `0`과 같은 종류).
-- 함께 정한 것 (**판단**): POST는 `upload_store`가 있는 location만 답한다(7단계에서 CGI가 더해진다). `limit_except`에 POST가 있어도 저장 위치가 없으면 405이고 `Allow`에 넣지 않는다.
+- 함께 정한 것 (**판단**): POST는 `upload_store`가 있는 location만 답한다. 7단계에서 더한 CGI 스크립트 경로는 예외로, `limit_except`가 허용한 메서드를 모두 스크립트에 넘긴다 (webserv src/route/Router.cpp:344-349). `limit_except`에 POST가 있어도 저장 위치가 없으면 405이고 `Allow`에 넣지 않는다.
 - 시험: [[analysis/test-plan]] C-17, F-09, F-12, D-04.
 
 ## 17. 같은 이름의 업로드는 409로 거부

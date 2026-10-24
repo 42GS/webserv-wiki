@@ -2,7 +2,7 @@
 title: 구현 순서
 type: analysis
 sources: [raw/subject.md, raw/evaluation-sheet-en.md]
-updated: 2026-10-16
+updated: 2026-10-25
 ---
 
 # 구현 순서
@@ -10,6 +10,7 @@ updated: 2026-10-16
 위키의 결론을 구현 단계로 묶었다. 순서는 **판단**이다. 기준은 두 가지다. 각 단계가 끝나면 서버를 실제로 띄워 curl·브라우저로 확인할 수 있어야 하고, 뒤 단계가 앞 단계의 구조를 뜯어고치지 않아야 한다.
 클래스·인터페이스는 [[analysis/design]]에 있다. 각 단계의 세부 규칙은 링크한 concept 페이지에 있다. 사용자가 정한 것은 [[analysis/design-decisions]]에 있다.
 각 단계의 완료 기준을 테스트로 옮긴 표는 [[analysis/test-plan]]에 있다. 단계를 시작할 때 그 표를 먼저 채운다.
+진행: 0~9단계를 모두 마쳤다 (2026-10-18). 아래 구조도는 구현 전의 계획이고, 실제 모듈과 클래스는 [[analysis/design]] 1·2절에 있다.
 
 ## 전체 구조 (판단)
 
@@ -21,12 +22,12 @@ main
  │        ├─ RequestParser   바이트 → Request (요청줄·헤더·본문, chunked 해제)
  │        ├─ Router          Request + Config → 처리 방식 (정적·리다이렉트·업로드·DELETE·CGI·에러)
  │        ├─ Handler들       정적 파일 / autoindex / 업로드 / DELETE / CGI
- │        └─ ResponseBuilder 상태줄·헤더·본문 → 보낼 바이트
+ │        └─ ResponseStream  상태줄·헤더·본문 → 보낼 바이트 (구현에서 Router·Handler 조율은 RequestProcessor가 맡았다)
  └─ Signals       SIGPIPE 무시, SIGINT·SIGTERM은 플래그만 세움
 ```
 
 - 모든 소켓·pipe I/O는 `poll()`이 준비됐다고 알린 뒤에만, 준비 1회에 `recv`/`send`/`read`/`write` 1번만 한다 (raw/subject.md:130-133) → [[concepts/io-multiplexing]].
-- Handler는 결과를 바로 쓰지 않는다. 응답 바이트를 Connection의 쓰기 버퍼에 넣고, 실제 전송은 `POLLOUT` 때 EventLoop가 한다. CGI도 pipe fd를 EventLoop에 등록해서 처리한다.
+- Handler는 결과를 바로 쓰지 않는다. 응답 바이트를 Connection의 쓰기 버퍼에 넣고, 실제 전송은 EventLoop가 `POLLOUT`을 알릴 때 Connection이 한다. CGI도 pipe fd를 EventLoop에 등록해서 처리한다.
 
 ## 단계
 
@@ -64,7 +65,7 @@ main
   - GET·HEAD(결정 5), 허용되지 않은 메서드는 405 + `Allow`.
   - 디렉토리: `/` 없으면 301, index 파일, autoindex, 둘 다 없으면 403 → [[concepts/configuration-file]] "디렉토리 요청 처리 순서".
   - `return` 리다이렉트, 기본 에러 페이지와 설정된 에러 페이지 (raw/subject.md:143).
-  - ResponseBuilder: 상태줄, `Content-Length`, `Content-Type`, `Connection` → [[concepts/http-features]] "응답 헤더 규칙".
+  - 응답 직렬화(구현은 `ResponseStream`): 상태줄, `Content-Length`, `Content-Type`, `Connection` → [[concepts/http-features]] "응답 헤더 규칙".
 - 완료 기준: 정적 사이트 하나를 브라우저로 끝까지 볼 수 있다 (raw/subject.md:145). 각 경우의 상태 코드를 curl로 확인한다.
 
 ### 5. 연결 관리
@@ -91,7 +92,7 @@ main
 ### 9. 시연 준비와 마무리
 
 - 기능별 설정 파일, 정적 사이트, CGI 스크립트(정상·에러·무한 루프)를 저장소에 넣는다 (raw/subject.md:184).
-- README를 채운다 (raw/subject.md:196-203).
+- README를 채운다 (raw/subject.md:196-207).
 - 보너스는 필수가 모두 통과해야 평가된다 (raw/subject.md:218). 쿠키·세션은 CGI 예제(결정 8), CGI 여러 종류(raw/subject.md:216) → [[concepts/bonus]].
 
 ## 진행 중 정할 것

@@ -1,7 +1,7 @@
 ---
 title: Index
 type: overview
-updated: 2026-10-17
+updated: 2026-10-25
 ---
 
 # Index
@@ -91,6 +91,6 @@ updated: 2026-10-17
 |---|---|
 | [[analysis/subject-vs-evaluation]] | 모순·제약(EAGAIN vs errno, HEAD, 허용 함수 범위(Date·exit), half-close, HTTP 버전, REMOTE_ADDR, read/write 외 errno, waitpid 매크로, /dev/urandom, fcntl 허용 목록, POSIX poll vs macOS 실측), 정리본 vs 원문 차이표, 해소된 미확인 |
 | [[analysis/design]] | 클래스·인터페이스 설계 — 파일 배치, 모듈 책임, 설정 구조체, `IoHandler`/`EventLoop`, Connection 상태기계와 상태별 타임아웃, 파서·라우터·응답·CGI 인터페이스, 에러 처리, 상수 |
-| [[analysis/implementation-plan]] | 구현 순서 10단계(뼈대 → 설정 파서 → 이벤트 루프 → 요청 파서 → 라우팅·정적 → 연결 관리 → 업로드·DELETE → CGI → 안정성 → 시연 준비)와 모듈 구조, 단계별 완료 기준 |
-| [[analysis/test-plan]] | 테스트 계획 — 요구사항 한 줄마다 근거·테스트 수준(단위·통합·코드 읽기·수동)·기대 결과·현재 테스트·상태. 0~2단계 상세, 일부러 틀린 코드로 실패 확인 |
+| [[analysis/implementation-plan]] | 구현 순서 10단계(뼈대 → 설정 파서 → 이벤트 루프 → 요청 파서 → 라우팅·정적 → 연결 관리 → 업로드·DELETE → CGI → 안정성 → 시연 준비)와 모듈 구조, 단계별 완료 기준. 모두 완료(2026-10-18) |
+| [[analysis/test-plan]] | 테스트 계획 — 요구사항 한 줄마다 근거·테스트 수준(단위·통합·코드 읽기·수동)·기대 결과·현재 테스트·상태. 0~9단계 전체, 8절 안정성 점검(valgrind·e_fence·siege)과 코드 리뷰, 일부러 틀린 코드로 실패 확인 |
 | [[analysis/design-decisions]] | 사용자가 정한 설계 결정 18건 (poll, `..`·`%2F` 400, virtual host 미구현, HEAD 지원, index→CGI, 업로드는 multipart만, 세션은 CGI 예제, NGINX 설정 문법, 파일 시계·`Date`, 본문 상한 100MB, CGI 자식 `std::exit`, `listen`은 `IPv4:port`·`port`만, alias는 경로 경계에서만, 삭제는 `std::remove`, `limit_except` 없으면 GET·HEAD만, 같은 이름 업로드는 409, 업로드 파일은 요청당 5개)과 근거·구현 영향 |

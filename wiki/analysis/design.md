@@ -2,7 +2,7 @@
 title: webserv 설계 (클래스·인터페이스)
 type: analysis
 sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/nginx-core-module.md, raw/design-checks-observed.md, raw/cpp-core-guidelines.md, raw/google-cpp-style-guide.md, raw/rfc9110.txt, raw/rfc9112.txt, raw/siegerc.in, raw/rfc2046.txt, raw/rfc7578.txt, raw/posix-remove.md, raw/fs-observed-remove-name-length.md, raw/rfc3875.txt]
-updated: 2026-10-23
+updated: 2026-10-25
 ---
 
 # webserv 설계 (클래스·인터페이스)
@@ -33,7 +33,7 @@ src/
   route/    Router  RouteResult  PathResolver
   handler/  StaticHandler  AutoindexHandler  UploadHandler  DeleteHandler  StatusPage
   cgi/      CgiProcess  CgiPipes  CgiEnv  CgiOutput
-tests/                Python 테스트 스크립트
+tests/                unit/(C++ 단위 테스트), integration/(Python 통합 테스트)
 ```
 
 - 헤더는 `include/<모듈>/`, 소스는 `src/<모듈>/`에 같은 이름으로 둔다(`-Iinclude`, 2026-10-16 사용자 요청). 단위 테스트는 `tests/unit/`, `make test`로 실행한다. 코드 포맷은 clang-format Google 스타일(`Standard: c++03`)이고 `make format`으로 맞춘다 (2026-10-16 사용자 선택).
@@ -70,7 +70,7 @@ EventLoop → IoHandler, LoopObserver 인터페이스만
 ### 문법
 
 - `server { ... }` 블록 여러 개, 그 안에 `location 경로 { ... }` 블록. 지시자는 `이름 인자 ...;`, `#`부터 줄 끝까지 주석.
-- 크기는 숫자 또는 `k`·`m` 단위 (`client_max_body_size 1m;`, raw/nginx-core-module.md:355).
+- 크기는 숫자 또는 `k`·`m` 단위 (`client_max_body_size 1m;`, raw/nginx-core-module.md:356).
 - 같은 이름의 지시자가 server와 location에 모두 있으면 location 값을 쓴다. location에 없으면 server 값을 물려받는다.
 
 ### 지시자
@@ -154,7 +154,7 @@ struct ServerConfig {
 };
 ```
 
-- `ConfigParser::parse(path)`는 `std::vector<ServerConfig>`를 돌려주거나 `ConfigError`(파일·줄 번호 포함)를 던진다. server 값의 상속은 파싱 단계에서 끝내, 실행 중에는 `LocationConfig`만 보면 되게 한다.
+- `loadConfigFile(path)`(`config/ConfigLoader`)는 `std::vector<ServerConfig>`를 돌려주거나 `ConfigError`(파일·줄 번호 포함)를 던진다. server 값의 상속은 파싱 단계에서 끝내, 실행 중에는 `LocationConfig`만 보면 되게 한다.
 - 검증: 같은 `interface:port` 중복, `0.0.0.0`과 특정 IP의 같은 포트 → [[concepts/configuration-file]] "포트 관련 엣지 케이스", 결정 4.
 - virtual host가 없으므로(결정 4) `ListenAddr` 하나에 `ServerConfig`가 하나 대응한다.
 - 설정 객체는 프로그램이 끝날 때까지 `main`이 갖는다. 다른 객체는 `const` 참조로만 쓴다.
@@ -195,10 +195,10 @@ public:
 
 class EventLoop : public IoRegistry {
 public:
-    EventLoop(LoopObserver& observer, Clock& clock);
+    explicit EventLoop(Clock& clock);
     void watch(IoHandler* handler);
     void unwatch(IoHandler* handler);       // 순회 중이면 표시만 하고 바퀴 끝에 뺀다
-    void run();
+    void run(LoopObserver& observer);       // shouldStop()이 참이 될 때까지
 };
 ```
 
@@ -241,21 +241,21 @@ public:
 - `Server`는 `LoopObserver`를 구현한다. `afterIteration`에서 연결 타임아웃 점검 → 닫힌 연결 삭제 → `ChildReaper::reap()`를 차례로 한다. `Listener`가 `accept`하면 `Server::adopt(fd, ...)`로 `Connection`을 넘긴다.
 
 ```cpp
-class Server : public LoopObserver {
+class Server : public LoopObserver, public AcceptHandler {   // AcceptHandler: Listener가 accept한 fd를 넘기는 곳
 public:
-    Server(const std::vector<ServerConfig>& configs, EventLoop& loop, ChildReaper& reaper);
-    bool openListeners();                       // 실패하면 원인 출력 후 false
+    Server(const std::vector<ServerConfig>& configs, IoRegistry& registry, ChildReaper& reaper, time_t now);
+    ~Server();                                  // 모든 연결 삭제(CGI 자식은 reaper로), listener 삭제
+    bool openListeners(std::string& error);     // 실패하면 false, error에 원인
     void adopt(int clientFd, const ListenContext& where);
     void afterIteration(time_t now);
-    bool shouldStop() const;                    // Signals::stopRequested()
-    void shutdown();                            // 모든 연결·CGI 정리
+    bool shouldStop() const;                    // signals::stopRequested()
 };
 
 class ChildReaper {
 public:
+    ~ChildReaper();                             // 남은 자식을 SIGKILL하고 기다린다
     void adopt(pid_t pid);                      // 이미 kill했거나 출력이 끝난 자식
     void reap();                                // waitpid(pid, &status, WNOHANG)로 하나씩
-    void killAndReapAll();                      // 종료 시
 };
 ```
 
@@ -291,28 +291,36 @@ public:
     bool  isClosed() const;
 private:
     enum State { READ_HEAD, READ_BODY, WAIT_CGI, WRITE, DRAIN, CLOSED };
-    void  receiveOnce();                         // recv 1번
+    void  receiveOnce();                         // recv 1번. DRAIN이면 버린다
     void  sendOnce();                            // send 1번
-    void  handleParsed();                        // RequestProcessor 호출
-    void  startResponse(const Response& res);    // ResponseStream 준비, 다음 상태 결정
-    void  changeState(State next, time_t now);
+    void  parseInput();                          // inBuffer_를 파서에 넣고 결과에 따라 처리
+    void  handleOutcome(const ProcessOutcome& outcome);   // 응답, CGI 대기, local redirect
+    void  followCgi();                           // 끝난 CGI의 결과를 받거나 504
+    void  startResponse(const Response& response);
+    void  startErrorResponse(int status);        // 다 읽지 못한 요청의 오류 응답
+    void  finishResponse();                      // 응답을 다 보낸 뒤: 다음 요청, DRAIN, 닫기
+    void  changeState(State next);
+    bool  hasTimedOut() const;
 
     int                 fd_;
     State               state_;
-    ListenContext       where_;                  // ServerConfig 참조 + 로컬·원격 주소 (연결마다 다름)
-    std::string         inBuf_;
     RequestParser       parser_;
-    RequestProcessor    processor_;
-    ResponseStream      out_;
+    RequestProcessor    processor_;              // ListenContext(server 블록, 두 끝의 주소)를 가진다
+    ResponseStream      stream_;
     CgiProcess*         cgi_;                    // 소유. WAIT_CGI 동안만
+    const Request*      current_;                // 파싱한 요청이나 redirected_
+    Request             redirected_;             // 마지막 local redirect의 요청
+    int                 localRedirects_;
+    std::string         inBuffer_;
+    bool                keepAlive_;
+    bool                requestConsumed_;        // false면 응답 뒤 DRAIN
+    time_t              now_;
     time_t              stateSince_;
     time_t              lastProgress_;
-    bool                keepAlive_;
-    bool                requestBodyConsumed_;    // false면 응답 뒤 DRAIN
 };
 ```
 
-- `ListenContext`는 `ServerConfig`와 로컬 `ListenAddr`, 원격 주소를 묶은 값이다. 생성자 인자를 4개 이하로 유지한다. 지금 코드에는 `server`만 있다. 로컬·원격 주소는 읽는 곳이 없어 4차 코드 리뷰에서 뺐고, CGI(`REMOTE_ADDR` 등, 7단계)에서 다시 넣는다.
+- `ListenContext`는 `ServerConfig` 포인터와 원격 주소, 로컬 주소·포트를 묶은 값이다. 생성자 인자를 4개 이하로 유지한다. 주소는 읽는 곳이 없어 4차 코드 리뷰에서 뺐다가 CGI(`REMOTE_ADDR` 등, 7단계)에서 다시 넣었다 (9절 구현 세부).
 - `recv`가 0이면 상대가 닫은 것, -1이면 에러다. 둘 다 errno 없이 `CLOSED`로 간다 → [[concepts/io-multiplexing]] "recv·send 반환값 처리".
 - keep-alive 판단과 `DRAIN` 규칙 → [[concepts/connection-management]]. 본문을 다 읽지 않고 응답했으면 `DRAIN`을 거친다 ([[sources/close-after-413-observed]]).
 - pipelining: 응답을 다 보낸 뒤 `inBuf_`에 남은 바이트로 다음 요청을 파싱한다 → [[concepts/connection-management]] "pipelining".
@@ -340,6 +348,7 @@ struct Request {
     std::string method, target, path, query, version;
     HeaderMap   headers;
     std::string body;                // chunked는 해제된 상태
+    bool        persistent;          // 응답 뒤 연결 유지를 원함 (5절)
 };
 
 class RequestParser {
@@ -349,6 +358,7 @@ public:
     Result  feed(std::string& buf);       // buf 앞부분을 소비
     void    setMaxBodySize(size_t n);     // HEAD_DONE 뒤 location 결정 후 호출
     int     errorStatus() const;          // 400, 413, 414, 431, 501, 505 등
+    bool    hasStarted() const;           // 이 요청의 바이트가 왔는지. 시간 초과 때 408인지 그냥 닫는지 정한다 (5절)
     const Request& request() const;
     void    reset();                      // 다음 요청
 };
@@ -384,29 +394,33 @@ public:
     RequestProcessor(const ListenContext& where, const CgiServices& services);
     size_t         bodyLimitFor(const Request& req) const;
     ProcessOutcome process(const Request& req, time_t now) const;     // 응답 또는 시작한 CGI
-    ProcessOutcome afterCgi(const Request& req, const CgiProcess& cgi, time_t now) const;  // 응답 또는 local redirect
+    ProcessOutcome afterCgi(const Request& req, CgiProcess& cgi, time_t now) const;  // 응답 또는 local redirect. 출력을 가져간다(11절)
     Response       statusResponse(int status, const Request& req, time_t now) const;      // 504 등
     Response       errorResponse(int status, const std::string& method, time_t now) const;  // 파서 오류·408
 };
 
 struct RouteResult {
     enum Kind { STATIC_FILE, DIRECTORY_LISTING, REDIRECT, UPLOAD, DELETE, CGI, ERROR };
-    Kind                  kind;
-    const LocationConfig* location;
-    std::string           fsPath;      // root 매핑 결과 (STATIC_FILE, DIRECTORY_LISTING, DELETE)
-    std::string           uploadStore; // UPLOAD: 저장할 디렉토리
-    std::string           interpreter; // CGI: "cgi" 지시자의 프로그램
-    std::string           scriptName;  // CGI: 스크립트 URI 경로 (디코딩)
-    std::string           pathInfo;    // CGI: 스크립트 뒤 경로 (디코딩)
-    std::string           pathTranslated;  // CGI: pathInfo의 매핑
-    int                   status;      // REDIRECT, ERROR
+    Kind        kind;
+    int         status;          // REDIRECT, ERROR
+    std::string redirectTo;      // REDIRECT: Location 값
+    std::string allow;           // ERROR 405: Allow 값
+    std::string fsPath;          // 매핑한 파일 경로 (STATIC_FILE, DIRECTORY_LISTING, DELETE, CGI)
+    std::string uploadStore;     // UPLOAD: 저장할 디렉토리
+    std::string interpreter;     // CGI: "cgi" 지시자의 프로그램
+    std::string scriptName;      // CGI: 스크립트 URI 경로 (디코딩)
+    std::string pathInfo;        // CGI: 스크립트 뒤 경로 (디코딩)
+    std::string pathTranslated;  // CGI: pathInfo의 매핑
+    std::string urlPath;         // DIRECTORY_LISTING, UPLOAD: 정규화한 요청 경로
 };
 
 class Router {
 public:
     explicit Router(const ServerConfig& server);
     const LocationConfig* matchLocation(const std::string& path) const;   // 가장 긴 prefix, alias면 세그먼트 경계까지 (결정 14)
+    const LocationConfig* locationFor(const std::string& encodedPath) const;  // 정규화 후 matchLocation (본문 상한)
     RouteResult route(const Request& req) const;
+    bool mapToFile(const std::string& uriPath, std::string& fsPath) const;    // 에러 페이지·업로드 Location의 매핑
 };
 ```
 
@@ -414,7 +428,7 @@ public:
 - `Router::route` 순서: 경로 정규화(`PathResolver`) → location 선택 → 파일 경로 매핑(`root`면 URI 전체를 붙이고, `alias`면 location prefix를 바꿔 끼운다) → `return` → CGI 확장자 → `limit_except` 검사 → 업로드 POST → DELETE → 파일·디렉토리 → [[concepts/security]] "경로 정규화 절차", [[concepts/configuration-file]] "디렉토리 요청 처리 순서". 스크립트를 `limit_except` 검사보다 먼저 찾는 것은 두 경우의 메서드 기준이 달라서다: 스크립트는 `limit_except`가 허용한 메서드면 받고(아래 9절 "메서드"), 다른 경로는 그 location이 답할 수 있어야 한다(`answers()`, 아래 "메서드"). 2026-10-22 주석 점검에서 7단계 구현 뒤 이 줄의 순서가 코드와 달라진 것을 찾아 고쳤다.
 - index 파일을 찾으면 그 경로로 `route`를 다시 부른다(CGI 확장자면 CGI가 된다). 다시 부르는 횟수는 `kMaxInternalRedirects`까지, 넘으면 500 (결정 6).
 - 업로드는 본문 전체가 메모리에 모인 뒤(`client_max_body_size`로 상한, `Content-Length`를 알면 그만큼 `reserve`) 파일 하나를 `open` → `write`(다 쓸 때까지 반복) → `close`로 한 번에 저장한다. 일반 파일이라 `poll()`이 필요 없다 (raw/subject.md:134). 구현이 단순한 쪽으로 정했다 (사용자 결정, 2026-10-16).
-- Handler는 상태가 없는 함수다: `serveStaticFile(const RouteResult&, Response&)`, `storeUpload(const RouteResult&, const Request&)` 등. 인자는 2개 이하.
+- Handler는 상태가 없는 함수다: `bool serveStaticFile(const RouteResult&, Response&)`(실패하면 false), `UploadResult storeUpload(const RouteResult&, const Request&)` 등. 인자는 3개 이하(`buildStatusPage`·`createdResponse`가 3개).
 - `buildStatusPage(status, configuredPages, router)` (`handler/StatusPage`): 설정된 에러 페이지 파일이 있으면 그 파일, 없거나 읽지 못하면 내장 기본 페이지 (raw/subject.md:143). 리다이렉트 응답의 본문도 이것으로 만든다. 4단계 리뷰에서 `ErrorPageBuilder`에서 이름을 바꾸고, Router를 매번 만들지 않고 `RequestProcessor`의 것을 받게 했다.
 - 구현 세부 (단계 4, 2026-10-16, **판단**. 기준은 결정 13의 "요구사항에 부합하고 안전한 쪽"):
   - Router는 3단계에서 `http/`에 만들었던 것을 설계대로 `route/`로 옮긴다. `bodyLimitFor`는 `RequestProcessor`로 옮기고 정규화한 경로로 location을 찾는다. 정규화가 실패하거나 맞는 location이 없는 요청은 기본 상한(1MB)으로 본문을 받은 뒤 라우팅에서 400·404로 답한다(머리 단계에서 따로 끊는 경로를 두지 않아 단순하다).
@@ -467,15 +481,16 @@ struct Response {
     std::string bodyFile;        // 큰 정적 파일이면 경로 (body 대신)
     size_t      bodyFileSize;
     bool        omitBody;        // HEAD
+    bool        keepAlive;       // 응답 뒤 연결 유지 (5절)
 };
 
 class ResponseStream {           // 직렬화한 머리 + 본문(메모리 또는 파일)을 조금씩 내보낸다
 public:
-    void        reset(const Response& res, bool closeAfter);
+    bool        reset(const Response& res);   // 본문 파일을 열지 못하면 false
     bool        hasPending() const;
     const char* data() const;    // 다음에 보낼 바이트
     size_t      size() const;
-    void        consume(size_t n);   // send가 보낸 만큼. 비면 파일에서 다음 조각을 읽어 채운다
+    bool        consume(size_t n);   // send가 보낸 만큼. 비면 파일에서 다음 조각을 읽어 채운다. 읽지 못하면 false
 };
 ```
 
@@ -504,7 +519,7 @@ public:
     bool start(time_t now);         // pipe, fork, execve. 실패하면 false → 500
     bool isDone() const;            // 출력 EOF
     bool failed() const;            // 읽기 오류, 출력 상한 초과 → 502
-    const std::string& output() const;
+    void takeOutput(std::string& into);   // 출력을 swap으로 넘긴다 (11절)
     bool hasTimedOut(time_t now) const;   // kCgiTimeout 안에 출력이 안 끝남 → 504
 private:
     CgiStdin*  stdin_;              // IoHandler: 본문을 write
@@ -512,7 +527,7 @@ private:
 };
 
 std::vector<std::string> buildCgiEnvironment(const Request&, const RouteResult& script, const ListenContext&);
-CgiOutput parseCgiOutput(const std::string& output);   // RESPONSE, LOCAL_REDIRECT, INVALID
+CgiOutput parseCgiOutput(std::string& output);   // RESPONSE, LOCAL_REDIRECT, INVALID. 본문을 가져간다
 ```
 
 - 흐름: `RequestProcessor::process`가 CGI 결정을 받으면 `startCgi`(검사 → 환경 → `CgiProcess::start`)를 하고 `ProcessOutcome::CGI`를 돌려준다. `Connection`은 `WAIT_CGI`로 가서, 루프 한 바퀴마다 `checkTimeout`에서 `followCgi()`로 확인한다. 끝났으면 `afterCgi`가 출력을 응답(또는 local redirect)으로 바꾸고, 시간을 넘었으면 504.
@@ -529,9 +544,9 @@ CgiOutput parseCgiOutput(const std::string& output);   // RESPONSE, LOCAL_REDIRE
   - `cgi` 지시자의 프로그램이 절대 경로가 아니면 설정 오류다. `chdir` 뒤라 상대 경로를 찾을 수 없다.
   - 상속 fd 닫기: `FD_CLOEXEC`를 쓸 수 없어 (1.11절) 자식에서 허용 함수 `opendir`·`readdir`로 `/dev/fd`를 읽어 3 이상을 닫는다. Ubuntu 컨테이너의 열 수 있는 fd 한도가 20480이라 번호를 차례로 모두 닫는 것보다 낫다(2026-10-18 `ulimit -n`).
   - 출력: 스크립트의 `Content-Length`·`Transfer-Encoding`·`Connection`·`Date`는 버리고 서버 값을 쓴다. 스크립트가 연결에 영향을 주는 헤더를 보내면 서버는 지울 수 있고 서버 헤더와의 충돌을 해결해야 한다 (SHOULD, raw/rfc3875.txt:1493-1498). 204·304는 본문을 버리고 304에는 `Content-Length`를 보내지 않는다 (raw/rfc9110.txt:7042-7043, raw/rfc9110.txt:7477-7478, raw/rfc9110.txt:3232-3236). `Status`의 reason phrase는 쓰지 않고 서버의 것을 보낸다. 1xx `Status`는 502.
-  - 출력은 스크립트가 `Content-Length`를 줘도 EOF까지 읽는다. subject는 "`Content-Length`가 없으면 EOF가 끝"이라고 하지만 (raw/subject.md:180), RFC 3875는 EOF까지 모두 읽어야 한다고 한다 (MUST, raw/rfc3875.txt:1521-1524).
+  - 출력은 스크립트가 `Content-Length`를 줘도 EOF까지 읽는다. subject는 "`Content-Length`가 없으면 EOF가 끝"이라고 하지만 (raw/subject.md:180), RFC 3875는 EOF까지 모두 읽어야 한다고 한다 (MUST, raw/rfc3875.txt:1521-1523).
   - 출력 상한 `kMaxCgiOutputBytes`(16MB): 출력은 응답 전에 메모리에 모으므로 끝없이 출력하는 스크립트가 시간 초과까지 메모리를 키울 수 있다. 넘으면 자식을 죽이고 502.
-  - local redirect: 다시 처리할 메서드를 RFC가 정하지 않는다 (raw/rfc3875.txt:1310-1312). 원래 요청이 HEAD면 HEAD, 아니면 본문 없는 GET으로, `Host`만 옮겨 처리한다. 반복은 `kMaxInternalRedirects`(10)까지, 넘으면 500 (결정 6).
+  - local redirect: 다시 처리할 메서드를 RFC가 정하지 않는다 (raw/rfc3875.txt:1310-1314). 원래 요청이 HEAD면 HEAD, 아니면 본문 없는 GET으로, `Host`만 옮겨 처리한다. 반복은 `kMaxInternalRedirects`(10)까지, 넘으면 500 (결정 6).
   - 완료 확인: 완료 콜백 대신 `Connection::checkTimeout`(루프 한 바퀴마다, 이벤트 분배 밖)에서 확인한다. 끝난 프로세스를 그 pipe의 `onEvent` 안에서 지우는 일이 없고, 인터페이스가 하나 줄어든다. 응답이 늦어지는 시간은 그 바퀴의 끝까지다.
   - 클라이언트 끊김: `WAIT_CGI` 동안 소켓은 이벤트 0으로 poll한다. RST로 끊기면 `POLLHUP`·`POLLERR`로 알고 연결을 닫아 스크립트를 죽인다. 정상 종료(FIN)는 알 수 없어서 스크립트가 끝나거나 CGI 시간 초과(10초)가 지난 뒤 정리된다(2026-10-18 Ubuntu 컨테이너에서 확인). 시간 상한이 있으므로 hang은 아니다.
   - 출력은 끝냈지만 계속 도는 스크립트는 죽이지 않고 reaper에 넘긴다(마무리 중일 수 있음). 서버가 끝날 때 reaper가 죽인다.
@@ -539,9 +554,9 @@ CgiOutput parseCgiOutput(const std::string& output);   // RESPONSE, LOCAL_REDIRE
 
 ## 10. 시그널
 
-- `Signals::install()`: `SIGPIPE` → `SIG_IGN`, `SIGINT`·`SIGTERM` → 플래그만 세우는 핸들러. `SIGCHLD`는 기본 동작 → [[concepts/resilience]] "시그널 처리".
-- 플래그(`volatile sig_atomic_t`)는 `Signals.cpp` 안의 파일 범위 변수다. 다른 곳은 `Signals::stopRequested()`로만 읽는다. 시그널 핸들러가 쓸 수 있는 곳이 전역뿐이라 전역 상태 금지의 예외로 둔다.
-- 종료: `run()`이 끝나면 `Server::shutdown()`(모든 연결 삭제 → 각 CGI 자식 `kill` 후 reaper로) → `ChildReaper::killAndReapAll()` → listen 소켓 `close` → `main` 반환. valgrind에서 "All heap blocks were freed"가 나와야 한다 ([[sources/valgrind-observed-sigint]]).
+- `signals::install()`: `SIGPIPE` → `SIG_IGN`, `SIGINT`·`SIGTERM` → 플래그만 세우는 핸들러. `SIGCHLD`는 기본 동작 → [[concepts/resilience]] "시그널 처리".
+- 플래그(`volatile sig_atomic_t`)는 `Signals.cpp` 안의 파일 범위 변수다. 다른 곳은 `signals::stopRequested()`로만 읽는다. 시그널 핸들러가 쓸 수 있는 곳이 전역뿐이라 전역 상태 금지의 예외로 둔다.
+- 종료: `loop.run(server)`가 끝나면 `main`이 반환하며 지역 객체가 선언의 역순으로 소멸한다. `~Server`(모든 연결 삭제 → 각 CGI 자식은 출력이 안 끝났으면 `kill`하고 reaper로, listener 삭제) → `~ChildReaper`(남은 자식 `SIGKILL` 후 `waitpid`) 순서다. 처음 설계의 `Server::shutdown()`·`ChildReaper::killAndReapAll()`은 소멸자로 대신해 만들지 않았다. valgrind에서 "All heap blocks were freed"가 나와야 한다 ([[sources/valgrind-observed-sigint]]).
 
 ## 11. 에러 처리 방침
 
@@ -564,7 +579,7 @@ CgiOutput parseCgiOutput(const std::string& output);   // RESPONSE, LOCAL_REDIRE
 
 ## 12. 상수 (초기값, 시험하며 조정)
 
-코드에서는 `core/Limits.hpp`의 `limits::`에 있다(본문 상한 두 개는 `config/ConfigLimits.hpp`의 `config_limits::`). 시간 값의 코드 이름에는 `Seconds`가 붙는다(`kKeepAliveTimeoutSeconds` 등). 아직 쓰지 않는 값(CGI)은 그 단계에서 넣는다.
+코드에서는 `core/Limits.hpp`의 `limits::`에 있다(본문 상한 두 개는 `config/ConfigLimits.hpp`의 `config_limits::`). 시간 값의 코드 이름에는 `Seconds`가 붙는다(`kKeepAliveTimeoutSeconds` 등). 표에 없는 `kMaxArgc`(2)는 프로그램 이름과 설정 파일 하나라는 인자 수 상한이다.
 
 | 이름 | 값 | 비고 |
 |---|---|---|

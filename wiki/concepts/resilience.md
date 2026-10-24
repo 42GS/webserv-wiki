@@ -2,7 +2,7 @@
 title: 안정성 (크래시·hang·누수)
 type: concept
 sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/siege.pod, raw/siegerc.in, raw/posix-signal-h.md, raw/posix-send.md, raw/posix-waitpid.md, raw/posix-bind.md, raw/posix-exit.md, raw/posix-poll.md, raw/nginx-rewrite-module.md, raw/nginx-index-module.md, raw/nginx-core-module.md, raw/rfc3875.txt, raw/siege-sock.c, raw/valgrind-observed-sigint.md, raw/ubuntu2204-observed-tools.md, raw/siege-observed-ubuntu2204.md, raw/macos-observed-sigpipe-leaks.md, raw/efence-observed-ubuntu2204.md]
-updated: 2026-10-16
+updated: 2026-10-25
 ---
 
 # 안정성 (크래시·hang·누수)
@@ -31,7 +31,7 @@ subject와 평가표 모두 "서버가 항상 살아 있어야 한다"를 가장
 
 - "메모리 부족에도 크래시 금지"(raw/subject.md:46) → `new` 실패(`std::bad_alloc`) 처리 방침이 필요하다.
 - hang 금지(raw/subject.md:139) → 클라이언트·CGI 타임아웃이 필요하다.
-- **내부 리다이렉트 반복 상한 (판단):** index 파일(raw/nginx-index-module.md:46), `error_page`(raw/nginx-core-module.md:542), CGI local redirect(raw/rfc3875.txt:1303-1314)는 모두 요청을 다른 경로로 다시 처리하게 한다. 에러 페이지 경로가 다시 에러를 내는 식으로 순환하면 요청이 끝나지 않는다. NGINX는 URI가 다시 쓰일 때 location 검색을 10번까지만 반복하고 (raw/nginx-rewrite-module.md:24), 넘으면 500을 돌려준다 (raw/nginx-rewrite-module.md:169). 이 과제도 요청 하나당 내부 리다이렉트 횟수에 상한을 두고, 넘으면 500을 보낸다. `error_page` 처리 중 에러가 나면 NGINX는 마지막 에러의 코드를 보낸다 (raw/nginx-core-module.md:568).
+- **내부 리다이렉트 반복 상한 (판단):** index 파일(raw/nginx-index-module.md:46), `error_page`(raw/nginx-core-module.md:542), CGI local redirect(raw/rfc3875.txt:1303-1314)는 모두 요청을 다른 경로로 다시 처리하게 한다. 에러 페이지 경로가 다시 에러를 내는 식으로 순환하면 요청이 끝나지 않는다. NGINX는 URI가 다시 쓰일 때 location 검색을 10번까지만 반복하고 (raw/nginx-rewrite-module.md:24), 넘으면 500을 돌려준다 (raw/nginx-rewrite-module.md:169). 이 과제도 요청 하나당 내부 리다이렉트 횟수에 상한을 두고, 넘으면 500을 보낸다. `error_page` 처리 중 에러가 나면 NGINX는 마지막 에러의 코드를 보낸다 (raw/nginx-core-module.md:568). 구현에서는 `error_page`를 내부 리다이렉트로 처리하지 않고 그 파일을 직접 읽어 보내며, 읽지 못하면 내장 페이지를 쓴다. 그래서 상한은 index와 CGI local redirect에만 걸린다 ([[analysis/design]] 7절).
 - 시그널 처리 → 아래 절.
 - 시작 단계 실패(설정 파일 오류, `bind` 실패 등)는 크래시가 아니라 **원인을 담은 에러 메시지와 함께 정상 종료**해야 한다. `bind`는 실패하면 -1을 돌려준다 (raw/posix-bind.md:58). 원인은 `EADDRINUSE`, `EADDRNOTAVAIL` 등이다 (raw/posix-bind.md:66-72). 메시지에 errno를 쓰는 문제는 [[analysis/subject-vs-evaluation]] 1.8절.
 

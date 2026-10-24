@@ -2,7 +2,7 @@
 title: NGINX 소스 — lingering close (ngx_http_request.c, ngx_socket.h)
 type: source
 sources: [raw/nginx-src-ngx_http_request.c, raw/nginx-src-ngx_socket.h, raw/rfc9112.txt, raw/subject.md]
-updated: 2026-10-16
+updated: 2026-10-25
 ---
 
 # NGINX 소스 — lingering close (`ngx_http_request.c`, `ngx_socket.h`)
@@ -30,7 +30,7 @@ updated: 2026-10-16
 
 ## 정리
 
-- NGINX의 lingering close는 `shutdown(fd, SHUT_WR)`로 쓰기 쪽만 닫은 뒤 (raw/nginx-src-ngx_http_request.c:3693-3698, raw/nginx-src-ngx_socket.h:15, raw/nginx-src-ngx_socket.h:66), 들어오는 데이터를 읽어 버리다가 상대가 닫거나(0), 오류가 나거나, 시간이 다 되면 닫는다 (raw/nginx-src-ngx_http_request.c:3727-3752).
+- NGINX의 lingering close는 `shutdown(fd, SHUT_WR)`로 쓰기 쪽만 닫은 뒤 (raw/nginx-src-ngx_http_request.c:3693-3697, raw/nginx-src-ngx_socket.h:15, raw/nginx-src-ngx_socket.h:66), 들어오는 데이터를 읽어 버리다가 상대가 닫거나(0), 오류가 나거나, 시간이 다 되면 닫는다 (raw/nginx-src-ngx_http_request.c:3727-3752).
 - RFC 9112가 설명하는 half-close 방식(쓰기 쪽만 먼저 닫고 상대가 닫을 때까지 읽음, raw/rfc9112.txt:1548-1555)과 같은 순서다 (**판단**).
 - 요청을 마친 뒤 keep-alive가 가능하면 먼저 keep-alive로 가고, lingering close 조건은 그다음에 본다 (raw/nginx-src-ngx_http_request.c:2960-2987). keep-alive 처리(`ngx_http_set_keepalive`) 안에서도 쓰이는지는 그 함수를 읽지 않아 **미확인**이다.
 
