@@ -576,3 +576,8 @@
 ## [2026-10-25] lint | 3회차 점검 정정 — 잘못 고친 인용 범위 4건 되돌림
 - 갱신: [[analysis/design]], [[analysis/test-plan]], [[concepts/http-features]], [[analysis/subject-vs-evaluation]], [[concepts/connection-management]], [[sources/nginx-src-lingering-close]]
 - 메모: 바로 앞 항목에서 고친 범위 가운데 4건이 틀렸다. 원문을 범위보다 한 줄 앞부터 번호 없이 출력해 보고 줄 번호를 머릿속으로 세다가 한 줄씩 밀렸다. 줄 번호를 붙여 다시 보니 원래 범위가 문장 끝까지 맞았다: rfc3875 1521-1524(문장이 1524줄에서 끝남), rfc9112 880-889(HTTP/1.0 TE 문장이 889줄에서 끝남), rfc9110 3243-3246(3246줄 "section."), nginx 소스 3693-3698(3698줄은 빈 줄이 아니라 닫는 `}`). 넷 다 되돌렸다. 나머지 수정(rfc3875 1310-1314·637-640, rfc9112 1399-1404, rfc3986 689-692, siege-observed 16-18, nginx-core-module 356)은 번호를 붙여 다시 봐도 맞다. 그 뒤 design-decisions·design·test-plan의 모든 인용과, 번호 없이 판정했던 concept 페이지 인용의 경계(앞 줄·첫 줄·끝 줄·다음 줄)를 번호를 붙여 다시 확인했다.
+
+## [2026-10-25] query | 모의 평가
+- 생성: [[analysis/mock-evaluation]]
+- 갱신: [[analysis/test-plan]] B-03(있음 → 부족), [[overview]], [[index]]
+- 메모: 사용자 요청으로 평가표 순서대로 모의 평가를 했다. Ubuntu 22.04 컨테이너(일반 사용자, `git`·`curl`·`telnet`·`nc`·`ss`·electric-fence 추가)에 webserv `60401ad`를 빈 폴더로 `git clone`해서 했다. README, relink, poll·errno 코드 경로, 설정 7항목, telnet·curl 기본 동작, CGI(시연 스크립트와 잘못된 스크립트 9개, 무한 루프), 포트 3항목, siege(빈 페이지 2분 3,721,561건·60초 1,854,895건, availability 100%, RSS 1.9MB 일정, 끝난 뒤 fd 5개), valgrind(SIGINT, All heap blocks freed, 오류 0), e_fence, 보너스 2항목이 통과했다. 발견한 것 두 가지: (1) `-std=c++98` 없이 `c++ -Wall -Wextra -Werror`로는 `std::auto_ptr` deprecated 경고가 오류가 되어 빌드되지 않는다(subject 49-50줄. Makefile은 늘 `-std=c++98`이라 평가 빌드는 통과). test-plan B-03 테스트는 이 경우를 빌드하지 않아서 "있음"이 틀렸다. (2) 평가표 siege 기준인 빈 페이지가 저장소에 없다. 둘 다 고칠지는 사용자가 정한다. 처음 telnet 시험에서 `\r\n`을 파이프로 넣어 모두 400이 나왔는데, telnet이 CR을 `\r\0`으로 보낸 탓이었다(바이트로 확인). `%2F` 시험 하나는 제 `printf` 형식 문자열이 요청을 바꿔 404였고 curl로는 400이었다. 브라우저 항목은 하지 않았다.
