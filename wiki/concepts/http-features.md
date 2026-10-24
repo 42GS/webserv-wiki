@@ -46,7 +46,7 @@ updated: 2026-10-25
 
 | 헤더 | 규칙 | 근거 |
 |---|---|---|
-| `Content-Length` | 본문 크기를 알면 보낸다 (SHOULD, Transfer-Encoding이 없을 때) | raw/rfc9110.txt:3243-3245 |
+| `Content-Length` | 본문 크기를 알면 보낸다 (SHOULD, Transfer-Encoding이 없을 때) | raw/rfc9110.txt:3243-3246 |
 | `Content-Length` | 1xx·204 응답에는 보내면 안 됨 (MUST NOT) | raw/rfc9110.txt:3238-3239 |
 | `Content-Length` | HEAD 응답에 보낼 경우 GET이었을 때와 같은 값이어야 함 | raw/rfc9110.txt:3226-3230 |
 | `Content-Type` | 본문이 있으면 보낸다 (SHOULD). 없으면 수신자가 `application/octet-stream`으로 간주하거나 내용을 보고 판단할 수 있음 | raw/rfc9110.txt:2944-2949 |

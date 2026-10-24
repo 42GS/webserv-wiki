@@ -69,7 +69,7 @@ HTTP/1.1은 기본이 persistent connection이다. 구현은 이를 지원하는
 > 본문을 끝까지 보내는 클라이언트에 대해서는 서버가 10MB를 모두 읽어 버렸다 (raw/close-after-413-observed.md:240-244). 버리는 단계에는 무입력 시간과 총 시간의 상한을 둔다 (**판단**, 시험 서버는 1초·5초).
 >
 > NGINX의 `lingering_close`가 이 방식이다. 연결을 완전히 닫기 전에 클라이언트가 더 보내는 데이터를 기다려 처리한다. 기본값 `on`은 휴리스틱으로 클라이언트가 더 보낼 것 같다고 볼 때만 기다리고, `always`는 항상 기다린다 (raw/nginx-core-module.md:888-890). 기다리는 동안 온 데이터는 읽고 버린다 (raw/nginx-core-module.md:908). 데이터가 `lingering_timeout`(기본 5s) 동안 안 오면 닫고, 오면 읽어 버린 뒤 다시 기다린다. 이 반복은 `lingering_time`(기본 30s)을 넘지 않는다 (raw/nginx-core-module.md:903, raw/nginx-core-module.md:917, raw/nginx-core-module.md:922). 기다리지 않고 바로 닫는 `off`는 "프로토콜을 깨므로 보통은 쓰지 말라"고 한다 (raw/nginx-core-module.md:892).
-> NGINX 1.30.6 소스를 보면 lingering close에 들어갈 때 `shutdown(fd, SHUT_WR)`로 쓰기 쪽을 먼저 닫는다 (raw/nginx-src-ngx_http_request.c:3693-3697, raw/nginx-src-ngx_socket.h:15, raw/nginx-src-ngx_socket.h:66). 즉 RFC 9112의 half-close 방식 그대로다 → [[sources/nginx-src-lingering-close]]. 과제에서는 `shutdown` 없이 "읽고 버리다가 `close()`"까지만 따라 할 수 있고, FIN은 `close()` 때 나간다 (**판단**).
+> NGINX 1.30.6 소스를 보면 lingering close에 들어갈 때 `shutdown(fd, SHUT_WR)`로 쓰기 쪽을 먼저 닫는다 (raw/nginx-src-ngx_http_request.c:3693-3698, raw/nginx-src-ngx_socket.h:15, raw/nginx-src-ngx_socket.h:66). 즉 RFC 9112의 half-close 방식 그대로다 → [[sources/nginx-src-lingering-close]]. 과제에서는 `shutdown` 없이 "읽고 버리다가 `close()`"까지만 따라 할 수 있고, FIN은 `close()` 때 나간다 (**판단**).
 > 이 lingering 단계도 non-blocking이어야 하므로 읽기는 `poll()`을 거친다 → [[concepts/io-multiplexing]].
 
 ## 관련

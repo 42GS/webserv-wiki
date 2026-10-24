@@ -572,3 +572,7 @@
   - overview·resilience: `error_page`를 내부 리다이렉트로 적은 곳 — 구현은 파일을 직접 읽어 보내 반복 상한 대상이 아니다. overview에 구현 완료와 빠진 source 6개 추가. index의 test-plan·implementation-plan 요약.
   - connection-management: siege 설정 **미확인**을 Ubuntu 22.04 패키지 실측으로 좁힘(평가 PC는 여전히 미확인).
 - 남은 **미확인**은 모두 평가 PC나 평가자에게 확인할 것(설정·버전·`ulimit -n`, 허용 함수 해석)이거나 측정하지 않은 것(siege 최장 응답 5.91초 원인, 브라우저의 `\` 전송)이라 그대로 둔다. `src/core/Signals.cpp`의 "`std::signal()`은 잘못된 시그널 번호일 때만 실패한다" 주석은 원문으로 확인하지 않았고 위키에는 없다.
+
+## [2026-10-25] lint | 3회차 점검 정정 — 잘못 고친 인용 범위 4건 되돌림
+- 갱신: [[analysis/design]], [[analysis/test-plan]], [[concepts/http-features]], [[analysis/subject-vs-evaluation]], [[concepts/connection-management]], [[sources/nginx-src-lingering-close]]
+- 메모: 바로 앞 항목에서 고친 범위 가운데 4건이 틀렸다. 원문을 범위보다 한 줄 앞부터 번호 없이 출력해 보고 줄 번호를 머릿속으로 세다가 한 줄씩 밀렸다. 줄 번호를 붙여 다시 보니 원래 범위가 문장 끝까지 맞았다: rfc3875 1521-1524(문장이 1524줄에서 끝남), rfc9112 880-889(HTTP/1.0 TE 문장이 889줄에서 끝남), rfc9110 3243-3246(3246줄 "section."), nginx 소스 3693-3698(3698줄은 빈 줄이 아니라 닫는 `}`). 넷 다 되돌렸다. 나머지 수정(rfc3875 1310-1314·637-640, rfc9112 1399-1404, rfc3986 689-692, siege-observed 16-18, nginx-core-module 356)은 번호를 붙여 다시 봐도 맞다. 그 뒤 design-decisions·design·test-plan의 모든 인용과, 번호 없이 판정했던 concept 페이지 인용의 경계(앞 줄·첫 줄·끝 줄·다음 줄)를 번호를 붙여 다시 확인했다.

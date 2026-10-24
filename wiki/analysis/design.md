@@ -544,7 +544,7 @@ CgiOutput parseCgiOutput(std::string& output);   // RESPONSE, LOCAL_REDIRECT, IN
   - `cgi` 지시자의 프로그램이 절대 경로가 아니면 설정 오류다. `chdir` 뒤라 상대 경로를 찾을 수 없다.
   - 상속 fd 닫기: `FD_CLOEXEC`를 쓸 수 없어 (1.11절) 자식에서 허용 함수 `opendir`·`readdir`로 `/dev/fd`를 읽어 3 이상을 닫는다. Ubuntu 컨테이너의 열 수 있는 fd 한도가 20480이라 번호를 차례로 모두 닫는 것보다 낫다(2026-10-18 `ulimit -n`).
   - 출력: 스크립트의 `Content-Length`·`Transfer-Encoding`·`Connection`·`Date`는 버리고 서버 값을 쓴다. 스크립트가 연결에 영향을 주는 헤더를 보내면 서버는 지울 수 있고 서버 헤더와의 충돌을 해결해야 한다 (SHOULD, raw/rfc3875.txt:1493-1498). 204·304는 본문을 버리고 304에는 `Content-Length`를 보내지 않는다 (raw/rfc9110.txt:7042-7043, raw/rfc9110.txt:7477-7478, raw/rfc9110.txt:3232-3236). `Status`의 reason phrase는 쓰지 않고 서버의 것을 보낸다. 1xx `Status`는 502.
-  - 출력은 스크립트가 `Content-Length`를 줘도 EOF까지 읽는다. subject는 "`Content-Length`가 없으면 EOF가 끝"이라고 하지만 (raw/subject.md:180), RFC 3875는 EOF까지 모두 읽어야 한다고 한다 (MUST, raw/rfc3875.txt:1521-1523).
+  - 출력은 스크립트가 `Content-Length`를 줘도 EOF까지 읽는다. subject는 "`Content-Length`가 없으면 EOF가 끝"이라고 하지만 (raw/subject.md:180), RFC 3875는 EOF까지 모두 읽어야 한다고 한다 (MUST, raw/rfc3875.txt:1521-1524).
   - 출력 상한 `kMaxCgiOutputBytes`(16MB): 출력은 응답 전에 메모리에 모으므로 끝없이 출력하는 스크립트가 시간 초과까지 메모리를 키울 수 있다. 넘으면 자식을 죽이고 502.
   - local redirect: 다시 처리할 메서드를 RFC가 정하지 않는다 (raw/rfc3875.txt:1310-1314). 원래 요청이 HEAD면 HEAD, 아니면 본문 없는 GET으로, `Host`만 옮겨 처리한다. 반복은 `kMaxInternalRedirects`(10)까지, 넘으면 500 (결정 6).
   - 완료 확인: 완료 콜백 대신 `Connection::checkTimeout`(루프 한 바퀴마다, 이벤트 분배 밖)에서 확인한다. 끝난 프로세스를 그 pipe의 `onEvent` 안에서 지우는 일이 없고, 인터페이스가 하나 줄어든다. 응답이 늦어지는 시간은 그 바퀴의 끝까지다.
