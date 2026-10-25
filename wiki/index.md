@@ -95,3 +95,27 @@ updated: 2026-10-25
 | [[analysis/test-plan]] | 테스트 계획 — 요구사항 한 줄마다 근거·테스트 수준(단위·통합·코드 읽기·수동)·기대 결과·현재 테스트·상태. 0~9단계 전체, 8절 안정성 점검(valgrind·e_fence·siege)과 코드 리뷰, 일부러 틀린 코드로 실패 확인 |
 | [[analysis/mock-evaluation]] | 평가표 순서대로 따라 한 모의 평가(2026-10-25, Ubuntu 22.04 컨테이너): 항목별 결과, 발견한 것(`-std=c++98` 없는 빌드 실패, 빈 페이지 없음), 서버 문제가 아닌 현상, poll→I/O 코드 경로 디펜스 메모 |
 | [[analysis/design-decisions]] | 사용자가 정한 설계 결정 18건 (poll, `..`·`%2F` 400, virtual host 미구현, HEAD 지원, index→CGI, 업로드는 multipart만, 세션은 CGI 예제, NGINX 설정 문법, 파일 시계·`Date`, 본문 상한 100MB, CGI 자식 `std::exit`, `listen`은 `IPv4:port`·`port`만, alias는 경로 경계에서만, 삭제는 `std::remove`, `limit_except` 없으면 GET·HEAD만, 같은 이름 업로드는 409, 업로드 파일은 요청당 5개)과 근거·구현 영향 |
+
+## Lessons
+
+webserv 코드를 처음부터 배우는 학습 노트. 비유 → 이론 → 코드(파일:줄, webserv `60401ad`) → 구현 이유 → 평가 팁 → 확인 문제 순서.
+
+| 페이지 | 요약 |
+|---|---|
+| [[lessons/00-guide]] | 읽는 법, 상자(콜아웃) 종류, 추천 순서 |
+| [[lessons/01-request-journey]] | 요청 한 개가 서버를 지나가는 8단계, 모듈별 책임 |
+| [[lessons/02-networking-basics]] | 프로세스, fd, 소켓·포트, TCP 스트림, 블로킹·논블로킹 |
+| [[lessons/03-http-basics]] | 요청·응답 모양, 상태 코드 표, Content-Length와 chunked, keep-alive |
+| [[lessons/04-poll]] | poll 하나 규칙(0점 조건), revents 처리, 준비 1회 I/O 1번, POLLOUT과 busy waiting |
+| [[lessons/05-startup]] | main 순서, 파일로 만든 시계, 소멸 순서 |
+| [[lessons/06-config-parsing]] | lexer → 지시어 나무 → builder, 규칙 표, 상속, 시작을 거부하는 설정 |
+| [[lessons/07-event-loop]] | IoHandler, 한 바퀴, 지연 unwatch, accept 실패 시 listener 멈춤, Server 소유 |
+| [[lessons/08-connection]] | Connection 상태기계와 타임아웃, DRAIN 실측 근거, keep-alive·pipelining, CGI 대기 |
+| [[lessons/09-request-parser]] | 파서 상태, HEAD_DONE, RFC 선택표, 크기 상한, Host 검사 |
+| [[lessons/10-routing]] | 경로 정규화, location 매칭과 alias 경계, root·alias, 결정 순서, 디렉토리 요청 |
+| [[lessons/11-response]] | finish(Date·HEAD·close), 에러 페이지, Content-Type, ResponseStream과 response splitting |
+| [[lessons/12-upload-delete]] | multipart 구조, 저장 전 검사(415·400·413·409), O_EXCL, DELETE와 std::remove |
+| [[lessons/13-cgi]] | 스크립트 찾기, 메타변수, pipe·fork·dup2·execve, pipe poll, 출력 해석, 좀비 회수 |
+| [[lessons/14-resilience]] | 시그널, 예외 세 겹, 점검 결과 |
+| [[lessons/15-defense-qa]] | 평가표 코드 질의 순서의 예상 질문 14개와 알려진 약점 |
+| [[lessons/16-glossary]] | 용어 사전 |

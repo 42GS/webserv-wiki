@@ -581,3 +581,8 @@
 - 생성: [[analysis/mock-evaluation]]
 - 갱신: [[analysis/test-plan]] B-03(있음 → 부족), [[overview]], [[index]]
 - 메모: 사용자 요청으로 평가표 순서대로 모의 평가를 했다. Ubuntu 22.04 컨테이너(일반 사용자, `git`·`curl`·`telnet`·`nc`·`ss`·electric-fence 추가)에 webserv `60401ad`를 빈 폴더로 `git clone`해서 했다. README, relink, poll·errno 코드 경로, 설정 7항목, telnet·curl 기본 동작, CGI(시연 스크립트와 잘못된 스크립트 9개, 무한 루프), 포트 3항목, siege(빈 페이지 2분 3,721,561건·60초 1,854,895건, availability 100%, RSS 1.9MB 일정, 끝난 뒤 fd 5개), valgrind(SIGINT, All heap blocks freed, 오류 0), e_fence, 보너스 2항목이 통과했다. 발견한 것 두 가지: (1) `-std=c++98` 없이 `c++ -Wall -Wextra -Werror`로는 `std::auto_ptr` deprecated 경고가 오류가 되어 빌드되지 않는다(subject 49-50줄. Makefile은 늘 `-std=c++98`이라 평가 빌드는 통과). test-plan B-03 테스트는 이 경우를 빌드하지 않아서 "있음"이 틀렸다. (2) 평가표 siege 기준인 빈 페이지가 저장소에 없다. 둘 다 고칠지는 사용자가 정한다. 처음 telnet 시험에서 `\r\n`을 파이프로 넣어 모두 400이 나왔는데, telnet이 CR을 `\r\0`으로 보낸 탓이었다(바이트로 확인). `%2F` 시험 하나는 제 `printf` 형식 문자열이 요청을 바꿔 404였고 curl로는 400이었다. 브라우저 항목은 하지 않았다.
+
+## [2026-10-25] schema | lessons 디렉토리 추가
+- 생성: [[lessons/00-guide]] ~ [[lessons/16-glossary]] (17개)
+- 갱신: CLAUDE.md (디렉토리 구조에 `lessons/`, frontmatter `type`에 `lesson`, lesson 페이지 형식 규칙), [[index]] Lessons 표, [[overview]]
+- 메모: 사용자 요청("웹페이지 말고 옵시디언 노트로 위키 레슨 추가해")으로, 앞서 Artifact로 만든 공부 자료를 장마다 한 페이지의 Obsidian 노트로 옮겼다. 비유는 `[!example]`, 구현 이유는 `[!tip]`, 평가 팁은 `[!info]`, 주의는 `[!danger]`·`[!warning]`, 확인 문제는 접힌 `[!question]-` 콜아웃이다. 다이어그램은 mermaid 코드 블록. 코드 위치는 webserv `60401ad` 기준이다. 인용은 Artifact를 쓸 때 대조한 것을 그대로 옮겼고, 새로 넣은 인용(rfc3875 1044-1046·1052-1055·1310-1314·1330-1335, rfc9110 3226-3230)은 같은 날 대조한 줄이다. 인용한 raw 파일이 각 페이지 `sources`에 있는지와 위키링크가 모두 있는 페이지인지 확인했다.

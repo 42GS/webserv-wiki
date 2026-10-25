@@ -16,6 +16,7 @@ wiki/                LLM이 소유하는 계층. 모든 페이지는 여기에 �
   sources/           소스 1개당 요약 페이지 1개
   concepts/          주제·개념 페이지 (I/O 멀티플렉싱, CGI, 설정 파일 …)
   analysis/          비교·모순 정리·질의 결과 등 종합 페이지
+  lessons/           webserv 코드를 처음부터 배우는 학습 노트 (장마다 한 페이지, 번호순)
 pandoc/              pandoc Lua 필터 (HTML 본문 영역 추출)
 ```
 
@@ -27,7 +28,7 @@ pandoc/              pandoc Lua 필터 (HTML 본문 영역 추출)
   ```yaml
   ---
   title: 페이지 제목
-  type: source | concept | analysis | overview
+  type: source | concept | analysis | overview | lesson
   sources: [raw/subject.md, raw/evaluation-sheet.md]   # 근거로 쓴 원본
   updated: YYYY-MM-DD
   ---
@@ -41,6 +42,7 @@ pandoc/              pandoc Lua 필터 (HTML 본문 영역 추출)
 - 소스 간 모순·차이는 지우지 않고 해당 페이지에 `> [!warning] 모순` 콜아웃으로 남기고
   [[analysis/subject-vs-evaluation]]에도 기록한다.
 - "0점/평가 종료" 같은 치명 조건은 `> [!danger]` 콜아웃으로 강조한다.
+- lesson 페이지(`wiki/lessons/`)는 비유 → 이론 → 코드 → 구현 이유 → 평가 팁 → 확인 문제 순서로 쓴다. 비유는 `> [!example]`, 구현 이유는 `> [!tip]`, 평가 팁은 `> [!info]`, 0점·실수 주의는 `> [!danger]`·`> [!warning]`, 확인 문제는 접힌 `> [!question]-` 콜아웃으로 쓴다. 코드 위치는 `webserv` 저장소 기준 `src/...:줄`로 쓰고 기준 커밋을 페이지에 적는다. 사실 주장의 인용 규칙은 다른 페이지와 같다.
 
 ## 작업 흐름
 
