@@ -586,3 +586,7 @@
 - 생성: [[lessons/00-guide]] ~ [[lessons/16-glossary]] (17개)
 - 갱신: CLAUDE.md (디렉토리 구조에 `lessons/`, frontmatter `type`에 `lesson`, lesson 페이지 형식 규칙), [[index]] Lessons 표, [[overview]]
 - 메모: 사용자 요청("웹페이지 말고 옵시디언 노트로 위키 레슨 추가해")으로, 앞서 Artifact로 만든 공부 자료를 장마다 한 페이지의 Obsidian 노트로 옮겼다. 비유는 `[!example]`, 구현 이유는 `[!tip]`, 평가 팁은 `[!info]`, 주의는 `[!danger]`·`[!warning]`, 확인 문제는 접힌 `[!question]-` 콜아웃이다. 다이어그램은 mermaid 코드 블록. 코드 위치는 webserv `60401ad` 기준이다. 인용은 Artifact를 쓸 때 대조한 것을 그대로 옮겼고, 새로 넣은 인용(rfc3875 1044-1046·1052-1055·1310-1314·1330-1335, rfc9110 3226-3230)은 같은 날 대조한 줄이다. 인용한 raw 파일이 각 페이지 `sources`에 있는지와 위키링크가 모두 있는 페이지인지 확인했다.
+
+## [2026-10-27] query | 모의 평가 발견 두 가지 수정
+- 갱신: [[analysis/test-plan]] B-03(부족 → 있음), E-10(새 행), [[analysis/mock-evaluation]] 처리 기록, [[lessons/15-defense-qa]] 약점 상자, lessons 00·01·03·07·08·11·13·14의 코드 줄 번호와 기준 커밋(`5ca93a2`), [[index]]
+- 메모: 사용자 요청("어 진행해")으로 모의 평가에서 찾은 두 가지를 고쳤다. (1) `std::auto_ptr` 두 곳(`Server::openListeners`, `RequestProcessor::startCgi`)을 없애고 실패 경로에서 직접 `delete`한다. `-std=c++98` 없이 빌드하는 테스트 `test_b03_builds_without_std_flag`를 더했다 (webserv `664692b`). (2) `www/empty.html`(0바이트)을 넣고 README의 siege 명령을 그 파일로 바꿨다. `test_e10_empty_page_for_siege`가 200·`Content-Length: 0`을 본다 (webserv `5ca93a2`). Ubuntu 22.04에서 단위 102, 통합 118(느린 테스트 포함, root라 2개 건너뜀) 통과. 두 새 테스트는 각각 원래 코드(auto_ptr)와 파일 삭제로 실패하는 것을 확인했다. valgrind로 띄워 CGI·빈 페이지 요청 뒤 SIGINT: 누수·오류 0. macOS에서도 단위 102와 `-std` 없는 빌드 통과. 시험 중 `pgrep -f` 패턴이 시험용 셸 자신에 걸려 셸이 끝난 일이 있어 프로세스 이름으로 다시 했다. mock-evaluation 본문의 코드 위치는 그때 기준(`60401ad`) 기록이라 그대로 두었다.

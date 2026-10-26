@@ -2,7 +2,7 @@
 title: "레슨 8: 연결 하나의 일생"
 type: lesson
 sources: [raw/rfc9112.txt, raw/subject.md, raw/close-after-413-observed.md, raw/siegerc.in]
-updated: 2026-10-25
+updated: 2026-10-27
 ---
 
 # 레슨 8: 연결 하나의 일생
@@ -87,7 +87,7 @@ void Connection::finishResponse() {
 > 그래서 직접 쟀다. 10MB 본문에 413을 보내고 바로 `close()`하면 macOS에서 curl 한 번이 응답을 받지 못했고 Python 클라이언트는 reset을 받았다 (raw/close-after-413-observed.md:359-363, raw/close-after-413-observed.md:370-374). 읽고 버리다가 닫으면 Ubuntu와 macOS에서 12번 모두 413을 받았다 (raw/close-after-413-observed.md:225-256, raw/close-after-413-observed.md:388-419) → [[sources/close-after-413-observed]].
 
 - **언제 유지하나**: HTTP/1.1이고 `Connection: close`가 없으면 유지한다. HTTP/1.0은 `keep-alive`가 있어도 닫는다 (`src/http/RequestParser.cpp:174-183`). RFC 9112 9.3은 1.0의 keep-alive를 받아들일지 수신자에게 맡기고 (raw/rfc9112.txt:1353-1359), siege 기본 설정은 HTTP/1.1이다 (raw/siegerc.in:213) **(판단)**.
-- **400이면 닫기**: 잘못된 경로(`..`로 root 위)는 NGINX처럼 닫는다 (결정 2, `src/app/RequestProcessor.cpp:75-77`). 404·405는 요청을 다 읽었으니 유지한다.
+- **400이면 닫기**: 잘못된 경로(`..`로 root 위)는 NGINX처럼 닫는다 (결정 2, `src/app/RequestProcessor.cpp:73-75`). 404·405는 요청을 다 읽었으니 유지한다.
 - **파서 오류와 408은 항상 닫기**: 요청의 끝을 믿을 수 없으니 이어지는 바이트를 다음 요청으로 읽으면 안 된다. 서버는 요청 본문을 다 읽거나 응답 뒤 닫아야 한다 (MUST, raw/rfc9112.txt:1374-1377).
 
 > [!example] 쉬운 예 — pipelining

@@ -2,7 +2,7 @@
 title: "레슨 7: 이벤트 루프"
 type: lesson
 sources: [raw/subject.md, raw/ubuntu2204-observed-nofile.md]
-updated: 2026-10-25
+updated: 2026-10-27
 ---
 
 # 레슨 7: 이벤트 루프
@@ -78,15 +78,15 @@ void Listener::onEvent(short revents) {
 ```
 
 > [!tip] 왜 accept가 실패하면 멈추나? (fd 고갈)
-> fd가 다 차면 `accept`가 실패한다. 그런데 기다리는 손님은 그대로라 listen 소켓은 계속 "읽을 것 있음"이다. 그대로 두면 poll이 매번 바로 돌아와 루프가 쉬지 않고 돈다(fd 한도 16 실험에서 CPU 10% 초과). 그래서 실패하면 listener를 잠시 멈추고(`wantedEvents`가 0), 연결이 하나 닫히거나 1초가 지나면 다시 켠다 (`src/core/Server.cpp:95-98`, [[analysis/test-plan]] 8절 R5). 실패 원인은 errno로 가리지 않는다.
+> fd가 다 차면 `accept`가 실패한다. 그런데 기다리는 손님은 그대로라 listen 소켓은 계속 "읽을 것 있음"이다. 그대로 두면 poll이 매번 바로 돌아와 루프가 쉬지 않고 돈다(fd 한도 16 실험에서 CPU 10% 초과). 그래서 실패하면 listener를 잠시 멈추고(`wantedEvents`가 0), 연결이 하나 닫히거나 1초가 지나면 다시 켠다 (`src/core/Server.cpp:99-102`, [[analysis/test-plan]] 8절 R5). 실패 원인은 errno로 가리지 않는다.
 >
 > 참고: Ubuntu 22.04 systemd 기본 fd 한도는 soft 1024다 (raw/ubuntu2204-observed-nofile.md:16). 평가 PC의 실제 값은 **미확인**이다 (확인: `ulimit -n`).
 
 ## 7.4 Server: 소유자이자 관찰자
 
 - `Server`는 listener와 연결을 **소유**한다(만들고 지우는 책임). `EventLoop`는 아무것도 소유하지 않고 가리키기만 한다. 주인이 하나뿐이라 C++98에서도 해제 경로가 분명하다.
-- `adopt`: 새 `Connection`을 만들다 메모리 부족 예외가 나면 그 fd만 닫고 계속한다 (`Server.cpp:51-67`).
-- `afterIteration`: 모든 연결에 `checkTimeout`을 부르고, 닫힌 연결을 지우고, 끝난 CGI 자식을 회수한다 (`Server.cpp:75-99`).
+- `adopt`: 새 `Connection`을 만들다 메모리 부족 예외가 나면 그 fd만 닫고 계속한다 (`Server.cpp:55-71`).
+- `afterIteration`: 모든 연결에 `checkTimeout`을 부르고, 닫힌 연결을 지우고, 끝난 CGI 자식을 회수한다 (`Server.cpp:79-103`).
 
 > [!question]- 확인 문제: poll을 쓰는 곳은 코드에 몇 군데인가?
 > 딱 한 곳, `src/core/EventLoop.cpp:48`이다. `src/main.cpp:86`의 `loop.run(server)` → `run` → `pollOnce` 순서로 메인 루프 안에서 불린다.

@@ -2,7 +2,7 @@
 title: "레슨 15: 평가 예상 질문"
 type: lesson
 sources: [raw/evaluation-sheet-en.md, raw/os-observed-pipe-poll.md, raw/subject.md]
-updated: 2026-10-25
+updated: 2026-10-27
 ---
 
 # 레슨 15: 평가 예상 질문
@@ -53,6 +53,6 @@ updated: 2026-10-25
 > [!question]- Q14. 연결이 영원히 매달리지 않게 하는 방법은?
 > 상태마다 시간 제한이 있다: 첫 바이트 15초, 머리 30초(첫 바이트부터), 본문·전송 무진행 30초, DRAIN 1초/5초, CGI 10초. 머리는 진행이 있어도 연장하지 않아 1바이트씩 보내는 공격을 막는다 ([[lessons/08-connection]]).
 
-> [!warning] 알고 있어야 할 약점 두 가지 (모의 평가에서 발견)
-> 1. `-std=c++98` 없이 `c++ -Wall -Wextra -Werror`로 빌드하면 `std::auto_ptr` deprecated 경고가 오류가 된다 (Ubuntu 22.04의 g++ 11.4.0에서 확인). Makefile에는 `-std=c++98`이 들어 있어 평가 빌드는 통과한다 (raw/subject.md:49-50, [[analysis/test-plan]] B-03).
-> 2. 평가표의 siege 기준인 "빈 페이지"가 저장소에 없다 (raw/evaluation-sheet-en.md:114).
+> [!info] 모의 평가에서 찾아 고친 두 가지 (webserv `664692b`, `5ca93a2`)
+> 1. `-std=c++98` 없이 `c++ -Wall -Wextra -Werror`로 빌드하면 `std::auto_ptr` deprecated 경고가 오류가 되던 것을 고쳤다. `std::auto_ptr`를 없애고 실패 경로에서 직접 지운다. subject는 이 플래그로 컴파일하고 `-std=c++98`을 더해도 빌드되라고 한다 (raw/subject.md:49-50). 이 빌드를 시험하는 테스트가 있다 ([[analysis/test-plan]] B-03).
+> 2. 평가표의 siege 기준인 빈 페이지(raw/evaluation-sheet-en.md:114)로 `www/empty.html`(0바이트)을 넣었다. README의 siege 명령은 `siege -b -c 50 -t 1M http://127.0.0.1:8080/empty.html`이다 ([[analysis/test-plan]] E-10).

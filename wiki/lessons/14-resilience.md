@@ -2,7 +2,7 @@
 title: "레슨 14: 절대 죽지 않기"
 type: lesson
 sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/posix-waitpid.md, raw/valgrind-observed-sigint.md, raw/siege.pod]
-updated: 2026-10-25
+updated: 2026-10-27
 ---
 
 # 레슨 14: 절대 죽지 않기
@@ -40,7 +40,7 @@ void install() {
 ## 14.2 예외는 세 겹으로 막는다
 
 1. **handler 하나**: `onEvent`에서 난 예외 → `EventLoop`가 잡아 그 handler의 `onFailure` → 그 연결만 닫힌다 (`src/core/EventLoop.cpp:62-66`).
-2. **타임아웃 점검**: `checkTimeout`에서 난 예외 → `Server`가 잡아 그 연결만 닫는다 (`src/core/Server.cpp:80-84`).
+2. **타임아웃 점검**: `checkTimeout`에서 난 예외 → `Server`가 잡아 그 연결만 닫는다 (`src/core/Server.cpp:84-88`).
 3. **마지막 그물**: 그래도 빠져나온 예외(poll 목록을 만들다 메모리 부족) → `main`이 잡아 메시지를 내고 종료 코드 1 (`src/main.cpp:85-89`). `std::terminate`로 갑자기 끝나지 않는다.
 
 - 소멸자에서는 예외를 내보내지 않는다(`~CgiProcess`는 reaper에 못 넘기면 그 자리에서 죽이고 기다린다).
@@ -52,7 +52,7 @@ void install() {
 | 점검 | 결과 |
 |---|---|
 | 단위 테스트 | 102개 통과 |
-| 통합 테스트 (Ubuntu, 느린 테스트 포함) | 116개 통과 |
+| 통합 테스트 (Ubuntu, 느린 테스트 포함) | 118개 통과 |
 | siege `-b -c 50`, 빈 페이지 2분 | 3,721,561건, availability 100%, RSS 1.9MB 일정 |
 | valgrind (통합 테스트 전체, 모의 평가) | 오류 0, 누수 0, 남은 fd는 표준 3개 |
 | Electric Fence | 크래시 없음 |

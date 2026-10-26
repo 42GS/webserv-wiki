@@ -2,7 +2,7 @@
 title: 모의 평가 (2026-10-25)
 type: analysis
 sources: [raw/evaluation-sheet-en.md, raw/subject.md, raw/rfc9112.txt, raw/rfc3875.txt, raw/nginx-core-module.md]
-updated: 2026-10-25
+updated: 2026-10-27
 ---
 
 # 모의 평가 (2026-10-25)
@@ -43,6 +43,9 @@ updated: 2026-10-25
 
 1. **`-std=c++98` 없이는 빌드되지 않는다.** subject는 `c++`와 `-Wall -Wextra -Werror`로 컴파일하라고 하고, `-std=c++98`을 더해도 컴파일돼야 한다고 한다 (raw/subject.md:49-50). Ubuntu 22.04의 g++ 11.4.0은 기본이 C++17이라 `std::auto_ptr` deprecated 경고가 `-Werror`로 오류가 된다 (`src/core/Server.cpp:40`, `src/app/RequestProcessor.cpp:198`). Makefile에는 늘 `-std=c++98`이 들어가므로 평가자가 Makefile로 빌드하면 통과한다. [[analysis/test-plan]] B-03을 "부족"으로 고쳤다. 고치는 방법(예: `auto_ptr` 대신 직접 `delete`하는 `try`/`catch`)은 사용자가 정한다.
 2. **저장소에 빈 페이지가 없다.** 평가표의 siege 기준은 빈 페이지다 (raw/evaluation-sheet-en.md:114). README의 siege 명령은 `/`(1,438바이트)이고, `www/`에 0바이트 파일이 없다. 위 결과는 클론 사본에 임시로 만든 `www/empty.html`로 쟀다. 평가자는 설정 파일 말고는 고치지 않아야 하므로 (raw/evaluation-sheet-en.md:24), 시연 자료에 넣어 두는 편이 낫다(**판단**).
+
+> [!info] 처리 (2026-10-27)
+> 두 가지 모두 사용자 요청으로 고쳤다: `std::auto_ptr`를 없애고 `-std=c++98` 없는 빌드 테스트를 더했다 (webserv `664692b`, [[analysis/test-plan]] B-03). `www/empty.html`을 넣고 README의 siege 명령을 바꿨다 (webserv `5ca93a2`, [[analysis/test-plan]] E-10). Ubuntu 22.04에서 단위 102개, 통합 118개(느린 테스트 포함) 통과, valgrind 누수·오류 0.
 
 ## 서버 문제가 아닌 것 (디펜스에서 물을 수 있음)
 

@@ -2,7 +2,7 @@
 title: "레슨 11: 응답 만들고 보내기"
 type: lesson
 sources: [raw/rfc9110.txt, raw/subject.md, raw/nginx-core-module.md]
-updated: 2026-10-25
+updated: 2026-10-27
 ---
 
 # 레슨 11: 응답 만들고 보내기
@@ -11,7 +11,7 @@ updated: 2026-10-25
 
 ## 11.1 RequestProcessor: 결정을 응답으로
 
-`src/app/RequestProcessor.cpp:152-157`, `:291-298`:
+`src/app/RequestProcessor.cpp:150-155`, `:304-311`:
 
 ```cpp
 ProcessOutcome RequestProcessor::process(const Request& request, std::time_t now) const {

@@ -2,7 +2,7 @@
 title: 테스트 계획
 type: analysis
 sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/nginx-core-module.md, raw/macos-observed-sigpipe-leaks.md, raw/posix-poll.md, raw/design-checks-observed.md, raw/posix-recv.md, raw/rfc9112.txt, raw/rfc9110.txt, raw/rfc6585.txt, raw/rfc1945.txt, raw/rfc3986.txt, raw/rfc2046.txt, raw/rfc7578.txt, raw/rfc3875.txt, raw/rfc6265.txt, raw/posix-exit.md, raw/posix-fcntl.md, raw/os-observed-pipe-poll.md, raw/efence-observed-ubuntu2204.md, raw/ubuntu2204-observed-nofile.md]
-updated: 2026-10-25
+updated: 2026-10-27
 ---
 
 # 테스트 계획
@@ -42,7 +42,7 @@ updated: 2026-10-25
 |---|---|---|---|---|---|---|
 | B-01 | Makefile 규칙 `$(NAME)`, `all`, `clean`, `fclean`, `re` | raw/subject.md:48 | I | 각 규칙이 성공하고 `fclean` 뒤 산출물이 없다 | `test_build.py` `test_b01_b03_rules_build_and_clean` (느린 테스트) | 있음 |
 | B-02 | 다시 링크하지 않는다 | raw/subject.md:47, raw/evaluation-sheet-en.md:60 | I | 두 번째 `make`가 아무것도 하지 않는다 | `test_build.py` `test_b02_second_make_does_not_relink` (느린 테스트) | 있음 |
-| B-03 | `c++ -Wall -Wextra -Werror`로 컴파일되고, `-std=c++98`을 더해도 컴파일된다 | raw/subject.md:49-50 | I | macOS·Ubuntu 모두 `make re` 성공 | `test_build.py` `test_b01_b03_rules_build_and_clean`이 컴파일 명령의 플래그를 확인 (느린 테스트) | 부족 (2026-10-25 모의 평가): Makefile은 늘 `-std=c++98`을 넣어 빌드하므로 평가 빌드는 통과한다. 그러나 `-std=c++98` 없이 `c++ -Wall -Wextra -Werror`(Ubuntu 22.04 g++ 11.4.0, 기본 C++17)로는 `std::auto_ptr` deprecated 경고가 `-Werror`로 오류가 되어 실패한다 (`src/core/Server.cpp:40`, `src/app/RequestProcessor.cpp:198`). 테스트는 이 경우를 빌드하지 않는다 → [[analysis/mock-evaluation]] |
+| B-03 | `c++ -Wall -Wextra -Werror`로 컴파일되고, `-std=c++98`을 더해도 컴파일된다 | raw/subject.md:49-50 | I | 컴파일러 기본 표준(플래그 없음)과 `-std=c++98` 모두에서 빌드 성공 | `test_build.py` `test_b01_b03_rules_build_and_clean`(Makefile의 `-std=c++98`), `test_b03_builds_without_std_flag`(`CXXFLAGS=-Wall -Wextra -Werror`로 빌드, 느린 테스트) | 있음 (2026-10-27). 2026-10-25 모의 평가에서 `std::auto_ptr` deprecated 경고 때문에 `-std=c++98` 없이는 빌드되지 않는 것을 찾았고([[analysis/mock-evaluation]]), `std::auto_ptr`를 없앴다 (webserv `664692b`). 되돌리면 Ubuntu 22.04 g++ 11.4.0에서 새 테스트가 실패한다 |
 | B-04 | C++ 버전이 있으면 C 헤더 대신 쓴다. 외부 라이브러리·Boost 금지 | raw/subject.md:51-52 | R | `.h` 헤더는 C++ 버전이 없는 POSIX 헤더뿐. 링크에 `-l` 없음 | 코드 읽기 2026-10-16: `.h`는 `arpa/inet.h`, `fcntl.h`, `netinet/in.h`, `poll.h`, `sys/socket.h`, `sys/stat.h`, `unistd.h`뿐 | 확인. 단계마다 다시 본다 |
 | B-08 | 허용 함수 목록에 없는 C 함수(`memset`·`strchr`·`strlen`·`<cctype>` 등)를 쓰지 않는다. 시스템 호출은 목록 안의 것만. 목록이 표준 라이브러리에도 적용되는지는 **미확인**이라 엄격한 쪽을 따른다 | raw/subject.md:111-113, raw/subject.md:51, [[analysis/subject-vs-evaluation]] 1.4 | R, U | 호출하는 외부 함수 목록이 허용 목록 안 | 코드 읽기 2026-10-17: 시스템 호출은 목록 안의 것만. C 함수는 `strerror`(목록 안)만 남는다. 문자 판별·숫자 해석은 `http/Ascii`가 C++ 표준 라이브러리(`find_first_not_of`, `<locale>`의 `std::tolower`)와 범위 비교로 한다. 구조체 초기화는 값 초기화. `ascii_test.cpp` 3개 | 있음 |
 | B-05 | 다른 웹 서버를 `execve`하지 않는다 | raw/subject.md:128 | R | `execve`는 CGI 실행에만 | 코드 읽기 2026-10-22: `execve`는 `src/cgi/CgiProcess.cpp:226` 한 곳이고, CGI 자식에서 `cgi` 지시자의 프로그램을 실행한다 | 확인 |
@@ -310,6 +310,7 @@ R1~R3은 실패를 만들 방법이 없어 코드 읽기로 확인했다(2026-10
 | E-07 | 쿠키·세션 (보너스): 식별자만 쿠키에, 모르는 식별자는 새로 발급, 로그아웃은 과거 날짜 `Expires` | raw/evaluation-sheet-en.md:126, raw/subject.md:215, [[concepts/bonus]] 세션 | I | 방문 수 1 → 2, 위조한 식별자는 새 세션, 로그아웃 쿠키 만료 | `test_e07_cookie_session` | 있음. 식별자는 Python `secrets`로 만든다. 스크립트 언어의 난수 기능이 허용 함수 목록의 대상인지는 결정 8의 **미확인** 그대로 |
 | E-08 | 여러 CGI (보너스): Python과 PHP | raw/subject.md:216, raw/evaluation-sheet-en.md:130 | I | PHP 페이지 200 | `test_e08_php` (`/usr/bin/php-cgi`가 있을 때) | 있음 |
 | E-09 | README: 이탤릭 첫 줄, Description·Instructions·Resources, AI를 어떤 작업·부분에 썼는지 | raw/evaluation-sheet-en.md:35-44, raw/subject.md:196-207 | I, M | 형식은 B-06. 내용은 사람이 읽는다 | `test_readme.py` (형식). README의 curl 명령은 2026-10-18 macOS에서 실행해 적힌 결과를 확인(`loop.py`, PHP, siege 제외) | 형식 있음. 내용은 사용자가 확인 (2026-10-18) |
+| E-10 | siege 시험용 빈 페이지가 저장소에 있다 | raw/evaluation-sheet-en.md:114 | I | `/empty.html`이 200, `Content-Length: 0`, 본문 없음. README의 siege 명령이 이 페이지를 쓴다 | `test_demo.py` `test_e10_empty_page_for_siege` | 있음 (2026-10-27, webserv `5ca93a2`). 파일을 지우면 실패한다 |
 | R-18, F-14 | 브라우저로 정적 사이트를 끝까지 보고, 폼으로 업로드한 파일을 다시 받는다. 네트워크 탭의 요청·응답 헤더 | raw/evaluation-sheet-en.md:97-103, raw/evaluation-sheet-en.md:82 | M | 페이지, 404, 목록, 리다이렉트가 보이고 업로드한 파일이 같다 | 사용자가 브라우저로 확인 (2026-10-18) | 확인 |
 
 - 시연 자료의 판단: 사이트 루트는 `limit_except` 없이 읽기 전용(결정 16)이고, 업로드한 `.py`는 `cgi`가 없는 `/upload/`에 저장되어 실행되지 않는다 ([[analysis/design-decisions]] 7). 본문 크기 시험은 평가표 명령이 `plain/text` 본문이라 업로드(415)가 아닌 본문을 돌려주는 CGI(`/limit/echo.py`, 상한 64바이트)로 보인다.
