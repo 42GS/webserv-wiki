@@ -1,8 +1,8 @@
 ---
 title: CGI
 type: concept
-sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc3875.txt, raw/rfc9112.txt, raw/rfc9110.txt, raw/posix-poll.md, raw/posix-signal-h.md, raw/posix-waitpid.md, raw/posix-bind.md, raw/posix-exit.md, raw/php-cgi-force-redirect.md, raw/php-ini-core.md, raw/rfc6265.txt, raw/posix-fcntl.md, raw/pep-0594.md, raw/os-observed-pipe-poll.md, raw/php-src-cgi_main.c, raw/php-cgi-observed-env.md, raw/ubuntu2204-observed-tools.md, raw/design-checks-observed.md]
-updated: 2026-10-22
+sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc3875.txt, raw/rfc9112.txt, raw/rfc9110.txt, raw/posix-poll.md, raw/posix-signal-h.md, raw/posix-waitpid.md, raw/posix-bind.md, raw/posix-exit.md, raw/php-cgi-force-redirect.md, raw/php-ini-core.md, raw/rfc6265.txt, raw/posix-fcntl.md, raw/pep-0594.md, raw/os-observed-pipe-poll.md, raw/php-src-cgi_main.c, raw/php-cgi-observed-env.md, raw/ubuntu2204-observed-tools.md, raw/design-checks-observed.md, raw/nginx-core-module.md]
+updated: 2026-10-29
 ---
 
 # CGI
@@ -78,6 +78,9 @@ updated: 2026-10-22
 - 같은 이름의 헤더가 여러 줄이면 의미가 같은 하나의 값으로 합친다 (MUST, raw/rfc3875.txt:1044-1046).
 - `Authorization` 같은 인증 헤더와, 다른 변수로 전달되는 `Content-Length`·`Content-Type`은 빼는 것이 좋다 (SHOULD, raw/rfc3875.txt:1051-1055). `Connection`도 뺄 수 있다 (MAY, raw/rfc3875.txt:1055-1057).
 - 서버 고유 변수는 `X_` 접두어를 쓴다 (SHOULD, raw/rfc3875.txt:587-588).
+- 서버는 받은 헤더마다 변수를 만들 의무가 없다 (raw/rfc3875.txt:1051-1052). 이 근거로 두 가지를 더 뺀다 (2026-10-29 사용자 결정, 기존 구현 `~/dev/webserv` 비교에서 가져옴):
+  - `Proxy`: `HTTP_PROXY`가 되어 스크립트가 밖으로 나가는 요청의 프록시로 쓸 수 있다. NVD의 CVE-2016-5385 설명: "untrusted client data in the HTTP_PROXY environment variable, which might allow remote attackers to redirect an application's outbound HTTP traffic to an arbitrary proxy server via a crafted Proxy header" (https://nvd.nist.gov/vuln/detail/CVE-2016-5385, 2026-10-29 NVD API로 확인, 원문은 raw/에 없음).
+  - 이름에 `_`가 든 헤더: 이름 변환에서 `-`가 `_`가 되므로 (raw/rfc3875.txt:1040-1042) `X_Forwarded_For`와 `X-Forwarded-For`가 같은 변수가 된다. 클라이언트가 앞단 프록시가 넣은 헤더를 바꿔칠 수 있다 (**판단**). NGINX도 기본값(`underscores_in_headers off`, `ignore_invalid_headers on`)에서 이런 헤더를 무시한다 (raw/nginx-core-module.md:2060-2066, raw/nginx-core-module.md:645-651).
 
 ### php-cgi가 추가로 요구하는 변수
 

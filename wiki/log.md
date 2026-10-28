@@ -590,3 +590,7 @@
 ## [2026-10-27] query | 모의 평가 발견 두 가지 수정
 - 갱신: [[analysis/test-plan]] B-03(부족 → 있음), E-10(새 행), [[analysis/mock-evaluation]] 처리 기록, [[lessons/15-defense-qa]] 약점 상자, lessons 00·01·03·07·08·11·13·14의 코드 줄 번호와 기준 커밋(`5ca93a2`), [[index]]
 - 메모: 사용자 요청("어 진행해")으로 모의 평가에서 찾은 두 가지를 고쳤다. (1) `std::auto_ptr` 두 곳(`Server::openListeners`, `RequestProcessor::startCgi`)을 없애고 실패 경로에서 직접 `delete`한다. `-std=c++98` 없이 빌드하는 테스트 `test_b03_builds_without_std_flag`를 더했다 (webserv `664692b`). (2) `www/empty.html`(0바이트)을 넣고 README의 siege 명령을 그 파일로 바꿨다. `test_e10_empty_page_for_siege`가 200·`Content-Length: 0`을 본다 (webserv `5ca93a2`). Ubuntu 22.04에서 단위 102, 통합 118(느린 테스트 포함, root라 2개 건너뜀) 통과. 두 새 테스트는 각각 원래 코드(auto_ptr)와 파일 삭제로 실패하는 것을 확인했다. valgrind로 띄워 CGI·빈 페이지 요청 뒤 SIGINT: 누수·오류 0. macOS에서도 단위 102와 `-std` 없는 빌드 통과. 시험 중 `pgrep -f` 패턴이 시험용 셸 자신에 걸려 셸이 끝난 일이 있어 프로세스 이름으로 다시 했다. mock-evaluation 본문의 코드 위치는 그때 기준(`60401ad`) 기록이라 그대로 두었다.
+
+## [2026-10-29] query | CGI 헤더 필터링 (기존 구현 비교에서 가져옴)
+- 갱신: [[concepts/cgi]] 2절 `HTTP_*` 세부 규칙, [[analysis/design]] 9절 출력, [[analysis/test-plan]] G-01·G-07
+- 메모: 사용자 요청("1번 선반영")으로, 기존 구현(`~/dev/webserv`)과 비교하며 찾은 CGI 보안 처리 두 가지를 넣었다 (webserv `cad952e`). (1) 요청 헤더 `Proxy`(httpoxy, NVD CVE-2016-5385 설명을 NVD API로 확인)와 이름에 `_`가 든 헤더는 `HTTP_` 변수로 넘기지 않는다. 근거는 변수를 다 만들 의무가 없다는 raw/rfc3875.txt:1051-1052와 NGINX 기본값(raw/nginx-core-module.md:2060-2066). (2) 스크립트 출력의 `Keep-Alive`·`Proxy-Connection`·`TE`·`Upgrade`도 버린다 (raw/rfc9110.txt:2604-2617 목록, 중개자 규칙을 쓰는 것은 **판단**). 단위 테스트 g01·g07에 검사를 더했고 macOS 단위 102, 통합 test_cgi 통과.

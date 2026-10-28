@@ -2,7 +2,7 @@
 title: 테스트 계획
 type: analysis
 sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/nginx-core-module.md, raw/macos-observed-sigpipe-leaks.md, raw/posix-poll.md, raw/design-checks-observed.md, raw/posix-recv.md, raw/rfc9112.txt, raw/rfc9110.txt, raw/rfc6585.txt, raw/rfc1945.txt, raw/rfc3986.txt, raw/rfc2046.txt, raw/rfc7578.txt, raw/rfc3875.txt, raw/rfc6265.txt, raw/posix-exit.md, raw/posix-fcntl.md, raw/os-observed-pipe-poll.md, raw/efence-observed-ubuntu2204.md, raw/ubuntu2204-observed-nofile.md]
-updated: 2026-10-27
+updated: 2026-10-29
 ---
 
 # 테스트 계획
@@ -233,13 +233,13 @@ CGI는 `G-`로 쓴다 (`C-`는 설정). 통합 테스트는 `test_cgi.py`이고,
 
 | ID | 요구사항 | 근거 | 수준 | 기대 결과 | 현재 테스트 | 상태 |
 |---|---|---|---|---|---|---|
-| G-01 | 메타변수: 요청 전체와 인자가 CGI에 보인다. `PATH_INFO`는 디코딩, `QUERY_STRING`은 그대로, 같은 헤더는 `, `로 합치고, `Authorization`·`Content-Length`·`Content-Type`은 `HTTP_`로 넘기지 않는다 | raw/subject.md:178, raw/rfc3875.txt:1044-1046, raw/rfc3875.txt:1052-1055, [[concepts/cgi]] 2절 | U, I | 변수 값 표 그대로 | `cgi_test.cpp` `g01_metaVariables`·`g01_addressAndPathText`, `router_test.cpp` `g01_g09_g10_scripts`, `test_cgi.py` `test_g01_*` | 있음 |
+| G-01 | 메타변수: 요청 전체와 인자가 CGI에 보인다. `PATH_INFO`는 디코딩, `QUERY_STRING`은 그대로, 같은 헤더는 `, `로 합치고, `Authorization`·`Content-Length`·`Content-Type`은 `HTTP_`로 넘기지 않는다. `Proxy`와 이름에 `_`가 든 헤더도 넘기지 않는다 (2026-10-29) | raw/subject.md:178, raw/rfc3875.txt:1044-1046, raw/rfc3875.txt:1052-1055, raw/rfc3875.txt:1051-1052, [[concepts/cgi]] 2절 | U, I | 변수 값 표 그대로. `HTTP_PROXY` 없음, `X_Forwarded_For`가 아니라 `X-Forwarded-For` 값 | `cgi_test.cpp` `g01_metaVariables`·`g01_addressAndPathText`, `router_test.cpp` `g01_g09_g10_scripts`, `test_cgi.py` `test_g01_*` | 있음 |
 | G-02 | POST 본문은 스크립트의 표준 입력으로, `CONTENT_LENGTH`·`CONTENT_TYPE`과 함께 | raw/evaluation-sheet-en.md:90, raw/rfc3875.txt:1073-1075, raw/rfc3875.txt:637-640 | I | 본문과 길이가 그대로 | `test_cgi.py` `test_g02_*` | 있음 |
 | G-03 | chunked 본문은 해제해 넘기고 `CONTENT_LENGTH`를 다시 계산한다 (MUST) | raw/subject.md:179, raw/rfc3875.txt:1093-1097 | I | 해제한 7바이트와 `CONTENT_LENGTH=7` | `test_cgi.py` `test_g03_*` | 있음 |
 | G-04 | 스크립트는 자기 디렉토리에서 실행된다 | raw/subject.md:181, raw/evaluation-sheet-en.md:89, raw/rfc3875.txt:1565-1566 | I | 상대 경로 파일을 읽는다 | `test_cgi.py` `test_g04_*` | 있음 |
 | G-05 | 무한 루프 스크립트: 다른 요청은 그동안 처리되고, 10초 뒤 504 | raw/evaluation-sheet-en.md:91-93, raw/rfc3875.txt:1255-1258, 설계 12절 | I | 다른 GET이 2초 안에 200, 루프는 10초 이상 뒤 504 | `test_cgi.py` `test_g05_*` (약 11초) | 있음 |
 | G-06 | 출력이 CGI 응답이 아니면(출력 없이 종료, 헤더 아닌 줄, `Content-Type` 없는 문서 등) 502 | raw/rfc3875.txt:1295-1296, [[concepts/cgi]] 5절 | U, I | 502, 서버는 계속 응답 | `cgi_test.cpp` `g06_invalidOutputs`, `test_cgi.py` `test_g06_*` | 있음 |
-| G-07 | `Status`는 상태 코드로, `Set-Cookie` 여러 줄은 그대로, 스크립트의 `Content-Length`·`Date`·`Connection`·`Transfer-Encoding`은 버린다(서버 값과 충돌, SHOULD 해결). 204·304는 본문을 버린다 | raw/rfc3875.txt:1295-1299, raw/rfc3875.txt:1496-1498, raw/rfc6265.txt:315-319, raw/rfc9110.txt:7042-7043, raw/rfc9110.txt:7477-7478 | U, I | 418, `Set-Cookie` 2줄, `Content-Length`·`Date` 1줄씩 | `cgi_test.cpp` `g07_documentResponse`, `test_cgi.py` `test_g07_*` | 있음 |
+| G-07 | `Status`는 상태 코드로, `Set-Cookie` 여러 줄은 그대로, 스크립트의 `Content-Length`·`Date`·`Connection`·`Transfer-Encoding`은 버린다(서버 값과 충돌, SHOULD 해결). `Keep-Alive`·`Proxy-Connection`·`TE`·`Upgrade`도 버린다 (2026-10-29, [[analysis/design]] 9절). 204·304는 본문을 버린다 | raw/rfc3875.txt:1295-1299, raw/rfc3875.txt:1496-1498, raw/rfc6265.txt:315-319, raw/rfc9110.txt:7042-7043, raw/rfc9110.txt:7477-7478, raw/rfc9110.txt:2604-2617 | U, I | 418, `Set-Cookie` 2줄, `Content-Length`·`Date` 1줄씩, 연결 단위 헤더 없음 | `cgi_test.cpp` `g07_documentResponse`, `test_cgi.py` `test_g07_*` | 있음 |
 | G-08 | local redirect는 그 경로를 다시 처리하고(GET), client redirect는 302 (MUST). 자기 자신으로의 반복은 내부 리다이렉트 상한 뒤 500 | raw/rfc3875.txt:1310-1314, raw/rfc3875.txt:1324-1326, [[analysis/design-decisions]] 6 | U, I | 다른 스크립트의 출력, 302 + `Location`, 500 | `cgi_test.cpp` `g08_redirects`, `test_cgi.py` `test_g08_*` | 있음 |
 | G-09 | index 파일이 CGI 확장자면 CGI로 실행 | [[analysis/design-decisions]] 6 | U, I | `/cgi/`가 `index.py`의 출력 | `router_test.cpp` `g01_g09_g10_scripts`, `test_cgi.py` `test_g09_*` | 있음 |
 | G-10 | 스크립트는 `limit_except`가 허용한 메서드를 모두 받고(DELETE도 스크립트가 처리), 막힌 메서드는 405 + `Allow`. `cgi`가 없는 location의 `.py`는 실행하지 않고 파일로 보낸다 | 설계 9절, [[analysis/design-decisions]] 16 | U, I | DELETE가 스크립트에 가고 파일은 남는다. GET만 허용한 location의 POST는 405 + `Allow: GET, HEAD` | `router_test.cpp` `g01_g09_g10_scripts`, `test_cgi.py` `test_g10_*` | 있음 |

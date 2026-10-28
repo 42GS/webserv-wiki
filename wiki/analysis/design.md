@@ -2,7 +2,7 @@
 title: webserv 설계 (클래스·인터페이스)
 type: analysis
 sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/nginx-core-module.md, raw/design-checks-observed.md, raw/cpp-core-guidelines.md, raw/google-cpp-style-guide.md, raw/rfc9110.txt, raw/rfc9112.txt, raw/siegerc.in, raw/rfc2046.txt, raw/rfc7578.txt, raw/posix-remove.md, raw/fs-observed-remove-name-length.md, raw/rfc3875.txt]
-updated: 2026-10-25
+updated: 2026-10-29
 ---
 
 # webserv 설계 (클래스·인터페이스)
@@ -543,7 +543,7 @@ CgiOutput parseCgiOutput(std::string& output);   // RESPONSE, LOCAL_REDIRECT, IN
   - 경로 변수: 자식은 스크립트 디렉토리에서 실행되고 `getcwd()`는 허용 함수가 아니다 (raw/subject.md:113). 그래서 `SCRIPT_FILENAME`은 스크립트 경로가 절대 경로가 아니면 파일 이름만 넣고, `PATH_TRANSLATED`(SHOULD)는 매핑 결과가 절대 경로일 때만 넣는다. 위키의 php-cgi 실측은 절대 경로로만 했다. 상대 이름과 스크립트 인자를 함께 줘도 Ubuntu 22.04의 php-cgi가 GET·POST를 처리했다 ([[analysis/test-plan]] G-17).
   - `cgi` 지시자의 프로그램이 절대 경로가 아니면 설정 오류다. `chdir` 뒤라 상대 경로를 찾을 수 없다.
   - 상속 fd 닫기: `FD_CLOEXEC`를 쓸 수 없어 (1.11절) 자식에서 허용 함수 `opendir`·`readdir`로 `/dev/fd`를 읽어 3 이상을 닫는다. Ubuntu 컨테이너의 열 수 있는 fd 한도가 20480이라 번호를 차례로 모두 닫는 것보다 낫다(2026-10-18 `ulimit -n`).
-  - 출력: 스크립트의 `Content-Length`·`Transfer-Encoding`·`Connection`·`Date`는 버리고 서버 값을 쓴다. 스크립트가 연결에 영향을 주는 헤더를 보내면 서버는 지울 수 있고 서버 헤더와의 충돌을 해결해야 한다 (SHOULD, raw/rfc3875.txt:1493-1498). 204·304는 본문을 버리고 304에는 `Content-Length`를 보내지 않는다 (raw/rfc9110.txt:7042-7043, raw/rfc9110.txt:7477-7478, raw/rfc9110.txt:3232-3236). `Status`의 reason phrase는 쓰지 않고 서버의 것을 보낸다. 1xx `Status`는 502.
+  - 출력: 스크립트의 `Content-Length`·`Transfer-Encoding`·`Connection`·`Date`는 버리고 서버 값을 쓴다. 스크립트가 연결에 영향을 주는 헤더를 보내면 서버는 지울 수 있고 서버 헤더와의 충돌을 해결해야 한다 (SHOULD, raw/rfc3875.txt:1493-1498). 같은 이유로 연결 하나에만 속하는 `Keep-Alive`·`Proxy-Connection`·`TE`·`Upgrade`도 버린다 (2026-10-29 사용자 결정). 목록은 RFC 9110이 중개자가 전달 전에 지우라고 한 필드다 (SHOULD, raw/rfc9110.txt:2604-2617). 서버는 중개자가 아니지만 스크립트 응답을 클라이언트에 전달하는 자리라 같은 목록을 쓴다 (**판단**). 204·304는 본문을 버리고 304에는 `Content-Length`를 보내지 않는다 (raw/rfc9110.txt:7042-7043, raw/rfc9110.txt:7477-7478, raw/rfc9110.txt:3232-3236). `Status`의 reason phrase는 쓰지 않고 서버의 것을 보낸다. 1xx `Status`는 502.
   - 출력은 스크립트가 `Content-Length`를 줘도 EOF까지 읽는다. subject는 "`Content-Length`가 없으면 EOF가 끝"이라고 하지만 (raw/subject.md:180), RFC 3875는 EOF까지 모두 읽어야 한다고 한다 (MUST, raw/rfc3875.txt:1521-1524).
   - 출력 상한 `kMaxCgiOutputBytes`(16MB): 출력은 응답 전에 메모리에 모으므로 끝없이 출력하는 스크립트가 시간 초과까지 메모리를 키울 수 있다. 넘으면 자식을 죽이고 502.
   - local redirect: 다시 처리할 메서드를 RFC가 정하지 않는다 (raw/rfc3875.txt:1310-1314). 원래 요청이 HEAD면 HEAD, 아니면 본문 없는 GET으로, `Host`만 옮겨 처리한다. 반복은 `kMaxInternalRedirects`(10)까지, 넘으면 500 (결정 6).
