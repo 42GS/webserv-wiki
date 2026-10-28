@@ -622,3 +622,9 @@
   - Ubuntu 22.04에서 단위 105, 통합 124(느린 테스트 포함, root라 2개 건너뜀) 통과.
   - G-22가 반환값 복사 생략을 잡는지는 `-fno-elide-constructors` 빌드로 확인했다: 바꾼 코드는 실패(3.0배), 바꾸기 전 코드는 통과.
   - 같은 모양(성공 여부를 반환하고 결과는 매개변수로)이 남은 곳은 이번 범위 밖으로 두었다: `normalizePath`, `Server::openListeners(error)`, `Listener::open(error)`, `readWholeFile`, `regularFileSize`, `parseDecimal` 등의 해석 함수, `RequestParser`의 버퍼 소비 함수, `parseCgiOutput`(본문을 옮겨 가져감).
+
+## [2026-10-29] query | 출력 매개변수 정리 범위를 정함
+- 갱신: [[analysis/design]] 1절 (출력 매개변수 방침)
+- 메모: 남은 출력 매개변수(약 45개 함수, 20개 파일)까지 바꾸려다 멈췄다.
+  - 바꾸려면 C++98용 `Maybe<T>`(C++17 `std::optional`의 최소 판)가 필요하다. libc++ 헤더로 비교했다(Xcode SDK `c++/v1/optional`: C++17 조건 350줄, union 저장 380-383줄, 빈 값 `value()`가 예외 1170-1172줄). `Maybe<T>`는 빈 값 읽기를 막지 못한다.
+  - 사용자와 오버 엔지니어링이고 평가 영향이 없다고 보고 지금 상태로 두기로 했다.
