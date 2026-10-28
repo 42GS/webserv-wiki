@@ -41,14 +41,14 @@ tests/                unit/(C++ 단위 테스트), integration/(Python 통합 �
 - 공용 `util/`은 두지 않는다. 문자열 처리 같은 도우미는 그것을 쓰는 모듈 안에 둔다. 두 모듈 이상에서 같은 이유로 쓰게 되면 그때 뺀다. 이 규칙으로 4단계 리뷰 뒤에 파일 종류 확인과 파일 읽기를 `fs/`로, 16진수 해석을 `http/Hex`로 뺐다. 6단계에서는 요청 파서 안에 있던 token·목록·공백 처리를 multipart 파서도 쓰게 되어 `http/FieldSyntax`로 뺐다(parameter·quoted-string 해석을 더함).
 - 헤더에는 다른 파일이 쓰는 상수·자료형만 둔다 (2026-10-17 사용자 결정. 2026-10-16의 "상수와 자료형은 모두 헤더에" 규칙을 가독성 때문에 바꿨다). 여러 파일이 쓰는 어휘(상태 코드 `http/StatusCodes.hpp`, 헤더 이름, 메서드 이름)와 12절의 조정용 값(`core/Limits.hpp`, 본문 상한은 `config/ConfigLimits.hpp`)은 헤더에 둔다. 한 `.cpp`에서만 쓰는 상수·표와 그 행 타입은 그 `.cpp`의 이름 없는 namespace 맨 위에 둔다. 한 `.cpp`에서만 쓰는 보조 클래스·함수도 그 `.cpp`의 이름 없는 namespace에 둔다. 근거: C++ Core Guidelines SF.22는 다른 파일에 내보내지 않는 것을 모두 이름 없는 namespace에 두라고 하고, 구현 파일에 정의한 "helper" 클래스·함수를 예로 든다 (raw/cpp-core-guidelines.md:19791-19796, raw/cpp-core-guidelines.md:19816). SF.21은 헤더에 이름 없는 namespace를 쓰지 말라고 한다 (raw/cpp-core-guidelines.md:19758-19762). Google C++ Style Guide도 다른 파일이 참조하지 않는 `.cc` 파일의 정의에 internal linkage를 권하고 `.h` 파일에는 쓰지 말라고 한다 (raw/google-cpp-style-guide.md:434). 이렇게 두면 다른 파일이 같은 이름을 선언해도 서로 독립이다 (raw/google-cpp-style-guide.md:438). 자세한 내용은 [[sources/cpp-core-guidelines]], [[sources/google-cpp-style-guide]]. 의미가 바로 옆 코드나 주석에서 보이는 값(문법상 글자 위치, 진법, `%XX`의 2, fd의 -1, 참고한 알고리즘의 숫자)은 리터럴로 쓴다.
 - 주석은 Doxygen 형식이고, 영어 문장 바로 아래 줄에 같은 뜻의 한국어를 쓴다 (2026-10-17 사용자 결정). 파일마다 `@file`, 헤더의 모든 선언과 `.cpp`의 이름 없는 namespace 함수에 `@brief`·`@param[in/out]`·`@return`을 단다. 매개변수 없는 조회 함수는 `@brief`만. 구조체·클래스 멤버 주석은 선언 위 한 줄(`/** 영어 / 한국어 */`), 열거값과 정렬한 상수 표는 줄 끝 `/**< */`. 헤더에 문서가 있는 함수는 `.cpp` 정의에서 되풀이하지 않고, 구현 쪽 이유만 적는다. 근거: Google C++ Style Guide는 정의의 주석에 선언의 주석을 되풀이하지 말고 어떻게 하는지에 집중하라고 하고 (raw/google-cpp-style-guide.md:2645), 정의에 쓸 내용으로 쓴 기법, 단계 개요, 다른 방법 대신 이 방법을 고른 이유를 예로 든다 (raw/google-cpp-style-guide.md:2643). 복사 금지용 private 선언은 `/// @cond`로 문서에서 뺀다. 테스트 코드도 같은 형식을 쓴다 (2026-10-23 사용자 결정). 단위 테스트(C++)는 파일마다 `@file`을 달고, 테스트 헤더의 선언과 이름 없는 namespace 도우미에 위 태그를 단다. `TEST_CASE` 본문에는 이름이 내용을 말하므로 문서 주석을 달지 않는다. 테스트 ID를 쓰는 파일은 `@file` 설명에 "Test IDs (X-xx) refer to the test plan in the wiki" 문장을 둔다. 통합 테스트(Python)는 Doxygen 태그 없이 docstring과 `#` 주석에 영어 줄 바로 아래 한국어 줄을 쓴다. 모듈과 도우미 함수·메서드에는 docstring을 단다. `test_*` 메서드에는 docstring을 달지 않고 위의 `#` 주석으로 설명한다. docstring을 달면 `unittest -v`가 테스트 이름 다음 줄에 그 첫 줄을 찍기 때문이다 (2026-10-23 Ubuntu 22.04의 Python 3.10.12와 macOS의 Python 3.14.7에서 직접 실행해 확인). src처럼 줄 끝의 짧은 표기 주석(`// a.b.c.d` 같은 것)은 영어만 둔다.
-- 로그 모듈은 필요해질 때 만든다.
+- 로그 모듈은 필요해질 때 만든다. 2026-10-29에 운영 로그가 필요해져 `core/Logger`를 만들었다 (결정 19, 11절).
 
 ## 2. 모듈과 책임
 
 | 모듈 | 책임 | 하지 않는 것 |
 |---|---|---|
 | `config` | 설정 파일을 읽어 검증된 `ServerConfig` 목록을 만든다. 잘못되면 시작 전에 에러로 끝낸다 | 네트워크·HTTP |
-| `core` | `poll()` 루프, 객체 수명 관리(`Server`), 자식 회수, 시그널 | HTTP 의미 해석 |
+| `core` | `poll()` 루프, 객체 수명 관리(`Server`), 자식 회수, 시그널, 로그 파일 | HTTP 의미 해석 |
 | `http` | 연결의 소켓 I/O와 상태 전이, 요청 파싱, 응답 직렬화 | 요청을 어떻게 처리할지 결정 |
 | `app` | 완성된 요청 하나를 받아 응답 또는 CGI 실행으로 바꾼다 (Router → Handler 조율) | 소켓 I/O |
 | `route` | 요청 + 설정 → 처리 방식 결정 (경로 정규화, location 선택, 메서드 검사) | 실제 처리 |
@@ -236,6 +236,7 @@ public:
 | `CgiProcess` | 그 요청의 `Connection` (하나만) | CGI 완료 후 또는 `Connection` 소멸 시 |
 | `CgiPipe` (입력·출력) | 그 `CgiProcess` | `CgiProcess` 소멸 시 (먼저 `unwatch`) |
 | 끝난 자식의 pid | `ChildReaper` | `waitpid`로 회수되면 |
+| `Logger` (로그 파일 두 개) | `main` | 프로그램 끝. 다른 객체는 `ConnectionServices`로 받은 `const` 참조만 갖는다 |
 
 - 소유자가 하나뿐이라 C++98에서도 해제 경로가 분명하다. 다른 객체는 참조만 갖고, 수명이 더 긴 쪽만 참조한다(`Connection` → `ServerConfig`, `CgiProcess` → 자기 `Connection`이 가진 요청의 본문).
 - `Server`는 `LoopObserver`를 구현한다. `afterIteration`에서 연결 타임아웃 점검 → 닫힌 연결 삭제 → `ChildReaper::reap()`를 차례로 한다. `Listener`가 `accept`하면 `Server::adopt(fd, ...)`로 `Connection`을 넘긴다.
@@ -243,10 +244,11 @@ public:
 ```cpp
 class Server : public LoopObserver, public AcceptHandler {   // AcceptHandler: Listener가 accept한 fd를 넘기는 곳
 public:
-    Server(const std::vector<ServerConfig>& configs, IoRegistry& registry, ChildReaper& reaper, time_t now);
+    Server(const std::vector<ServerConfig>& configs, const ConnectionServices& services, time_t now);  // services: 루프·reaper·logger 참조 묶음
     ~Server();                                  // 모든 연결 삭제(CGI 자식은 reaper로), listener 삭제
     bool openListeners(std::string& error);     // 실패하면 false, error에 원인
     void adopt(int clientFd, const ListenContext& where);
+    void acceptFailed(const std::string& listenAddress);  // 오류 로그에 남긴다
     void afterIteration(time_t now);
     bool shouldStop() const;                    // signals::stopRequested()
 };
@@ -281,7 +283,7 @@ READ_HEAD ──머리 완성──▶ READ_BODY ──본문 완성──▶ (R
 ```cpp
 class Connection : public IoHandler {
 public:
-    Connection(int fd, const ListenContext& where, const CgiServices& services, time_t now);
+    Connection(int fd, const ListenContext& where, const ConnectionServices& services, time_t now);
     ~Connection();                               // CGI가 남아 있으면 kill 후 reaper에 넘김
     int   fd() const;
     short wantedEvents() const;
@@ -391,7 +393,7 @@ struct ProcessOutcome {
 
 class RequestProcessor {
 public:
-    RequestProcessor(const ListenContext& where, const CgiServices& services);
+    RequestProcessor(const ListenContext& where, const ConnectionServices& services);  // services.cgi()를 CgiProcess에 넘긴다
     size_t         bodyLimitFor(const Request& req) const;
     ProcessOutcome process(const Request& req, time_t now) const;     // 응답 또는 시작한 CGI
     ProcessOutcome afterCgi(const Request& req, CgiProcess& cgi, time_t now) const;  // 응답 또는 local redirect. 출력을 가져간다(11절)
@@ -504,6 +506,7 @@ public:
 
 ```cpp
 struct CgiServices { IoRegistry& registry; ChildReaper& reaper; };   // 모든 CGI가 쓰는 것
+struct ConnectionServices { IoRegistry& registry; ChildReaper& reaper; const Logger& logger; CgiServices cgi() const; };  // 모든 연결이 쓰는 것
 
 struct CgiLaunch {                      // 실행할 것
     std::string interpreter;            // "cgi" 지시자의 프로그램 (절대 경로)
@@ -567,6 +570,7 @@ CgiOutput parseCgiOutput(std::string& output);   // RESPONSE, LOCAL_REDIRECT, IN
 | 처리 중 서버 문제 (`fork`·`pipe` 실패, 파일을 읽지 못함) | 500. 파일이 없으면 404, 권한이 없으면 403 |
 | handler 안의 예외 (`std::bad_alloc` 등) | `EventLoop`가 잡아 `onFailure()` → 그 연결만 닫는다. 단 메모리가 바닥나면 예외 없이 프로세스가 끝날 수 있어 이것만으로는 방어가 안 된다 ([[sources/design-checks-observed]]). 본문 크기 상한(결정 11)이 실제 방어다 |
 | 소켓 I/O -1·0 | 그 연결만 닫는다 |
+| 운영자가 알아야 할 사건 | `logs/error.log`에 한 줄 (결정 19): 시작·종료, CGI 시작 실패(500)·잘못된 출력(502)·시간 초과(504), 끝나지 않은 요청(408), 멈춘 전송, `accept()` 실패. 응답마다 `logs/access.log`에 한 줄 |
 
 - 예외는 설정 파싱과 요청 처리 내부에서만 던진다. 서버 프로세스는 어떤 요청에도 끝나지 않아야 한다 (raw/evaluation-sheet-en.md:24).
 - 8단계 리뷰에서 더한 규칙 (2026-10-18, **판단**):
@@ -616,8 +620,8 @@ CgiOutput parseCgiOutput(std::string& output);   // RESPONSE, LOCAL_REDIRECT, IN
 | SRP | `Connection`은 I/O·상태만, 처리 조율은 `RequestProcessor`, 본문 출처는 `ResponseStream`, 자식 회수는 `ChildReaper` |
 | 리소스 해제 | 모든 객체에 소유자가 하나 (4절 표). `EventLoop`는 소유하지 않는다 |
 | DIP·낮은 결합도 | `EventLoop`는 `IoHandler`·`LoopObserver`만 안다. `cgi`는 이벤트 루프를 `IoRegistry` 인터페이스로만 안다 (`ChildReaper`는 구체 클래스) |
-| 파라미터 4개 이하 | `ListenContext`, `CgiServices`, `CgiLaunch`로 묶었다 |
-| 높은 응집도·YAGNI | 공용 `util/`과 로그 모듈을 두지 않는다 |
+| 파라미터 4개 이하 | `ListenContext`, `CgiServices`, `ConnectionServices`, `CgiLaunch`로 묶었다 |
+| 높은 응집도·YAGNI | 공용 `util/`을 두지 않는다. 로그 모듈은 필요해진 뒤에 만들었다 (결정 19) |
 | 매직 넘버 금지 | 12절 상수. 의미가 바로 옆에서 보이는 값은 리터럴로 쓴다 (1절) |
 
 의도한 예외:

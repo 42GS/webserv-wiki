@@ -2,7 +2,7 @@
 title: 설계 결정 목록
 type: analysis
 sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/posix-remove.md, raw/posix-rmdir.md, raw/fs-observed-remove-name-length.md, raw/rfc9110.txt, raw/rfc9112.txt, raw/rfc3875.txt, raw/rfc6265.txt, raw/rfc7578.txt, raw/nginx-core-module.md, raw/nginx-request-processing.md, raw/nginx-index-module.md, raw/nginx-rewrite-module.md, raw/design-checks-observed.md]
-updated: 2026-10-25
+updated: 2026-10-29
 ---
 
 # 설계 결정 목록
@@ -30,6 +30,7 @@ updated: 2026-10-25
 | 16 | `limit_except`가 없는 location은 GET·HEAD만 받음 | 2026-10-17 | [[concepts/configuration-file]], [[analysis/design]] 3절 |
 | 17 | 같은 이름의 업로드는 409로 거부 | 2026-10-17 | [[concepts/file-upload]] |
 | 18 | 업로드 요청 하나의 파일은 5개까지, 넘으면 413 | 2026-10-17 | [[concepts/file-upload]], [[analysis/design]] 7·12절 |
+| 19 | 운영 로그는 일반 파일 두 개(`logs/access.log`, `logs/error.log`)에 남김 | 2026-10-29 | [[analysis/design]] 11절 |
 
 1~3은 앞서 정한 것을 함께 모았다. 근거는 각 관련 페이지에 있다.
 
@@ -157,6 +158,20 @@ updated: 2026-10-25
 - 넘을 때의 코드 (사용자가 400과 413 중 고르게 맡김, **판단**): 413. 400은 잘못된 문법이나 framing처럼 클라이언트 오류로 보이는 요청의 코드다 (raw/rfc9110.txt:7543-7546). 파일 6개짜리 요청은 문법이 맞다. 413은 요청 내용이 서버가 처리하려는 양보다 커서 거절할 때의 코드다 (raw/rfc9110.txt:7710-7712).
 - 본문은 끝까지 읽은 뒤이므로 연결은 유지한다(파서의 413과 다름).
 - 시험: [[analysis/test-plan]] F-15.
+
+## 19. 운영 로그는 일반 파일 두 개에
+
+- 계기: 기존 구현(`~/dev/webserv`)과 비교하며 운영용 로그가 없다는 점을 확인했고, 사용자가 구현을 요청했다 (2026-10-29).
+- 쟁점: 소켓·pipe처럼 기다릴 수 있는 I/O는 하나의 `poll()`을 거쳐야 하고, 일반 디스크 파일은 예외다 (raw/subject.md:134, raw/subject.md:136). 표준 출력·에러는 실행 방법에 따라 pipe일 수 있다(`./webserv | tee`). 그러면 `poll()` 없이 쓰는 것이 되고 막힐 수도 있다 (**판단**).
+- 결정 (사용자, 2026-10-29): 일반 파일 `logs/access.log`와 `logs/error.log`에 덧붙인다(`O_APPEND`). 내용은 접근 로그(응답마다 클라이언트 주소, 클라이언트가 보낸 요청 줄, 상태, 본문 바이트)와 오류 로그(시작·종료, CGI 실패·시간 초과·시작 실패, 끝나지 않은 요청의 408, 멈춘 전송, `accept()` 실패)다.
+- 구현:
+  - `core/Logger`를 `main`이 소유한다. `ConnectionServices`(이벤트 루프, reaper, logger 참조 묶음)로 `Server` → `Connection` → `RequestProcessor`에 넘긴다. 생성자 매개변수를 넷 이하로 지키려고 묶었다.
+  - 한 줄은 `write()` 한 번이다. 실패해도 다시 쓰지 않는다.
+  - 클라이언트가 넣을 수 있는 제어 문자는 `?`로 바꿔, 줄을 위조하지 못하게 한다.
+  - 시각은 결정 10의 시계를 쓴다(초 단위).
+  - 시작할 때 로그 파일을 열지 못하면 서버를 시작하지 않는다(종료 코드 1). `mkdir`은 허용 함수가 아니라서 (raw/subject.md:113) `logs/` 디렉토리는 저장소에 둔다(`logs/.gitkeep`). 사용자 전역 `~/.gitignore`가 `logs`를 무시하므로 이 파일만 `git add -f`로 넣었다.
+- 남겨 둔 것: 시작과 종료 때 표준 출력·에러에 한 줄씩 쓰는 것은 그대로 둔다. 서비스 중의 I/O가 아니다 (**판단**).
+- 시험: [[analysis/test-plan]] 10절.
 
 ## 아직 정하지 않은 것
 

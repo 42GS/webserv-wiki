@@ -594,3 +594,17 @@
 ## [2026-10-29] query | CGI 헤더 필터링 (기존 구현 비교에서 가져옴)
 - 갱신: [[concepts/cgi]] 2절 `HTTP_*` 세부 규칙, [[analysis/design]] 9절 출력, [[analysis/test-plan]] G-01·G-07
 - 메모: 사용자 요청("1번 선반영")으로, 기존 구현(`~/dev/webserv`)과 비교하며 찾은 CGI 보안 처리 두 가지를 넣었다 (webserv `cad952e`). (1) 요청 헤더 `Proxy`(httpoxy, NVD CVE-2016-5385 설명을 NVD API로 확인)와 이름에 `_`가 든 헤더는 `HTTP_` 변수로 넘기지 않는다. 근거는 변수를 다 만들 의무가 없다는 raw/rfc3875.txt:1051-1052와 NGINX 기본값(raw/nginx-core-module.md:2060-2066). (2) 스크립트 출력의 `Keep-Alive`·`Proxy-Connection`·`TE`·`Upgrade`도 버린다 (raw/rfc9110.txt:2604-2617 목록, 중개자 규칙을 쓰는 것은 **판단**). 단위 테스트 g01·g07에 검사를 더했고 macOS 단위 102, 통합 test_cgi 통과.
+
+## [2026-10-29] query | 운영 로그 구현, 기존 구현과 poll·성능 실측 비교
+- 갱신: [[analysis/design-decisions]] 19(새 결정), [[analysis/design]] 1·2·4·5·7·9·11·13절, [[analysis/test-plan]] 10절(새 절, L-01~L-05)
+- 메모: 사용자 요청("운영을 위한 로그 출력 기능 구현해줘")으로 `logs/access.log`·`logs/error.log`를 쓰는 `core/Logger`를 넣었다 (webserv `13982df`). 위치와 내용은 사용자가 골랐다(파일, 접근+오류). macOS 단위 105, Ubuntu 22.04 단위 105·통합 124(느린 테스트 포함, root라 2개 건너뜀) 통과. 사용자 전역 `~/.gitignore`가 `logs`를 무시해서 `logs/.gitkeep`만 `git add -f`로 넣었다.
+- 메모 (정정): 질문에서 일반 파일의 `poll()` 예외 근거를 raw/subject.md:137-141로 적었는데, 맞는 줄은 134·136이다. 앞선 비교 보고에서 "제 구현에는 세션 보너스가 없다"고 한 것도 틀렸다. 결정 8대로 CGI 예제로 있다(E-07).
+- 메모 (실측, Ubuntu 22.04 컨테이너 `webserv-bench` = webserv-dev + strace·wrk, 서버는 CPU 0, wrk는 CPU 2-3에 고정, 1KB 파일, 기존 `1b3e7ff` 대 현재 `13982df`):
+  - 연결 50개, keep-alive 클라이언트: 현재 약 73,600 rps, 기존 약 47,200 rps(기존은 응답마다 닫음). 3회 모두 같은 순서였다.
+  - 요청마다 연결을 닫게 하면: 현재 약 32,500 rps, 기존 약 44,600 rps(3회). strace로 센 요청당 시스템 콜은 현재 19, 기존 16이다. 현재 쪽에 더 있는 것은 poll 한 바퀴마다 시계 파일의 `openat`·`write`·`close`·`newfstatat`, 접근 로그 `write`, accept마다 `getsockname`이다.
+  - 유휴 연결이 poll 집합에 있을 때(요청마다 닫음, 유휴 연결을 모두 accept한 뒤 측정): 0·1000·3000개에서 기존 43,655·9,767·2,416 rps, 현재 30,078·7,500·1,774 rps. 1000요청당 user CPU는 기존 15·34·85ms, 현재 14·57·180ms다. 둘 다 바퀴마다 O(n)이고, 현재 쪽의 user 시간이 더 빨리 는다. 매 바퀴 pollfd를 새로 만드는 비용 등이 원인으로 보인다 (**판단**, 프로파일러로 나누지 않음).
+  - 연결이 몰릴 때: 기존 backlog 128에서 연결 1000개가 5.15~6.2초 걸렸다. 연결 5번이 약 1.02초씩 멈췄는데, SYN을 다시 보내느라 그런 것으로 보인다(**판단**). 현재(`SOMAXCONN`, 이 컨테이너에서 4096)는 0.11~0.19초였다.
+  - 아무 요청이 없을 때: 10초 동안 기존은 시스템 콜 0번(poll 무기한 대기), 현재는 1초마다 깨어나 45번(ppoll + 시계 파일 4번)이다.
+  - 5MB 파일, 연결 4개: 현재 1,305 rps(약 637MB/s, 최대 RSS 3.4MB), 기존 304 rps(약 148MB/s, 최대 RSS 44MB).
+  - CGI(작은 Python 스크립트): 기존 188 rps, 현재 179 rps. fork와 Python 시작 시간이 대부분이다.
+  - 측정 스크립트는 세션 스크래치(`cmp/bench/run*.sh`)에만 있다. 처음 측정에서 `-H Connection:close`(콜론 뒤 공백 없음)는 wrk가 헤더로 보내지 않은 것으로 보여, 그 결과는 keep-alive로 보고 위 숫자에서 뺐다.

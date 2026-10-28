@@ -315,3 +315,18 @@ R1~R3은 실패를 만들 방법이 없어 코드 읽기로 확인했다(2026-10
 
 - 시연 자료의 판단: 사이트 루트는 `limit_except` 없이 읽기 전용(결정 16)이고, 업로드한 `.py`는 `cgi`가 없는 `/upload/`에 저장되어 실행되지 않는다 ([[analysis/design-decisions]] 7). 본문 크기 시험은 평가표 명령이 `plain/text` 본문이라 업로드(415)가 아닌 본문을 돌려주는 CGI(`/limit/echo.py`, 상한 64바이트)로 보인다.
 - `127.0.0.2`는 Ubuntu 22.04 컨테이너에서 바로 bind되고 macOS에서는 `Can't assign requested address`였다(2026-10-18 실행). 평가는 Ubuntu에서 한다.
+
+## 10. 운영 로그
+
+읽은 위키: [[analysis/design-decisions]] 19, [[analysis/design]] 11절, raw/subject.md:134-136 (일반 파일은 `poll()` 예외).
+구현은 webserv `13982df`. 로그 줄은 `[IMF-fixdate] 내용` 형식이다.
+
+| ID | 요구사항 | 근거 | 수준 | 기대 결과 | 현재 테스트 | 상태 |
+|---|---|---|---|---|---|---|
+| L-01 | 응답마다 접근 로그 한 줄: 클라이언트 주소, 클라이언트가 보낸 요청 줄, 상태, 본문 바이트(HEAD는 0). 오지 않은 부분은 `-`. 제어 문자는 `?`로 바꿔 한 줄을 지킨다 | 결정 19 | U, I | `127.0.0.1 "GET / HTTP/1.1" 200 15` | `logger_test.cpp` 3개, `test_logs.py` `test_l01_*` 2개 | 있음 |
+| L-02 | 시작과 (SIGINT로) 종료를 오류 로그에 남긴다 | 결정 19 | I | `started: <설정 경로>`, `shutting down` | `test_l02_start_and_stop_are_logged` | 있음 |
+| L-03 | CGI의 잘못된 출력(502)·시간 초과(504)를 오류 로그에 남긴다 | 결정 19 | I | `CGI response invalid: /cgi/garbage.py (502)`, `CGI timed out and was killed: /cgi/loop.py (504)` | `test_l03_*` 2개 (시간 초과는 느린 테스트) | 있음 |
+| L-04 | 로그 파일을 열 수 없으면 시작하지 않는다 | 결정 19 | I | 종료 코드 1, `cannot open log files` | `test_l04_missing_log_directory_stops_startup` | 있음 |
+| L-05 | 끝나지 않은 요청(408), 멈춘 전송, CGI 시작 실패(500), `accept()` 실패를 오류 로그에 남긴다 | 결정 19 | R | 코드 읽기: `Connection::checkTimeout`, `RequestProcessor::startCgi`, `Server::acceptFailed` | 없음 (30초 시간 제한·fd 고갈을 만들어야 함) | 코드 읽기만 |
+
+- 결과 (2026-10-29): macOS 단위 105, Ubuntu 22.04 단위 105와 통합 124(느린 테스트 포함, root라 2개 건너뜀) 통과.
