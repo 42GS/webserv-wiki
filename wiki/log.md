@@ -608,3 +608,7 @@
   - 5MB 파일, 연결 4개: 현재 1,305 rps(약 637MB/s, 최대 RSS 3.4MB), 기존 304 rps(약 148MB/s, 최대 RSS 44MB).
   - CGI(작은 Python 스크립트): 기존 188 rps, 현재 179 rps. fork와 Python 시작 시간이 대부분이다.
   - 측정 스크립트는 세션 스크래치(`cmp/bench/run*.sh`)에만 있다. 처음 측정에서 `-H Connection:close`(콜론 뒤 공백 없음)는 wrk가 헤더로 보내지 않은 것으로 보여, 그 결과는 keep-alive로 보고 위 숫자에서 뺐다.
+
+## [2026-10-29] query | 로그 기능 뒤 누수 재점검, 디펜스 자료 갱신
+- 갱신: [[analysis/test-plan]] 8절 결과 표, [[lessons/00-guide]] 코드 기준, [[lessons/13-cgi]] 13.2·13.5, [[lessons/14-resilience]] 14.3·14.4(새 절), [[lessons/15-defense-qa]] Q15~Q17
+- 메모: 사용자 요청("1, 2, 3 차례대로 진행")의 1·2번이다. (1) Ubuntu 22.04 컨테이너에서 valgrind 3.18.1로 단위 105개와 통합 124개(8절 절차)를 돌렸다. 모두 통과했고, 서버 기록 106개는 오류·누수 0, 끝날 때 fd는 표준 3개와 valgrind 기록 파일뿐이었다. (2) 레슨에 CGI 헤더 필터링, 운영 로그, 부하 질문을 더했다. 새로 넣은 코드 위치는 `13982df` 기준이고, 다른 장은 `5ca93a2` 기준 그대로라 00-guide에 적었다. 새 인용(raw/rfc3875.txt:1051-1052·1052-1055, raw/rfc9110.txt:2604-2617, raw/nginx-core-module.md:2060-2066, raw/subject.md:113·134·136, raw/evaluation-sheet-en.md:113-118)은 같은 날 원문을 열어 대조한 줄이다.

@@ -2,7 +2,7 @@
 title: "레슨 14: 절대 죽지 않기"
 type: lesson
 sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/posix-waitpid.md, raw/valgrind-observed-sigint.md, raw/siege.pod]
-updated: 2026-10-27
+updated: 2026-10-29
 ---
 
 # 레슨 14: 절대 죽지 않기
@@ -55,9 +55,33 @@ void install() {
 | 통합 테스트 (Ubuntu, 느린 테스트 포함) | 118개 통과 |
 | siege `-b -c 50`, 빈 페이지 2분 | 3,721,561건, availability 100%, RSS 1.9MB 일정 |
 | valgrind (통합 테스트 전체, 모의 평가) | 오류 0, 누수 0, 남은 fd는 표준 3개 |
+| valgrind 다시 (2026-10-29, 로그 기능 뒤, 단위 105·통합 124) | 오류 0, 누수 0, 로그 파일도 닫힘 |
 | Electric Fence | 크래시 없음 |
 
 근거: [[analysis/test-plan]] 8절, [[analysis/mock-evaluation]].
 
 > [!example] 쉬운 예 — siege
 > siege는 손님 50명을 한꺼번에 들여보내 계속 주문하게 하는 연습 도구다. availability는 "문을 두드린 손님 중 몇 %가 들어왔나"다. 4xx·5xx 응답은 깎이지 않고, 연결이 거부되거나 끊기면 깎인다 (raw/siege.pod:373-378). 평가 기준은 99.5% 초과다 (raw/evaluation-sheet-en.md:114) → [[concepts/testing]].
+
+## 14.4 운영 로그 (2026-10-29, webserv `13982df`)
+
+> [!example] 쉬운 예
+> 가게 장부가 두 권이다. 손님 장부(`logs/access.log`)에는 손님마다 "몇 시, 누가, 무엇을 주문했고, 어떻게 나갔나"를 한 줄씩 적는다. 사고 장부(`logs/error.log`)에는 "가게 문 열고 닫음, 제빵사가 안 나옴, 손님이 주문하다 말았음" 같은 일만 적는다.
+
+- 접근 로그: 응답마다 한 줄. `[날짜] 127.0.0.1 "GET / HTTP/1.1" 200 15` (클라이언트, 클라이언트가 보낸 요청 줄, 상태, 본문 바이트). 요청 줄이 다 오기 전에 실패하면 빈 부분이 `-`다 (`src/http/Connection.cpp:304-312`).
+- 오류 로그: 시작·종료 (`src/main.cpp:83`, `:98`), CGI 시작 실패·잘못된 출력 (`src/app/RequestProcessor.cpp:170`, `:220`), CGI 시간 초과·끝나지 않은 요청·멈춘 전송 (`src/http/Connection.cpp:113`, `:120`, `:271`), `accept()` 실패 (`src/core/Server.cpp:106`).
+- 한 줄은 `write()` 한 번이고, `O_APPEND`로 연다 (`src/core/Logger.cpp:42`, `:85-90`). 실패해도 다시 쓰지 않고 서비스를 계속한다.
+- 클라이언트가 요청에 넣은 제어 문자는 `?`로 바꾼다 (`src/core/Logger.cpp:26-33`). 줄 끝을 넣어 가짜 로그 줄을 만들지 못하게 한다.
+- `Logger`는 `main`이 갖고, 연결들은 `ConnectionServices`로 받은 참조만 쓴다 ([[analysis/design]] 4절).
+
+> [!tip] 왜 stderr가 아니라 파일인가
+> 소켓·pipe처럼 기다릴 수 있는 I/O는 `poll()`을 거쳐야 하고, 일반 디스크 파일은 예외다 (raw/subject.md:134, raw/subject.md:136). stdout·stderr는 실행 방법에 따라 pipe일 수 있다(`./webserv | tee`). 그러면 `poll()` 없이 쓰는 셈이 된다 **(판단)**. 그래서 로그는 일반 파일에만 쓴다 ([[analysis/design-decisions]] 19).
+
+> [!warning] `logs/` 디렉토리가 있어야 시작한다
+> `mkdir`은 허용 함수가 아니라 (raw/subject.md:113) 서버가 디렉토리를 만들 수 없다. 저장소에 `logs/.gitkeep`이 있고, 저장소 루트에서 실행하면 된다. 없으면 "cannot open log files"를 내고 종료 코드 1로 끝난다.
+
+> [!info] 평가 때
+> siege를 `-b -c 50`으로 1분 돌리면 접근 로그가 약 120MB(166만 줄) 쌓인다(2026-10-29 Ubuntu 컨테이너 실측). 메모리는 늘지 않는다(RSS 3.2MB → 2.3MB). 평가 전에 `logs/*.log`를 비워 두고, 평가 중에는 `tail -f logs/error.log`로 사고만 보여 준다.
+
+> [!question]- 확인 문제: 클라이언트가 요청 줄에 CR LF를 넣으면 로그가 두 줄이 되나요?
+> 아니다. 로그에 쓰는 텍스트의 제어 문자(CR·LF 포함)는 모두 `?`로 바뀌어, 호출 하나가 언제나 한 줄이다. 단위 테스트 `controlCharactersStayOnOneLine`이 이것을 본다 ([[analysis/test-plan]] L-01).

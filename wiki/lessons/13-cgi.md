@@ -1,8 +1,8 @@
 ---
 title: "레슨 13: CGI — 다른 프로그램에게 일 맡기기"
 type: lesson
-sources: [raw/rfc3875.txt, raw/subject.md, raw/evaluation-sheet-en.md, raw/design-checks-observed.md, raw/os-observed-pipe-poll.md, raw/rfc6265.txt, raw/posix-exit.md]
-updated: 2026-10-27
+sources: [raw/rfc3875.txt, raw/subject.md, raw/evaluation-sheet-en.md, raw/design-checks-observed.md, raw/os-observed-pipe-poll.md, raw/rfc6265.txt, raw/posix-exit.md, raw/nginx-core-module.md, raw/rfc9110.txt]
+updated: 2026-10-29
 ---
 
 # 레슨 13: CGI — 다른 프로그램에게 일 맡기기
@@ -31,6 +31,11 @@ location에 `cgi .py /usr/bin/python3`가 있으면, 경로를 앞에서부터 �
 | `SERVER_NAME`, `SERVER_PORT`, `REMOTE_ADDR` | 연결의 두 끝 주소 (`getsockname`, `accept` 결과) |
 | `HTTP_*` | 요청 헤더. 이름을 대문자로, `-`를 `_`로 (raw/rfc3875.txt:1038-1042). 같은 헤더는 `, `로 합침 (MUST, raw/rfc3875.txt:1044-1046). `Authorization`·`Content-Length`·`Content-Type`은 넣지 않음 (SHOULD, raw/rfc3875.txt:1052-1055) |
 | `REDIRECT_STATUS=200`, `SCRIPT_FILENAME` | php-cgi용. 없으면 php-cgi가 실행을 거부함 → [[sources/php-cgi-observed-env]] |
+
+> [!tip] 넘기지 않는 헤더 두 가지 더 (2026-10-29, webserv `cad952e`)
+> - `Proxy` 헤더: `HTTP_PROXY`가 되면 많은 라이브러리가 이것을 바깥으로 나가는 요청의 프록시로 쓴다. 공격자가 스크립트의 바깥 요청을 자기 서버로 돌릴 수 있다("httpoxy", NVD CVE-2016-5385).
+> - 이름에 `_`가 든 헤더: `-`가 `_`로 바뀌므로 `X_Forwarded_For`와 `X-Forwarded-For`가 같은 `HTTP_X_FORWARDED_FOR`가 된다. 클라이언트가 앞단 프록시가 넣은 값을 바꿔칠 수 있다 **(판단)**. NGINX도 기본 설정에서 이런 헤더를 무시한다 (raw/nginx-core-module.md:2060-2066).
+> - 서버가 받은 헤더를 모두 변수로 만들 의무는 없다 (raw/rfc3875.txt:1051-1052). 코드: `src/cgi/CgiEnv.cpp:56-58`, `:77-78` (`13982df` 기준).
 
 쿠키도 `HTTP_COOKIE`로 넘어가므로 보너스 세션은 CGI 예제로 보여 준다 ([[analysis/design-decisions]] 8, `www/cgi-bin/session.py`) → [[concepts/bonus]].
 
@@ -97,7 +102,7 @@ Set-Cookie: a=1
 
 코드: `src/cgi/CgiOutput.cpp:289-320` (parseCgiOutput), `:246-261` (redirectKind).
 
-- 스크립트의 `Content-Length`·`Date`·`Connection`·`Transfer-Encoding`은 버리고 서버 값을 쓴다. 서버는 충돌하는 헤더를 해결해야 한다 (SHOULD, raw/rfc3875.txt:1493-1498).
+- 스크립트의 `Content-Length`·`Date`·`Connection`·`Transfer-Encoding`은 버리고 서버 값을 쓴다. 서버는 충돌하는 헤더를 해결해야 한다 (SHOULD, raw/rfc3875.txt:1493-1498). 연결 하나에만 속하는 `Keep-Alive`·`Proxy-Connection`·`TE`·`Upgrade`도 버린다. 목록은 RFC 9110이 중개자에게 지우라고 한 것이다 (raw/rfc9110.txt:2604-2617, CGI 서버에 쓰는 것은 **판단**). 코드: `src/cgi/CgiOutput.cpp:33-35` (`13982df` 기준).
 - `Set-Cookie` 여러 줄은 합치지 않고 그대로 옮긴다. 합치면 쿠키 뜻이 바뀔 수 있다 (raw/rfc6265.txt:315-319). 그래서 헤더 저장 구조(`HeaderMap`)가 같은 이름을 여러 개 담는다.
 - 헤더 값에 제어 문자가 있으면 502다. CR이 들어가면 응답이 쪼개질 수 있다([[lessons/11-response]]).
 - 판정은 종료 코드가 아니라 **출력 형식**으로 한다. 그래서 `waitpid` 종료 상태 매크로(허용 여부 불분명)를 쓸 필요가 없다. php-cgi는 파일이 없을 때 `Status: 404`를 올바르게 출력하고 종료 코드 255로 끝나는데, 종료 코드로 판정했다면 이 404가 사라졌을 것이다 **(판단)** → [[concepts/cgi]] 5절.

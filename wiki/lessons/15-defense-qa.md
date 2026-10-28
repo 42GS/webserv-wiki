@@ -1,8 +1,8 @@
 ---
 title: "레슨 15: 평가 예상 질문"
 type: lesson
-sources: [raw/evaluation-sheet-en.md, raw/os-observed-pipe-poll.md, raw/subject.md]
-updated: 2026-10-27
+sources: [raw/evaluation-sheet-en.md, raw/os-observed-pipe-poll.md, raw/subject.md, raw/rfc3875.txt]
+updated: 2026-10-29
 ---
 
 # 레슨 15: 평가 예상 질문
@@ -52,6 +52,15 @@ updated: 2026-10-27
 
 > [!question]- Q14. 연결이 영원히 매달리지 않게 하는 방법은?
 > 상태마다 시간 제한이 있다: 첫 바이트 15초, 머리 30초(첫 바이트부터), 본문·전송 무진행 30초, DRAIN 1초/5초, CGI 10초. 머리는 진행이 있어도 연장하지 않아 1바이트씩 보내는 공격을 막는다 ([[lessons/08-connection]]).
+
+> [!question]- Q15. 로그는 남기나요? 어디에, 왜 그렇게요?
+> `logs/access.log`(응답마다 한 줄)와 `logs/error.log`(시작·종료, CGI 실패·시간 초과, 끝나지 않은 요청, `accept` 실패)에 남긴다. stderr가 아니라 일반 파일에 쓰는 이유는, 일반 디스크 파일만 `poll()` 없이 읽고 써도 되기 때문이다 (raw/subject.md:134). stderr는 pipe일 수 있다 **(판단)**. 자세히: [[lessons/14-resilience]] 14.4, [[analysis/design-decisions]] 19.
+
+> [!question]- Q16. CGI에 요청 헤더를 다 넘기나요? 위험한 것은 없나요?
+> `HTTP_*`로 넘기되 네 종류는 뺀다. 인증 정보인 `Authorization`, 다른 변수로 넘기는 `Content-Length`·`Content-Type` (SHOULD, raw/rfc3875.txt:1052-1055), 스크립트의 바깥 요청을 공격자 프록시로 돌릴 수 있는 `Proxy`(httpoxy), `-` 헤더와 같은 변수가 되는 `_` 이름 헤더다. 반대로 스크립트가 낸 연결용 헤더(`Connection`, `Keep-Alive`, `Transfer-Encoding`, `Upgrade` 등)는 응답에 옮기지 않는다 ([[lessons/13-cgi]] 13.2·13.5).
+
+> [!question]- Q17. 부하를 얼마나 견디나요?
+> 평가표는 처리량이 아니라 availability 99.5% 초과, 메모리가 끝없이 늘지 않음, 매달린 연결 없음을 본다 (raw/evaluation-sheet-en.md:113-118). Ubuntu 컨테이너에서 `siege -b -c 50 -t 60S` 빈 페이지: 166만 건, availability 100%, 최장 0.04초, RSS 3.2MB → 2.3MB, fd 수 변화 없음 (2026-10-29, webserv `13982df`). keep-alive를 지원하고, 1MB가 넘는 파일은 64KB씩 나눠 보내 큰 파일도 메모리를 거의 쓰지 않는다. 다른 구현과의 실측 비교는 [[log]] 2026-10-29 항목.
 
 > [!info] 모의 평가에서 찾아 고친 두 가지 (webserv `664692b`, `5ca93a2`)
 > 1. `-std=c++98` 없이 `c++ -Wall -Wextra -Werror`로 빌드하면 `std::auto_ptr` deprecated 경고가 오류가 되던 것을 고쳤다. `std::auto_ptr`를 없애고 실패 경로에서 직접 지운다. subject는 이 플래그로 컴파일하고 `-std=c++98`을 더해도 빌드되라고 한다 (raw/subject.md:49-50). 이 빌드를 시험하는 테스트가 있다 ([[analysis/test-plan]] B-03).
