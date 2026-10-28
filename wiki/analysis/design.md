@@ -422,7 +422,7 @@ public:
     const LocationConfig* matchLocation(const std::string& path) const;   // 가장 긴 prefix, alias면 세그먼트 경계까지 (결정 14)
     const LocationConfig* locationFor(const std::string& encodedPath) const;  // 정규화 후 matchLocation (본문 상한)
     RouteResult route(const Request& req) const;
-    bool mapToFile(const std::string& uriPath, std::string& fsPath) const;    // 에러 페이지·업로드 Location의 매핑
+    std::string mapToFile(const std::string& uriPath) const;    // 에러 페이지·업로드 Location의 매핑. 매핑 못 하면 ""
 };
 ```
 
@@ -522,7 +522,7 @@ public:
     bool start(time_t now);         // pipe, fork, execve. 실패하면 false → 500
     bool isDone() const;            // 출력 EOF
     bool failed() const;            // 읽기 오류, 출력 상한 초과 → 502
-    void takeOutput(std::string& into);   // 출력을 swap으로 넘긴다 (11절)
+    std::string takeOutput();            // 출력을 swap으로 꺼내 값으로 돌려준다 (11절)
     bool hasTimedOut(time_t now) const;   // kCgiTimeout 안에 출력이 안 끝남 → 504
 private:
     CgiStdin*  stdin_;              // IoHandler: 본문을 write
@@ -578,7 +578,7 @@ CgiOutput parseCgiOutput(std::string& output);   // RESPONSE, LOCAL_REDIRECT, IN
   - 소멸자에서는 예외를 내보내지 않는다. `~CgiProcess`는 reaper에 넘기지 못하면 그 자리에서 `SIGKILL` 후 기다린다.
   - 연결별 예외 처리 밖에서 매 바퀴 도는 코드(`ChildReaper::reap`)는 할당하지 않는다.
   - `accept`가 실패하면 listener를 멈춘다(`wantedEvents` 0). `Server::afterIteration`이 연결이 닫혔거나 1초가 지났을 때 다시 켠다. fd가 다 찬 동안 루프가 쉬지 않고 도는 것을 막는다.
-  - 큰 CGI 출력은 pipe 버퍼에서 응답까지 `swap`으로 옮겨 복사하지 않는다 (`CgiProcess::takeOutput`, `parseCgiOutput`이 인자의 본문을 가져감).
+  - 큰 CGI 출력은 pipe 버퍼에서 응답까지 `swap`으로 옮겨 복사하지 않는다 (`CgiProcess::takeOutput`, `parseCgiOutput`이 인자의 본문을 가져감). 2026-10-29에 `takeOutput`을 출력 매개변수 대신 값으로 돌려주게 바꿨다(사용자 규칙: 결과는 반환값으로). 이름 있는 반환 객체 하나를 호출자 변수에 바로 만드는 것은 C++98이 허용하는 생략이고 보장은 아니라서, G-22의 메모리 측정으로 복사가 없는지 확인한다. G-22가 이것을 잡는지도 확인했다 (Ubuntu 22.04, g++ 11, 2026-10-29). `-fno-elide-constructors`로 생략을 끄면 바꾼 코드는 G-22가 실패하고(최대 메모리 증가가 출력의 3.0배), 바꾸기 전 swap 코드(`13982df`)는 통과했다.
   - 결과와 점검 절차는 [[analysis/test-plan]] 8절.
 
 ## 12. 상수 (초기값, 시험하며 조정)

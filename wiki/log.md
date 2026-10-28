@@ -612,3 +612,13 @@
 ## [2026-10-29] query | 로그 기능 뒤 누수 재점검, 디펜스 자료 갱신
 - 갱신: [[analysis/test-plan]] 8절 결과 표, [[lessons/00-guide]] 코드 기준, [[lessons/13-cgi]] 13.2·13.5, [[lessons/14-resilience]] 14.3·14.4(새 절), [[lessons/15-defense-qa]] Q15~Q17
 - 메모: 사용자 요청("1, 2, 3 차례대로 진행")의 1·2번이다. (1) Ubuntu 22.04 컨테이너에서 valgrind 3.18.1로 단위 105개와 통합 124개(8절 절차)를 돌렸다. 모두 통과했고, 서버 기록 106개는 오류·누수 0, 끝날 때 fd는 표준 3개와 valgrind 기록 파일뿐이었다. (2) 레슨에 CGI 헤더 필터링, 운영 로그, 부하 질문을 더했다. 새로 넣은 코드 위치는 `13982df` 기준이고, 다른 장은 `5ca93a2` 기준 그대로라 00-guide에 적었다. 새 인용(raw/rfc3875.txt:1051-1052·1052-1055, raw/rfc9110.txt:2604-2617, raw/nginx-core-module.md:2060-2066, raw/subject.md:113·134·136, raw/evaluation-sheet-en.md:113-118)은 같은 날 원문을 열어 대조한 줄이다.
+
+## [2026-10-29] query | 출력 매개변수 세 곳을 반환값으로
+- 갱신: [[analysis/design]] 7절(`Router::mapToFile`), 9절(`CgiProcess::takeOutput`), 11절(큰 CGI 출력)
+- 메모: 사용자 요청("1, 2, 3 차례대로 진행")의 3번이다.
+  - `Router::mapToFile`은 경로를 돌려주고, 매핑하지 못하면 `""`를 돌려준다. `Router::resolve`는 호출부 두 곳에 펼치고 지웠다.
+  - `CgiProcess::takeOutput`·`CgiStdout::takeData`는 출력을 swap으로 꺼내 값으로 돌려준다.
+  - `StatusPage`의 `readConfiguredPage`는 매핑된 경로를 받게 바꿨다.
+  - Ubuntu 22.04에서 단위 105, 통합 124(느린 테스트 포함, root라 2개 건너뜀) 통과.
+  - G-22가 반환값 복사 생략을 잡는지는 `-fno-elide-constructors` 빌드로 확인했다: 바꾼 코드는 실패(3.0배), 바꾸기 전 코드는 통과.
+  - 같은 모양(성공 여부를 반환하고 결과는 매개변수로)이 남은 곳은 이번 범위 밖으로 두었다: `normalizePath`, `Server::openListeners(error)`, `Listener::open(error)`, `readWholeFile`, `regularFileSize`, `parseDecimal` 등의 해석 함수, `RequestParser`의 버퍼 소비 함수, `parseCgiOutput`(본문을 옮겨 가져감).
