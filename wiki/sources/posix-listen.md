@@ -15,7 +15,7 @@ POSIX.1-2024 (IEEE Std 1003.1-2024) 표준 문서다 (raw/posix-listen.md:5-7).
 
 ## 과제와 관련된 부분
 
-서버는 listen 소켓을 `listen(fd, SOMAXCONN)`으로 연다 (`webserv/src/core/Listener.cpp:46`). 기초 설명은 [[lessons/02b-tcp-connections]].
+서버는 listen 소켓을 `listen(fd, SOMAXCONN)`으로 연다 (`webserv/src/core/Listener.cpp:48`). 기초 설명은 [[lessons/02b-tcp-connections]].
 
 | 부분 (줄) | 내용 | 위키 페이지 |
 |---|---|---|
@@ -35,7 +35,7 @@ POSIX.1-2024 (IEEE Std 1003.1-2024) 표준 문서다 (raw/posix-listen.md:5-7).
 ## 과제 적용 (판단)
 
 - 대기열이 차면 새 연결이 바로 받아들여지지 않는다. 2026-10-29 기존 구현(backlog 128) 비교 실측에서, 연결 1000개를 한꺼번에 열 때 몇 개가 약 1초씩 멈췄다 ([[log]] 2026-10-29 "운영 로그 구현, 기존 구현과 poll·성능 실측 비교"). 이 서버는 `SOMAXCONN`을 넘겨 그런 멈춤이 보이지 않았다.
-- `webserv/src/core/Listener.cpp:44`의 주석은 `SOMAXCONN`을 "시스템이 허용하는 가장 긴 대기열"이라고 하지만, 원문은 그 값까지 지원해야 한다고만 하고 최대라고 하지 않는다 (raw/posix-listen.md:27, raw/posix-listen.md:31). 주석이 원문보다 강하다.
+- `webserv/src/core/Listener.cpp:44`의 주석은 `SOMAXCONN`을 "시스템이 허용하는 가장 긴 대기열"이라고 하지만, 원문은 그 값까지 지원해야 한다고만 하고 최대라고 하지 않는다 (raw/posix-listen.md:27, raw/posix-listen.md:31). 주석이 원문보다 강했다. 2026-10-29에 "모든 시스템이 지원해야 하는 값이고 시스템이 줄일 수 있다"로 고쳤다 (webserv `4db9510`).
 
 ## 관련
 

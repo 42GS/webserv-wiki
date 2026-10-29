@@ -693,3 +693,7 @@
 - 생성: [[sources/rfc9293]], `raw/rfc9293.txt`
 - 갱신: [[index]], [[source-wishlist]]
 - 메모: 기초 레슨 보충의 근거로 받았다. rfc-editor.org의 원문 그대로이고 처음부터 끝까지 읽었다. 과제와 이어지는 절은 연결 맺기·닫기, RST, 세그먼트 경계, TCP keep-alive다.
+
+## [2026-10-29] query | SOMAXCONN 주석 정정
+- 갱신: [[sources/posix-listen]], [[sources/posix-socket]], [[sources/posix-accept]], [[sources/posix-errno]] (`Listener.cpp` 줄 번호)
+- 메모: 사용자 요청("주석도 고치고")으로 `webserv/src/core/Listener.cpp`의 `SOMAXCONN` 주석을 원문(raw/posix-listen.md:27)에 맞게 "모든 시스템이 지원해야 하는 대기열 길이, 시스템이 줄일 수 있음"으로 고쳤다 (webserv `4db9510`). 주석이 두 줄 늘어 이 파일을 인용한 요약 페이지의 줄 번호를 고쳤다.

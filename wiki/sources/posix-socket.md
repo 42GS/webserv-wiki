@@ -36,7 +36,7 @@ POSIX.1-2024 (IEEE Std 1003.1-2024) 표준 문서다 (raw/posix-socket.md:5-7).
 
 ## 과제 적용 (판단)
 
-- 서버는 `SOCK_NONBLOCK` 플래그 대신 `fcntl(fd, F_SETFL, O_NONBLOCK)`으로 non-blocking을 켠다 (`webserv/src/core/Listener.cpp:51`). 과제가 허용한 방법이 `fcntl`의 `F_SETFL`·`O_NONBLOCK`이고 (raw/subject.md:155-157), 이 플래그는 POSIX.1-2024에서 들어온 것이라 오래된 시스템과의 호환도 덜 확실하다.
+- 서버는 `SOCK_NONBLOCK` 플래그 대신 `fcntl(fd, F_SETFL, O_NONBLOCK)`으로 non-blocking을 켠다 (`webserv/src/core/Listener.cpp:53`). 과제가 허용한 방법이 `fcntl`의 `F_SETFL`·`O_NONBLOCK`이고 (raw/subject.md:155-157), 이 플래그는 POSIX.1-2024에서 들어온 것이라 오래된 시스템과의 호환도 덜 확실하다.
 
 ## 관련
 

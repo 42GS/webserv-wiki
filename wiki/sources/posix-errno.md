@@ -15,7 +15,7 @@ POSIX.1-2024 (IEEE Std 1003.1-2024) 표준 문서다 (raw/posix-errno.md:5-7).
 
 ## 과제와 관련된 부분
 
-과제는 읽기·쓰기 뒤에 errno를 보고 서버 동작을 바꾸는 것을 금지한다 (raw/subject.md:133). 서버는 시작할 때 listen 소켓을 열지 못한 이유를 출력하는 곳에서만 errno를 읽는다 (`webserv/src/core/Listener.cpp:58`). 기초 설명은 [[lessons/02a-unix-system-calls]].
+과제는 읽기·쓰기 뒤에 errno를 보고 서버 동작을 바꾸는 것을 금지한다 (raw/subject.md:133). 서버는 시작할 때 listen 소켓을 열지 못한 이유를 출력하는 곳에서만 errno를 읽는다 (`webserv/src/core/Listener.cpp:60`). 기초 설명은 [[lessons/02a-unix-system-calls]].
 
 | 부분 (줄) | 내용 | 위키 페이지 |
 |---|---|---|

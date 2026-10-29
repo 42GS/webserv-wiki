@@ -15,7 +15,7 @@ POSIX.1-2024 (IEEE Std 1003.1-2024) 표준 문서다 (raw/posix-accept.md:5-7). 
 
 ## 과제와 관련된 부분
 
-listen 소켓이 POLLIN이면 서버는 `accept`를 한 번 부른다 (`webserv/src/core/Listener.cpp:72`). 기초 설명은 [[lessons/02b-tcp-connections]].
+listen 소켓이 POLLIN이면 서버는 `accept`를 한 번 부른다 (`webserv/src/core/Listener.cpp:74`). 기초 설명은 [[lessons/02b-tcp-connections]].
 
 | 부분 (줄) | 내용 | 위키 페이지 |
 |---|---|---|
@@ -39,8 +39,8 @@ listen 소켓이 POLLIN이면 서버는 `accept`를 한 번 부른다 (`webserv/
 
 ## 과제 적용 (판단)
 
-- 받은 소켓이 non-blocking을 물려받는지 구현마다 다르므로, 서버는 받자마자 `fcntl(clientFd, F_SETFL, O_NONBLOCK)`을 직접 부른다 (`webserv/src/core/Listener.cpp:87`). 이 호출이 없으면 어떤 OS에서는 클라이언트 소켓이 blocking으로 남을 수 있다.
-- `accept`가 실패하면 원인을 errno로 가리지 않고 listener를 잠시 멈춘다 (`webserv/src/core/Listener.cpp:77-81`, [[analysis/design]] 11절). fd가 다 찬 동안(`EMFILE`) listen 소켓이 계속 읽기 가능으로 보여 루프가 쉬지 않고 도는 것을 막는다.
+- 받은 소켓이 non-blocking을 물려받는지 구현마다 다르므로, 서버는 받자마자 `fcntl(clientFd, F_SETFL, O_NONBLOCK)`을 직접 부른다 (`webserv/src/core/Listener.cpp:89`). 이 호출이 없으면 어떤 OS에서는 클라이언트 소켓이 blocking으로 남을 수 있다.
+- `accept`가 실패하면 원인을 errno로 가리지 않고 listener를 잠시 멈춘다 (`webserv/src/core/Listener.cpp:79-83`, [[analysis/design]] 11절). fd가 다 찬 동안(`EMFILE`) listen 소켓이 계속 읽기 가능으로 보여 루프가 쉬지 않고 도는 것을 막는다.
 
 ## 관련
 
