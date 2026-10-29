@@ -697,3 +697,7 @@
 ## [2026-10-29] query | SOMAXCONN 주석 정정
 - 갱신: [[sources/posix-listen]], [[sources/posix-socket]], [[sources/posix-accept]], [[sources/posix-errno]] (`Listener.cpp` 줄 번호)
 - 메모: 사용자 요청("주석도 고치고")으로 `webserv/src/core/Listener.cpp`의 `SOMAXCONN` 주석을 원문(raw/posix-listen.md:27)에 맞게 "모든 시스템이 지원해야 하는 대기열 길이, 시스템이 줄일 수 있음"으로 고쳤다 (webserv `4db9510`). 주석이 두 줄 늘어 이 파일을 인용한 요약 페이지의 줄 번호를 고쳤다.
+
+## [2026-10-29] query | 기초 레슨 2A(시스템 콜)·2B(TCP 연결)
+- 생성: [[lessons/02a-unix-system-calls]], [[lessons/02b-tcp-connections]]
+- 메모: GitHub Wiki 공유용 기초 보충(사용자 요청 "기초 개념을 더 보충해서"). 코드 기준 webserv `4db9510`. 인용은 이번에 받은 POSIX 페이지·RFC 9293과 기존 RFC 9112·과제 원문에서 쓸 때마다 대조했다. 2A의 `FileReader` 코드는 줄여 옮기고 설명 주석을 붙였다고 표시했다. 레슨 순서(00-guide)·이웃 링크·index는 기초 레슨 네 장을 다 쓴 뒤 함께 고친다.
