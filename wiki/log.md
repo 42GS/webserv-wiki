@@ -673,3 +673,8 @@
 - 생성: [[sources/posix-fork]], `raw/posix-fork.md`, `raw/posix-fork.source.html`
 - 갱신: [[index]], [[source-wishlist]]
 - 메모: 기초 레슨 보충의 근거로 받았다. 원본 HTML 본문 전체를 변환본과 직접 읽어 대조했다(글자 차이 없음, 선택 범위 그림·빈 br·SEE ALSO의 빈 링크만 구조 차이).
+
+## [2026-10-29] ingest | POSIX exec
+- 생성: [[sources/posix-exec]], `raw/posix-exec.md`, `raw/posix-exec.source.html`
+- 갱신: [[index]], [[source-wishlist]]
+- 메모: 기초 레슨 보충의 근거로 받았다. 원본 HTML 본문 전체를 변환본과 직접 읽어 대조했다(글자 차이 없음, 선택 범위 그림·코드 블록·br·대입 호환 표가 GFM 표가 된 것만 구조 차이). 자식이 SIGPIPE를 기본값으로 되돌리는 이유(SIG_IGN은 exec 뒤에도 유지, raw/posix-exec.md:91)를 적었다.
