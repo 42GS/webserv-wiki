@@ -633,3 +633,8 @@
 - 생성: [[sources/posix-socket]], `raw/posix-socket.md`, `raw/posix-socket.source.html`
 - 갱신: [[index]], [[source-wishlist]]
 - 메모: 기초 레슨 보충(사용자 요청 2026-10-29)의 근거로 받았다. 원본 HTML 본문 전체를 변환본과 직접 읽어 대조했다(글자 차이 없음, `[OB]`·선택 범위 그림만 구조 차이). 서버는 `SOCK_NONBLOCK` 대신 과제가 허용한 `fcntl`로 non-blocking을 켠다(판단).
+
+## [2026-10-29] ingest | POSIX listen()
+- 생성: [[sources/posix-listen]], `raw/posix-listen.md`, `raw/posix-listen.source.html`
+- 갱신: [[index]], [[source-wishlist]]
+- 메모: 기초 레슨 보충의 근거로 받았다. 원본 HTML 본문 전체를 변환본과 직접 읽어 대조했다(차이 없음). `webserv/src/core/Listener.cpp:44` 주석이 `SOMAXCONN`을 '가장 긴 대기열'이라고 해 원문(지원해야 하는 값까지)보다 강하다는 점을 적었다.
