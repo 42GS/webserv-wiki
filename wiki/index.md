@@ -48,6 +48,7 @@ updated: 2026-10-25
 | [[sources/posix-remove]] | POSIX `remove()` — 파일이면 `unlink`, 디렉토리면 `rmdir`과 같음 (ISO C 밖의 확장) | `raw/posix-remove.md` |
 | [[sources/posix-rmdir]] | POSIX `rmdir()` — 빈 디렉토리만 지움, 비어 있지 않으면 실패하고 그대로 | `raw/posix-rmdir.md` |
 | [[sources/posix-exit]] | POSIX `_Exit()` — 프로세스 종료의 결과(좀비, fd 닫힘, 자식 입양) | `raw/posix-exit.md` |
+| [[sources/posix-socket]] | POSIX `socket()` — 주소 없는 소켓을 만들고 fd를 돌려줌, `SOCK_STREAM`, Issue 8의 `SOCK_NONBLOCK` | `raw/posix-socket.md` |
 | [[sources/nginx-index-module]] | NGINX index 모듈 — `/`로 끝나는 요청, 파일 목록 순서, 내부 리다이렉트 | `raw/nginx-index-module.md` |
 | [[sources/nginx-autoindex-module]] | NGINX autoindex 모듈 — index가 없을 때 리스팅, 기본 off, 형식 | `raw/nginx-autoindex-module.md` |
 | [[sources/rfc7578]] | RFC 7578 multipart/form-data — part 구조, Content-Disposition, filename 주의 | `raw/rfc7578.txt` |

@@ -628,3 +628,8 @@
 - 메모: 남은 출력 매개변수(약 45개 함수, 20개 파일)까지 바꾸려다 멈췄다.
   - 바꾸려면 C++98용 `Maybe<T>`(C++17 `std::optional`의 최소 판)가 필요하다. libc++ 헤더로 비교했다(Xcode SDK `c++/v1/optional`: C++17 조건 350줄, union 저장 380-383줄, 빈 값 `value()`가 예외 1170-1172줄). `Maybe<T>`는 빈 값 읽기를 막지 못한다.
   - 사용자와 오버 엔지니어링이고 평가 영향이 없다고 보고 지금 상태로 두기로 했다.
+
+## [2026-10-29] ingest | POSIX socket()
+- 생성: [[sources/posix-socket]], `raw/posix-socket.md`, `raw/posix-socket.source.html`
+- 갱신: [[index]], [[source-wishlist]]
+- 메모: 기초 레슨 보충(사용자 요청 2026-10-29)의 근거로 받았다. 원본 HTML 본문 전체를 변환본과 직접 읽어 대조했다(글자 차이 없음, `[OB]`·선택 범위 그림만 구조 차이). 서버는 `SOCK_NONBLOCK` 대신 과제가 허용한 `fcntl`로 non-blocking을 켠다(판단).
