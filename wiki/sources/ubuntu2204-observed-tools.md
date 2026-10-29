@@ -2,7 +2,7 @@
 title: Ubuntu 22.04 실측 — 도구 버전, siege 설정, php-cgi·valgrind 재측정
 type: source
 sources: [raw/ubuntu2204-observed-tools.md, raw/php-cgi-observed-env.md, raw/valgrind-observed-sigint.md, raw/siegerc.in, raw/siege-sock.c, raw/siege.pod]
-updated: 2026-10-15
+updated: 2026-10-29
 ---
 
 # Ubuntu 22.04 실측 — 도구 버전, siege 설정, php-cgi·valgrind 재측정
@@ -11,6 +11,7 @@ updated: 2026-10-15
 
 - 이미지: `Ubuntu 22.04.5 LTS` (raw/ubuntu2204-observed-tools.md:82). 커널은 OrbStack VM의 `7.0.14`라서 평가 PC의 22.04 커널과 다르다 (raw/ubuntu2204-observed-tools.md:4, raw/ubuntu2204-observed-tools.md:83). 커널이 정하는 동작(소켓·pipe·`poll`)은 이 측정으로 22.04 기준을 확인할 수 없다.
 - 평가 PC가 apt 기본 패키지와 기본 설정 파일을 그대로 쓰는지는 **미확인**이다 (확인: 평가 PC에서 `siege -V`, `siege -C`, `php-cgi -v`, `python3 --version`, `valgrind --version`).
+- 2026-10-29 사용자 보고 (평가 PC): siege가 설치되어 있지 않고 sudo 권한이 없다. `php-cgi -v`는 동작하고(버전은 보고받지 않음), 경로는 `conf/default.conf`가 쓰는 `/usr/bin/php-cgi`다. 그래서 보너스 "여러 CGI"(Python·PHP)를 기본 설정 그대로 보여 줄 수 있다. sudo 없이 siege를 쓰는 방법은 [[concepts/testing]] "sudo 없이 siege 쓰기".
 
 ## 패키지 버전
 

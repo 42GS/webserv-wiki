@@ -724,3 +724,7 @@
 - 생성: [[concepts/configuration-syntax]]
 - 갱신: [[concepts/configuration-file]] 관련, [[lessons/06-config-parsing]] (새 페이지 링크), `index`
 - 메모: 사용자 요청("config 파일 문법 정리해서 Wiki에 추가해줘"). 근거는 설정 모듈 코드 전체(`src/config/*`, 기준 `4db9510` = 제출 `5122dee`)와 과제 IV.3절. 오류 메시지 19개는 제출 코드를 Ubuntu 22.04 컨테이너에서 빌드해 잘못된 설정 파일로 실행한 출력 그대로다. 코드에서 읽어 낸 주의점 두 가지(location이 문자열 prefix라 `/files`가 `/filesystem`에도 맞음, alias와 location의 끝 `/`가 다르면 경로가 붙어 버림)와 NGINX의 `limit_except` 없는 location 동작은 **판단**으로 표시했다.
+
+## [2026-10-29] query | 평가 PC 도구 상황과 sudo 없이 siege 쓰기
+- 갱신: [[sources/ubuntu2204-observed-tools]] (평가 PC 사용자 보고), [[concepts/testing]] ("sudo 없이 siege 쓰기" 절)
+- 메모: 사용자 보고: 평가 PC에 siege가 없고 sudo가 없다. `php-cgi -v`가 동작하고 `/usr/bin/php-cgi`에 있다. 질문("스크립트를 직접 작성할지, docker image로 대체할지")에는 siege `.deb`를 `apt-get download`로 받아 `dpkg -x`로 홈에 푸는 방법을 권했다. 깨끗한 `ubuntu:22.04` 컨테이너의 일반 사용자로 시험해 siege 4.0.7이 동작함을 확인했다. 함께 든 `siege.config`는 `~/.siege`를 만들지 않아 실패해서 `etc/siege/siegerc`를 복사한다. 평가 PC에서 `apt-get download`가 되는지, Docker를 sudo 없이 쓸 수 있는지는 **미확인**.

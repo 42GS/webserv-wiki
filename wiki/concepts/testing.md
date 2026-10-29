@@ -2,7 +2,7 @@
 title: 테스트 도구와 평가 시연
 type: concept
 sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/siege.pod, raw/siegerc.in, raw/evaluation-sheet.md, raw/rfc9112.txt, raw/pep-0594.md, raw/siege-sock.c, raw/ubuntu2204-observed-tools.md, raw/siege-observed-ubuntu2204.md]
-updated: 2026-10-16
+updated: 2026-10-29
 ---
 
 # 테스트 도구와 평가 시연
@@ -71,6 +71,23 @@ curl -X POST -H "Content-Type: plain/text" \
 
 - 위 표는 master 템플릿 기준이다. 평가 PC와 같은 Ubuntu 22.04의 apt 패키지는 siege 4.0.7이고 (raw/ubuntu2204-observed-tools.md:87), 처음 실행할 때 만들어지는 `~/.siege/siege.conf`는 `/etc/siege/siegerc`와 같았다 (raw/ubuntu2204-observed-tools.md:141-142). `siege -C`로 본 적용값도 위 표와 같다: `connection: close`, `protocol: HTTP/1.1`, `socket timeout: 30`, `failures until abort: 1024` (raw/ubuntu2204-observed-tools.md:162-175) → [[sources/ubuntu2204-observed-tools]].
 - 평가 PC가 기본 패키지·기본 설정을 그대로 쓰는지는 **미확인**이다. 평가 전에 평가자와 `siege -C`로 `connection`, `protocol`, `socket timeout`을 함께 확인하면 좋다.
+
+### sudo 없이 siege 쓰기
+
+2026-10-29 사용자 보고: 평가 PC에 siege가 없고 sudo 권한도 없다. 평가표는 apt 설치를 가정하고 (raw/evaluation-sheet-en.md:48), siege로 시험하라고 한다 (raw/evaluation-sheet-en.md:113). 직접 만든 부하 스크립트는 siege의 Availability(연결 실패만 셈, raw/siege.pod:373-378)와 같은 값을 낸다고 보이기 어려우므로, siege 패키지를 설치하지 않고 홈 디렉토리에 풀어 쓴다.
+
+```bash
+cd ~ && apt-get download siege                     # .deb만 받는다 (sudo 필요 없음)
+dpkg -x siege_*.deb ~/siege-local                  # 설치하지 않고 푼다
+mkdir -p ~/.siege && cp ~/siege-local/etc/siege/siegerc ~/.siege/siege.conf
+export PATH=$HOME/siege-local/usr/bin:$PATH
+siege -b -c 10 -t 60S http://127.0.0.1:8080/empty.html
+```
+
+- 2026-10-29 깨끗한 `ubuntu:22.04` 컨테이너에서 root가 아닌 사용자로 실행했다(패키지 목록만 root로 미리 받아 둠). siege 4.0.7이 실행됐고, 필요한 공유 라이브러리는 모두 있었으며(`ldd`), Python 테스트 서버에 대해 availability 100.00이 나왔다. 기록은 raw에 없다.
+- 함께 들어 있는 `siege.config`는 `~/.siege` 디렉토리를 만들지 않아 "added"라고 출력하고도 설정 파일을 만들지 못했다. 그래서 `.deb` 안의 `etc/siege/siegerc`를 복사한다. apt로 설치했을 때 만들어지는 설정과 같은 내용이다 (raw/ubuntu2204-observed-tools.md:141-142).
+- `apt-get download`는 평가 PC에 패키지 목록과 인터넷 연결이 있어야 한다. 되는지는 **미확인**이다. 안 되면 다른 PC에서 같은 버전·아키텍처(amd64)의 `.deb`를 받아 옮긴다.
+- 대안인 Docker(`docker run --network host ...`)는 평가 PC에서 sudo 없이 `docker`를 쓸 수 있는지가 **미확인**이고, 시험하지 않았다.
 - `delay` 기본값은 매뉴얼(0.5초, raw/siege.pod:186-187)과 템플릿(0.0, raw/siegerc.in:350)이 다르다. 평가표의 availability 확인은 `-b`로 하므로 (raw/evaluation-sheet-en.md:114) 그때는 영향이 없다.
 
 ### 서버 구현에 주는 결론
