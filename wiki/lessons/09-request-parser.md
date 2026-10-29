@@ -2,7 +2,7 @@
 title: "레슨 9: 요청 해석기"
 type: lesson
 sources: [raw/rfc9112.txt, raw/rfc9110.txt, raw/rfc1945.txt, raw/evaluation-sheet-en.md, raw/design-checks-observed.md]
-updated: 2026-10-25
+updated: 2026-10-29
 ---
 
 # 레슨 9: 요청 해석기
@@ -29,7 +29,7 @@ flowchart LR
 `feed(buffer)`는 받은 바이트를 가능한 만큼 소비하고 네 가지 중 하나를 돌려준다: `NEED_MORE`(더 필요), `HEAD_DONE`(머리 끝), `DONE`(요청 완성), `ERROR`(상태 코드와 함께) (`src/http/RequestParser.cpp:202-211`, `:248-261`). 자세한 규칙: [[concepts/request-parsing]].
 
 > [!tip] 왜 머리에서 한 번 멈추나? (HEAD_DONE)
-> 본문 상한(`client_max_body_size`)은 location마다 다르다. 어느 location인지는 경로를 봐야 안다. 그래서 머리가 끝나면 멈추고, `Connection`이 그 요청의 location 상한을 알려 준 뒤 본문을 읽는다 (`src/http/Connection.cpp:150-153`). 덕분에 `Content-Length`가 상한보다 크면 **본문을 한 바이트도 읽기 전에** 413을 보낸다 (`RequestParser.cpp:349`).
+> 본문 상한(`client_max_body_size`)은 location마다 다르다. 어느 location인지는 경로를 봐야 안다. 그래서 머리가 끝나면 멈추고, `Connection`이 그 요청의 location 상한을 알려 준 뒤 본문을 읽는다 (`src/http/Connection.cpp:187-190`). 덕분에 `Content-Length`가 상한보다 크면 **본문을 한 바이트도 읽기 전에** 413을 보낸다 (`RequestParser.cpp:349`).
 
 ## 9.2 RFC가 여러 동작을 허용할 때 우리 선택
 

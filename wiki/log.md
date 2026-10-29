@@ -710,3 +710,8 @@
 - 생성: [[lessons/04a-cpp98-basics]]
 - 갱신: [[lessons/00-guide]] 순서(2A·2B·3A·4A를 보충 장으로), 이웃 링크([[lessons/02-networking-basics]]·[[lessons/03-http-basics]]·[[lessons/04-poll]]·[[lessons/05-startup]]), [[lessons/16-glossary]](시스템 콜·TCP·URL·HTTP·C++ 용어), [[sources/cpp-core-guidelines]](I.25·F.16·C.35·C.67·R.1·R.11·Con.2를 다룬 절에 추가), `index`
 - 메모: C++98에 `= delete`·`nullptr`·`auto`(새 뜻)·`override`가 없다는 것과, private에 선언만 한 복사 생성자를 클래스 안에서 쓰면 링크 오류가 난다는 것을 2026-10-29 Ubuntu 22.04 g++ 11.4.0(`-std=c++98 -pedantic-errors -Wall -Wextra -Werror`)으로 직접 컴파일해 확인했다. C++ Core Guidelines는 C++11 이후 기준이라 규칙의 이유만 인용했다. 소멸자가 범위를 벗어날 때 반드시 불린다는 설명은 C++ 표준 절로 확인하지 않아 **판단**으로 표시했다.
+
+## [2026-10-29] query | 레슨 코드 기준을 제출 저장소와 같은 커밋으로
+- 갱신: [[lessons/00-guide]], [[lessons/01-request-journey]], [[lessons/02-networking-basics]], [[lessons/03-http-basics]], [[lessons/04-poll]], [[lessons/05-startup]], [[lessons/07-event-loop]], [[lessons/08-connection]], [[lessons/09-request-parser]], [[lessons/10-routing]], [[lessons/11-response]], [[lessons/13-cgi]], [[lessons/14-resilience]], [[lessons/15-defense-qa]]
+- 메모: 사용자 요청("GitHub Wiki는 … 제출 저장소 기준으로 작성해야"). 제출 저장소에 SOMAXCONN 주석 수정을 넣어 push했다(`5122dee`). 이제 제출 저장소의 파일은 webserv `4db9510`과 모두 같다(`.clang-format`·`compile_flags.txt`는 제출에서 뺀 것). 레슨의 줄 번호는 `5ca93a2`(일부 `13982df`) 기준이었다. 바뀐 파일의 참조 약 100개를 diff로 새 위치를 찾고(찾기만), 새 줄을 열어 레슨 문장과 직접 대조했다. 코드가 바뀐 곳은 내용도 고쳤다: 5장 `main` 코드와 순서(운영 로그, `ConnectionServices`), 7장 `accept` 실패 시 `acceptFailed` 로그와 `ConnectionServices`, 8장 408 로그, 2장 listen 소켓 코드(SOMAXCONN 주석, 주석은 줄임 표시), 1장 `core/` 역할에 운영 로그.
+- 메모 (정정): 14.4의 오류 로그 줄 목록에서 설명 순서와 줄 번호 순서가 어긋나 있었다. "CGI 시작 실패·잘못된 출력"은 `RequestProcessor.cpp`의 `:219`·`:169`, "CGI 시간 초과·끝나지 않은 요청·멈춘 전송"은 `Connection.cpp`의 `:271`·`:113`·`:120`이 맞다.

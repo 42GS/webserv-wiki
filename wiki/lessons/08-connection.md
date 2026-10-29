@@ -2,7 +2,7 @@
 title: "레슨 8: 연결 하나의 일생"
 type: lesson
 sources: [raw/rfc9112.txt, raw/subject.md, raw/close-after-413-observed.md, raw/siegerc.in]
-updated: 2026-10-27
+updated: 2026-10-29
 ---
 
 # 레슨 8: 연결 하나의 일생
@@ -36,11 +36,11 @@ stateDiagram-v2
 | `WRITE` | `POLLOUT` | 30초 동안 전송 진행 없음 (닫음) |
 | `DRAIN` | `POLLIN` | 1초 무입력 또는 총 5초 (닫음) |
 
-코드: `src/http/Connection.cpp:38-43` (wantedEvents), `:97-121` (hasTimedOut). 값: `include/core/Limits.hpp`.
+코드: `src/http/Connection.cpp:69-74` (wantedEvents), `:134-158` (hasTimedOut). 값: `include/core/Limits.hpp`.
 
 ## 8.1 받기
 
-`src/http/Connection.cpp:125-143`:
+`src/http/Connection.cpp:162-180`:
 
 ```cpp
 void Connection::receiveOnce() {
@@ -57,14 +57,14 @@ void Connection::receiveOnce() {
 
 ## 8.2 타임아웃: 무한히 매달리지 않기
 
-- **머리는 첫 바이트부터 30초**: 5초마다 1바이트씩 보내는 손님(slowloris 같은 공격)이 연결을 붙잡지 못하게, 머리는 "처음부터 얼마나 지났는지"로 잰다 (`Connection.cpp:87-96`, [[analysis/test-plan]] N-24).
+- **머리는 첫 바이트부터 30초**: 5초마다 1바이트씩 보내는 손님(slowloris 같은 공격)이 연결을 붙잡지 못하게, 머리는 "처음부터 얼마나 지났는지"로 잰다 (`Connection.cpp:124-133`, [[analysis/test-plan]] N-24).
 - **본문·전송은 무진행 30초**: 큰 파일은 오래 걸릴 수 있으니 "멈춰 있던 시간"만 잰다.
-- **요청을 시작했으면 408, 아니면 그냥 닫기** (`Connection.cpp:79-84`). 불완전한 요청에는 닫기 전에 에러 응답을 보내도 된다 (MAY, RFC 9112 8절, raw/rfc9112.txt:1253-1255).
-- **"같다"가 아니라 "크다"로 비교**: 시계가 초 단위라 경과가 N초로 보여도 실제로는 초가 막 바뀐 직후일 수 있다. N보다 커야 진짜 N초가 넘은 것이다 (`Connection.cpp:87-96`). 처음에 `>=`로 썼다가 DRAIN 1초가 거의 0초가 되는 것을 테스트가 잡아서 고쳤다.
+- **요청을 시작했으면 408, 아니면 그냥 닫기** (`Connection.cpp:110-116`). 408을 보낼 때는 오류 로그에도 한 줄 남긴다. 불완전한 요청에는 닫기 전에 에러 응답을 보내도 된다 (MAY, RFC 9112 8절, raw/rfc9112.txt:1253-1255).
+- **"같다"가 아니라 "크다"로 비교**: 시계가 초 단위라 경과가 N초로 보여도 실제로는 초가 막 바뀐 직후일 수 있다. N보다 커야 진짜 N초가 넘은 것이다 (`Connection.cpp:124-133`). 처음에 `>=`로 썼다가 DRAIN 1초가 거의 0초가 되는 것을 테스트가 잡아서 고쳤다.
 
 ## 8.3 응답 뒤: 유지, 닫기, DRAIN
 
-`src/http/Connection.cpp:191-199`:
+`src/http/Connection.cpp:228-236`:
 
 ```cpp
 void Connection::finishResponse() {
@@ -95,9 +95,9 @@ void Connection::finishResponse() {
 
 ## 8.4 local redirect와 CGI 대기
 
-`handleOutcome`은 결과가 응답이면 보내기 시작하고, CGI면 `WAIT_CGI`로 간다. CGI가 "다른 경로를 대신 보여 줘"(local redirect)라고 하면 그 경로로 다시 처리하되 10번을 넘으면 500이다 (`Connection.cpp:201-223`). 자기 자신을 가리키는 스크립트가 무한 반복하지 않게 하는 장치다.
+`handleOutcome`은 결과가 응답이면 보내기 시작하고, CGI면 `WAIT_CGI`로 간다. CGI가 "다른 경로를 대신 보여 줘"(local redirect)라고 하면 그 경로로 다시 처리하되 10번을 넘으면 500이다 (`Connection.cpp:238-260`). 자기 자신을 가리키는 스크립트가 무한 반복하지 않게 하는 장치다.
 
-`WAIT_CGI` 동안에는 루프 한 바퀴마다 `checkTimeout` → `followCgi`로 끝났는지 확인한다 (`Connection.cpp:225-237`).
+`WAIT_CGI` 동안에는 루프 한 바퀴마다 `checkTimeout` → `followCgi`로 끝났는지 확인한다 (`Connection.cpp:262-276`).
 
 > [!tip] 왜 콜백이 아니라 매 바퀴 확인?
 > 처음 설계는 CGI가 끝나면 알려 주는 콜백이었다. 그러면 pipe의 `onEvent` 안에서 CGI 객체를 지우는 일이 생긴다. 실행 중인 객체를 그 안에서 지우면 위험하다. 바퀴 끝(이벤트 처리 밖)에서 확인하면 이 문제가 없고 인터페이스도 하나 줄어든다. 응답이 늦어지는 시간은 그 바퀴 끝까지뿐이다 ([[analysis/design]] 9절 "완료 확인").

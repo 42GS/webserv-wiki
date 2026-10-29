@@ -40,8 +40,8 @@ void install() {
 ## 14.2 예외는 세 겹으로 막는다
 
 1. **handler 하나**: `onEvent`에서 난 예외 → `EventLoop`가 잡아 그 handler의 `onFailure` → 그 연결만 닫힌다 (`src/core/EventLoop.cpp:62-66`).
-2. **타임아웃 점검**: `checkTimeout`에서 난 예외 → `Server`가 잡아 그 연결만 닫는다 (`src/core/Server.cpp:84-88`).
-3. **마지막 그물**: 그래도 빠져나온 예외(poll 목록을 만들다 메모리 부족) → `main`이 잡아 메시지를 내고 종료 코드 1 (`src/main.cpp:85-89`). `std::terminate`로 갑자기 끝나지 않는다.
+2. **타임아웃 점검**: `checkTimeout`에서 난 예외 → `Server`가 잡아 그 연결만 닫는다 (`src/core/Server.cpp:82-86`).
+3. **마지막 그물**: 그래도 빠져나온 예외(poll 목록을 만들다 메모리 부족) → `main`이 잡아 메시지를 내고 종료 코드 1 (`src/main.cpp:91-95`). `std::terminate`로 갑자기 끝나지 않는다.
 
 - 소멸자에서는 예외를 내보내지 않는다(`~CgiProcess`는 reaper에 못 넘기면 그 자리에서 죽이고 기다린다).
 - 예외 처리 밖에서 매 바퀴 도는 `ChildReaper::reap`은 메모리를 할당하지 않는다(제자리에서 지움).
@@ -63,13 +63,13 @@ void install() {
 > [!example] 쉬운 예 — siege
 > siege는 손님 50명을 한꺼번에 들여보내 계속 주문하게 하는 연습 도구다. availability는 "문을 두드린 손님 중 몇 %가 들어왔나"다. 4xx·5xx 응답은 깎이지 않고, 연결이 거부되거나 끊기면 깎인다 (raw/siege.pod:373-378). 평가 기준은 99.5% 초과다 (raw/evaluation-sheet-en.md:114) → [[concepts/testing]].
 
-## 14.4 운영 로그 (2026-10-29, webserv `13982df`)
+## 14.4 운영 로그 (2026-10-29)
 
 > [!example] 쉬운 예
 > 가게 장부가 두 권이다. 손님 장부(`logs/access.log`)에는 손님마다 "몇 시, 누가, 무엇을 주문했고, 어떻게 나갔나"를 한 줄씩 적는다. 사고 장부(`logs/error.log`)에는 "가게 문 열고 닫음, 제빵사가 안 나옴, 손님이 주문하다 말았음" 같은 일만 적는다.
 
 - 접근 로그: 응답마다 한 줄. `[날짜] 127.0.0.1 "GET / HTTP/1.1" 200 15` (클라이언트, 클라이언트가 보낸 요청 줄, 상태, 본문 바이트). 요청 줄이 다 오기 전에 실패하면 빈 부분이 `-`다 (`src/http/Connection.cpp:304-312`).
-- 오류 로그: 시작·종료 (`src/main.cpp:83`, `:98`), CGI 시작 실패·잘못된 출력 (`src/app/RequestProcessor.cpp:170`, `:220`), CGI 시간 초과·끝나지 않은 요청·멈춘 전송 (`src/http/Connection.cpp:113`, `:120`, `:271`), `accept()` 실패 (`src/core/Server.cpp:106`).
+- 오류 로그: 시작·종료 (`src/main.cpp:83`, `:98`), CGI 시작 실패·잘못된 출력 (`src/app/RequestProcessor.cpp:219`, `:169`), CGI 시간 초과·끝나지 않은 요청·멈춘 전송 (`src/http/Connection.cpp:271`, `:113`, `:120`), `accept()` 실패 (`src/core/Server.cpp:106`).
 - 한 줄은 `write()` 한 번이고, `O_APPEND`로 연다 (`src/core/Logger.cpp:42`, `:85-90`). 실패해도 다시 쓰지 않고 서비스를 계속한다.
 - 클라이언트가 요청에 넣은 제어 문자는 `?`로 바꾼다 (`src/core/Logger.cpp:26-33`). 줄 끝을 넣어 가짜 로그 줄을 만들지 못하게 한다.
 - `Logger`는 `main`이 갖고, 연결들은 `ConnectionServices`로 받은 참조만 쓴다 ([[analysis/design]] 4절).

@@ -21,16 +21,16 @@ updated: 2026-10-29
 > fd 배열과 fd마다 기다릴 이벤트(POLLIN, POLLOUT)를 넘기면, 하나라도 준비되거나 시간이 다 될 때까지 기다렸다가 fd마다 일어난 일(revents)을 채워 돌려준다. 1초 타임아웃으로 불러, 아무 일이 없어도 1초마다 타임아웃을 검사한다 ([[lessons/04-poll]], [[lessons/07-event-loop]]).
 
 > [!question]- Q4. poll을 하나만 쓰나요? accept와 클라이언트 읽기·쓰기는?
-> 하나만 쓴다 (`src/core/EventLoop.cpp:48`). listen 소켓, 클라이언트 소켓, CGI pipe가 모두 `IoHandler`라 한 배열에 들어간다. listen 소켓이 POLLIN이면 `accept` 한 번 (`src/core/Listener.cpp:67-72`), 클라이언트가 POLLIN이면 `recv` 한 번 (`src/http/Connection.cpp:127`), POLLOUT이면 `send` 한 번 (`:168`).
+> 하나만 쓴다 (`src/core/EventLoop.cpp:48`). listen 소켓, 클라이언트 소켓, CGI pipe가 모두 `IoHandler`라 한 배열에 들어간다. listen 소켓이 POLLIN이면 `accept` 한 번 (`src/core/Listener.cpp:69-74`), 클라이언트가 POLLIN이면 `recv` 한 번 (`src/http/Connection.cpp:164`), POLLOUT이면 `send` 한 번 (`:205`).
 
 > [!question]- Q5. poll에서 클라이언트 I/O까지 코드 경로를 보여 주세요.
-> `src/main.cpp:86` `loop.run(server)` → `EventLoop::run` (`src/core/EventLoop.cpp:24`) → `pollOnce`의 `poll` (`:48`) → `dispatch` (`:57-70`) → `Connection::onEvent` (`src/http/Connection.cpp:45`) → POLLIN·POLLHUP이면 `receiveOnce`의 `recv` (`:127`), POLLOUT이면 `sendOnce`의 `send` (`:168`).
+> `src/main.cpp:92` `loop.run(server)` → `EventLoop::run` (`src/core/EventLoop.cpp:24`) → `pollOnce`의 `poll` (`:48`) → `dispatch` (`:57-70`) → `Connection::onEvent` (`src/http/Connection.cpp:76`) → POLLIN·POLLHUP이면 `receiveOnce`의 `recv` (`:164`), POLLOUT이면 `sendOnce`의 `send` (`:205`).
 
 > [!question]- Q6. read/recv/write/send가 에러를 내면 클라이언트를 지우나요? 0과 -1을 모두 처리하나요?
-> 그렇다. `recv`·`send`가 0이나 -1이면 `changeState(CLOSED)`로 가고 (`src/http/Connection.cpp:130`, `:169`), 그 바퀴 끝에 `Server::afterIteration`이 연결을 지운다. CGI pipe (`src/cgi/CgiPipes.cpp:31`, `:70`), 파일 읽기·쓰기, 시계 쓰기도 0과 -1을 모두 처리한다.
+> 그렇다. `recv`·`send`가 0이나 -1이면 `changeState(CLOSED)`로 가고 (`src/http/Connection.cpp:167`, `:206`), 그 바퀴 끝에 `Server::afterIteration`이 연결을 지운다. CGI pipe (`src/cgi/CgiPipes.cpp:31`, `:70`), 파일 읽기·쓰기, 시계 쓰기도 0과 -1을 모두 처리한다.
 
 > [!question]- Q7. errno를 쓰나요?
-> read/write/recv/send 뒤에는 읽지 않는다. `src/core/Listener.cpp:58` 한 곳에서만 읽는데, 시작할 때 listen 소켓을 열지 못한 이유를 출력하기 위해서다. poll이 -1이어도 errno를 보지 않는다. 준비 한 번에 I/O 한 번만 해서 EAGAIN을 구분할 필요가 없다 ([[lessons/04-poll]]).
+> read/write/recv/send 뒤에는 읽지 않는다. `src/core/Listener.cpp:60` 한 곳에서만 읽는데, 시작할 때 listen 소켓을 열지 못한 이유를 출력하기 위해서다. poll이 -1이어도 errno를 보지 않는다. 준비 한 번에 I/O 한 번만 해서 EAGAIN을 구분할 필요가 없다 ([[lessons/04-poll]]).
 
 > [!question]- Q8. 디스크 파일을 동기로 읽어도 루프가 멈추지 않나요?
 > 설정 파일은 시작할 때만 읽는다. 정적 파일은 1MB 이하만 통째로 읽고, 더 크면 POLLOUT마다 64KB씩 읽어 보낸다. 시계 파일은 바퀴마다 1바이트다. 업로드는 본문을 다 받은 뒤 한 번에 쓴다 ([[lessons/11-response]]).

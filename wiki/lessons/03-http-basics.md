@@ -91,4 +91,4 @@ hello\r\n
 HTTP/1.1은 기본적으로 연결을 유지한다. 요청에 `Connection: close`가 있으면 그 응답 뒤 닫아야 한다 (MUST, RFC 9112 9.6, raw/rfc9112.txt:1521-1526). 요청을 연달아 보내는 것(pipelining)도 받을 수 있고, 응답은 받은 순서대로 보내야 한다 (MUST, RFC 9112 9.3.2, raw/rfc9112.txt:1399-1404). 자세한 규칙은 [[concepts/connection-management]].
 
 > [!question]- 확인 문제: HEAD 요청에 서버는 무엇을 보내야 할까?
-> GET이었을 때와 같은 머리만 보내고 내용은 보내면 안 된다 (MUST NOT, RFC 9110 9.3.2, raw/rfc9110.txt:3987-3988). `Content-Length`도 GET이었다면 보냈을 값이다 (raw/rfc9110.txt:3226-3230). 우리 서버는 응답을 다 만든 뒤 `omitBody`만 켠다 (`src/app/RequestProcessor.cpp:306`).
+> GET이었을 때와 같은 머리만 보내고 내용은 보내면 안 된다 (MUST NOT, RFC 9110 9.3.2, raw/rfc9110.txt:3987-3988). `Content-Length`도 GET이었다면 보냈을 값이다 (raw/rfc9110.txt:3226-3230). 우리 서버는 응답을 다 만든 뒤 `omitBody`만 켠다 (`src/app/RequestProcessor.cpp:313`).

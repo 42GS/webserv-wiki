@@ -10,9 +10,9 @@ updated: 2026-10-29
 이전: [[lessons/04a-cpp98-basics]] · 다음: [[lessons/06-config-parsing]]
 
 > [!example] 쉬운 예
-> 가게 문을 열기 전 순서: 운영 규칙표를 읽고(설정), 벽시계를 맞추고(시계), "불나면 정리하고 나가자" 약속을 정하고(시그널), 문을 열고(listen), 손님을 맞기 시작한다(이벤트 루프).
+> 가게 문을 열기 전 순서: 운영 규칙표를 읽고(설정), 벽시계를 맞추고(시계), 영업 일지를 펴고(운영 로그), "불나면 정리하고 나가자" 약속을 정하고(시그널), 문을 열고(listen), 손님을 맞기 시작한다(이벤트 루프).
 
-`src/main.cpp:48-93` (줄임):
+`src/main.cpp:49-100` (줄임):
 
 ```cpp
 int main(int argc, char** argv) {
@@ -21,13 +21,17 @@ int main(int argc, char** argv) {
   configs = loadConfigFile(configPath);          // 1. 설정 (실패 → ConfigError → 종료 1)
   Clock clock(limits::kClockFile);
   if (!clock.refresh()) return fail(...);        // 2. 시계
-  signals::install();                            // 3. 시그널
+  Logger logger;
+  if (!logger.open(kAccessLogFile, kErrorLogFile)) return fail(...);  // 3. 운영 로그
+  signals::install();                            // 4. 시그널
   EventLoop loop(clock);
   ChildReaper reaper;                            // server보다 먼저 선언 → 더 오래 산다
-  Server server(configs, loop, reaper, clock.now());
-  if (!server.openListeners(error)) return fail(error);   // 4. listen
-  try { loop.run(server); }                      // 5. 루프 (SIGINT까지)
+  Server server(configs, ConnectionServices(loop, reaper, logger), clock.now());
+  if (!server.openListeners(error)) return fail(error);   // 5. listen
+  logger.error(clock.now(), "started: ...");
+  try { loop.run(server); }                      // 6. 루프 (SIGINT까지)
   catch (const std::exception& error) { return fail(...); }
+  logger.error(clock.now(), "shutting down");
   return EXIT_SUCCESS;                           // 소멸자들이 모두 정리
 }
 ```
@@ -52,7 +56,7 @@ int main(int argc, char** argv) {
 
 ## 5.3 객체가 사라지는 순서
 
-C++에서는 함수가 끝날 때 지역 변수가 **선언의 역순**으로 소멸한다. `server`가 먼저 사라지며 모든 연결을 지우고(각 연결의 CGI 자식은 `reaper`에 넘김), 그다음 `reaper`가 남은 자식을 모두 `SIGKILL`하고 기다린다 (`src/core/ChildReaper.cpp:17-23`). 그래서 `reaper`를 `server`보다 먼저 선언했다 (`src/main.cpp:69-74`).
+C++에서는 함수가 끝날 때 지역 변수가 **선언의 역순**으로 소멸한다. `server`가 먼저 사라지며 모든 연결을 지우고(각 연결의 CGI 자식은 `reaper`에 넘김), 그다음 `reaper`가 남은 자식을 모두 `SIGKILL`하고 기다린다 (`src/core/ChildReaper.cpp:17-23`). 그래서 `reaper`를 `server`보다 먼저 선언했다 (`src/main.cpp:74-79`). 같은 이유로 `logger`도 `server`보다 먼저 선언되어(`src/main.cpp:67`), 연결들이 지워지는 동안 로그를 쓸 수 있다 **(판단)**. 운영 로그는 [[lessons/14-resilience]] 14.4.
 
 > [!info] 평가 때
 > "Ctrl-C를 누르면 어떻게 정리되나요?" → 시그널 핸들러는 플래그만 세우고([[lessons/14-resilience]]), 루프가 플래그를 보고 빠져나온 뒤 `main`이 반환하며 소멸자가 모두 정리한다. valgrind로 돌린 뒤 SIGINT로 끄면 "All heap blocks were freed"가 나온다 → [[analysis/mock-evaluation]].

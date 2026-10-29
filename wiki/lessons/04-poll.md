@@ -38,13 +38,13 @@ fd마다 기다리는 것(events)을 적어 넘기고, 일어난 일(revents)을
 | `POLLHUP` | 상대가 끊었다 | 읽던 중이면 한 번 더 읽어 0(EOF) 확인, 아니면 닫기 |
 | `POLLERR`, `POLLNVAL` | 오류, 잘못된 fd | 닫기 |
 
-처리표 근거: [[concepts/io-multiplexing]] "revents 처리". 코드: `src/http/Connection.cpp:45-62`.
+처리표 근거: [[concepts/io-multiplexing]] "revents 처리". 코드: `src/http/Connection.cpp:76-93`.
 
 > [!tip] 왜 준비 한 번에 I/O 한 번만?
 > 평가표는 EAGAIN이 나올 때까지 반복해서 읽어도 된다고 한다 (raw/evaluation-sheet-en.md:54). 하지만 EAGAIN을 알려면 errno를 봐야 하고, errno 검사는 금지다. 둘이 부딪히므로 **준비 알림 한 번에 recv/send 한 번**만 한다. 그러면 errno를 볼 일이 없다 **(판단)** → [[concepts/io-multiplexing]] "EAGAIN 반복 모순".
 
 > [!tip] 왜 POLLOUT은 보낼 게 있을 때만?
-> 소켓은 거의 항상 "쓸 수 있음"이다. 보낼 것도 없는데 `POLLOUT`을 요청하면 `poll()`이 매번 바로 돌아와 CPU를 다 쓴다(busy waiting). POSIX도 상태를 바꾸지 않고 poll을 반복하면 busy waiting이 된다고 경고한다 (raw/posix-poll.md:175). 그래서 `Connection::wantedEvents()`는 응답을 보내는 중(`WRITE`)일 때만 `POLLOUT`을 돌려준다 (`src/http/Connection.cpp:38-43`). 대기 연결 10개가 2초 동안 CPU 0.2초 미만을 쓰는지 테스트한다 ([[analysis/test-plan]] N-19).
+> 소켓은 거의 항상 "쓸 수 있음"이다. 보낼 것도 없는데 `POLLOUT`을 요청하면 `poll()`이 매번 바로 돌아와 CPU를 다 쓴다(busy waiting). POSIX도 상태를 바꾸지 않고 poll을 반복하면 busy waiting이 된다고 경고한다 (raw/posix-poll.md:175). 그래서 `Connection::wantedEvents()`는 응답을 보내는 중(`WRITE`)일 때만 `POLLOUT`을 돌려준다 (`src/http/Connection.cpp:69-74`). 대기 연결 10개가 2초 동안 CPU 0.2초 미만을 쓰는지 테스트한다 ([[analysis/test-plan]] N-19).
 
 > [!example] 쉬운 예
 > 할 말이 없는데 계속 손을 들면 선생님은 계속 와서 "뭐니?" 하고 물어야 한다. 할 말이 생겼을 때만 손을 든다.

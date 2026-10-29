@@ -2,7 +2,7 @@
 title: "레슨 10: 길 찾기 (라우팅)"
 type: lesson
 sources: [raw/rfc3986.txt, raw/nginx-core-module.md, raw/subject.md, raw/rfc9110.txt, raw/nginx-index-module.md]
-updated: 2026-10-25
+updated: 2026-10-29
 ---
 
 # 레슨 10: 길 찾기 (라우팅)
@@ -76,7 +76,7 @@ subject의 예시("`/kapouet`이 `/tmp/www`에 root되면 `/kapouet/pouic/toto/p
 
 ## 10.4 결정 순서
 
-`src/route/Router.cpp:337-369`:
+`src/route/Router.cpp:328-360`:
 
 ```cpp
 RouteResult Router::routePath(path, request, internalRedirects) const {
@@ -106,7 +106,7 @@ RouteResult Router::routePath(path, request, internalRedirects) const {
 3. index가 없고 `autoindex on`이면 목록 HTML (이름은 HTML 이스케이프, 링크는 퍼센트 인코딩).
 4. 둘 다 아니면 403 **(판단, NGINX 실측과 같음)**.
 
-코드: `src/route/Router.cpp:385-408`, `src/handler/AutoindexHandler.cpp:103-120`. 근거: [[concepts/configuration-file]] "디렉토리 요청 처리 순서".
+코드: `src/route/Router.cpp:375-398`, `src/handler/AutoindexHandler.cpp:103-120`. 근거: [[concepts/configuration-file]] "디렉토리 요청 처리 순서".
 
 > [!question]- 확인 문제: `/docs`(끝 슬래시 없음)를 요청하면 왜 404인가?
 > `location /docs/`는 `/docs`에 맞지 않아 `location /`가 처리하고, root인 `www/docs`가 없기 때문이다. NGINX도 끝 슬래시 301은 `proxy_pass` 등을 쓸 때만 한다 (raw/nginx-core-module.md:1115). 정적 파일이면 NGINX도 같다고 본다 **(판단)**.
