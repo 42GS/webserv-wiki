@@ -701,3 +701,7 @@
 ## [2026-10-29] query | 기초 레슨 2A(시스템 콜)·2B(TCP 연결)
 - 생성: [[lessons/02a-unix-system-calls]], [[lessons/02b-tcp-connections]]
 - 메모: GitHub Wiki 공유용 기초 보충(사용자 요청 "기초 개념을 더 보충해서"). 코드 기준 webserv `4db9510`. 인용은 이번에 받은 POSIX 페이지·RFC 9293과 기존 RFC 9112·과제 원문에서 쓸 때마다 대조했다. 2A의 `FileReader` 코드는 줄여 옮기고 설명 주석을 붙였다고 표시했다. 레슨 순서(00-guide)·이웃 링크·index는 기초 레슨 네 장을 다 쓴 뒤 함께 고친다.
+
+## [2026-10-29] query | 기초 레슨 3A(URL·HTTP 자세히)
+- 생성: [[lessons/03a-urls-and-http-details]]
+- 메모: URL 구성과 origin-form, 퍼센트 인코딩, 헤더 이름 대소문자·Content-Type·Date, safe·idempotent, 쿠키, 브라우저 요청 흐름. 근거는 RFC 3986·9110·9112·6265와 코드(`RequestParser`·`HeaderMap`·`MimeTypes`·`session.py`, 기준 `4db9510`). 한글 퍼센트 인코딩 예(UTF-8 변환)와 브라우저 흐름 요약은 **판단**으로 표시했다.
