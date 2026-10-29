@@ -34,6 +34,7 @@ URL은 2026-10-15에 접속해 HTTP 200을 확인했다. 받아서 넣은 소스
 | [x] | P2 | RFC 2046 — MIME Media Types (5.1 Multipart) — `raw/rfc2046.txt`로 ingest (2026-10-15) | <https://www.rfc-editor.org/rfc/rfc2046> | multipart 구분자 문법, 마지막 구분자 `--boundary--` (5.1.1 Common Syntax, 2026-10-15 `close-delimiter` 규칙 존재 확인) → [[concepts/file-upload]] | `raw/rfc2046.txt` |
 | [x] | P2 | IANA HTTP Status Code Registry — `raw/iana-http-status-codes.txt`로 ingest (2026-10-15, txt 형식) | <https://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml> | 평가표 "status code 목록 검색해 둘 것" (raw/evaluation-sheet.md:63) | `raw/iana-status-codes.md` |
 | [x] | P3 | RFC 6585 — Additional HTTP Status Codes — `raw/rfc6585.txt`로 ingest (2026-10-15) | <https://www.rfc-editor.org/rfc/rfc6585> | 431 Request Header Fields Too Large의 정의 (5절, 2026-10-15 존재 확인) → [[concepts/status-codes]] | `raw/rfc6585.txt` |
+| [x] | P2 | RFC 9293 (TCP) — `raw/rfc9293.txt`로 ingest (2026-10-29) | <https://www.rfc-editor.org/rfc/rfc9293.txt> | 기초 레슨(TCP 연결)의 근거 | `raw/rfc9293.txt` |
 
 ## 3. CGI
 
@@ -78,7 +79,6 @@ URL은 2026-10-15에 접속해 HTTP 200을 확인했다. 받아서 넣은 소스
 | [x] | P2 | `exec` (`execve`) — `raw/posix-exec.md`로 ingest (2026-10-29) | <https://pubs.opengroup.org/onlinepubs/9799919799/functions/exec.html> | 기초 레슨(시스템 콜)의 근거 | `raw/posix-exec.md` |
 | [x] | P2 | `pipe()` — `raw/posix-pipe.md`로 ingest (2026-10-29) | <https://pubs.opengroup.org/onlinepubs/9799919799/functions/pipe.html> | 기초 레슨(시스템 콜)의 근거 | `raw/posix-pipe.md` |
 | [x] | P2 | `dup()`·`dup2()` — `raw/posix-dup.md`로 ingest (2026-10-29) | <https://pubs.opengroup.org/onlinepubs/9799919799/functions/dup.html> | 기초 레슨(시스템 콜)의 근거 | `raw/posix-dup.md` |
-| [x] | P2 | RFC 9293 (TCP) — `raw/rfc9293.txt`로 ingest (2026-10-29) | <https://www.rfc-editor.org/rfc/rfc9293.txt> | 기초 레슨(TCP 연결)의 근거 | `raw/rfc9293.txt` |
 | [-] | P2 | Linux `epoll(7)` — 받지 않음: `poll()` 사용 결정 (2026-10-15) | <https://man7.org/linux/man-pages/man7/epoll.7.html> | Linux에서 epoll을 쓸 경우 | `raw/linux-epoll-7.md` |
 | [-] | P2 | FreeBSD `kqueue(2)` — 받지 않음: `poll()` 사용 결정 (2026-10-15) | <https://man.freebsd.org/cgi/man.cgi?query=kqueue&sektion=2> | macOS에서 kqueue를 쓸 경우. macOS 자체 man page는 터미널 `man 2 kqueue`가 더 정확함 | `raw/kqueue-2.md` |
 
