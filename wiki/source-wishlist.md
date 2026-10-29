@@ -77,6 +77,7 @@ URL은 2026-10-15에 접속해 HTTP 200을 확인했다. 받아서 넣은 소스
 | [x] | P2 | `fork()` — `raw/posix-fork.md`로 ingest (2026-10-29) | <https://pubs.opengroup.org/onlinepubs/9799919799/functions/fork.html> | 기초 레슨(시스템 콜)의 근거 | `raw/posix-fork.md` |
 | [x] | P2 | `exec` (`execve`) — `raw/posix-exec.md`로 ingest (2026-10-29) | <https://pubs.opengroup.org/onlinepubs/9799919799/functions/exec.html> | 기초 레슨(시스템 콜)의 근거 | `raw/posix-exec.md` |
 | [x] | P2 | `pipe()` — `raw/posix-pipe.md`로 ingest (2026-10-29) | <https://pubs.opengroup.org/onlinepubs/9799919799/functions/pipe.html> | 기초 레슨(시스템 콜)의 근거 | `raw/posix-pipe.md` |
+| [x] | P2 | `dup()`·`dup2()` — `raw/posix-dup.md`로 ingest (2026-10-29) | <https://pubs.opengroup.org/onlinepubs/9799919799/functions/dup.html> | 기초 레슨(시스템 콜)의 근거 | `raw/posix-dup.md` |
 | [-] | P2 | Linux `epoll(7)` — 받지 않음: `poll()` 사용 결정 (2026-10-15) | <https://man7.org/linux/man-pages/man7/epoll.7.html> | Linux에서 epoll을 쓸 경우 | `raw/linux-epoll-7.md` |
 | [-] | P2 | FreeBSD `kqueue(2)` — 받지 않음: `poll()` 사용 결정 (2026-10-15) | <https://man.freebsd.org/cgi/man.cgi?query=kqueue&sektion=2> | macOS에서 kqueue를 쓸 경우. macOS 자체 man page는 터미널 `man 2 kqueue`가 더 정확함 | `raw/kqueue-2.md` |
 
