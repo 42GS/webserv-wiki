@@ -668,3 +668,8 @@
 - 생성: [[sources/posix-errno]], `raw/posix-errno.md`, `raw/posix-errno.source.html`
 - 갱신: [[index]], [[source-wishlist]]
 - 메모: 기초 레슨 보충의 근거로 받았다. 원본 HTML 본문 전체를 변환본과 직접 읽어 대조했다(차이 없음).
+
+## [2026-10-29] ingest | POSIX fork()
+- 생성: [[sources/posix-fork]], `raw/posix-fork.md`, `raw/posix-fork.source.html`
+- 갱신: [[index]], [[source-wishlist]]
+- 메모: 기초 레슨 보충의 근거로 받았다. 원본 HTML 본문 전체를 변환본과 직접 읽어 대조했다(글자 차이 없음, 선택 범위 그림·빈 br·SEE ALSO의 빈 링크만 구조 차이).

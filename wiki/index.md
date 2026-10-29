@@ -56,6 +56,7 @@ updated: 2026-10-25
 | [[sources/posix-open]] | POSIX `open()` — 열린 파일 설명과 fd, 접근 모드, O_CREAT·O_EXCL(원자적 생성)·O_APPEND·O_TRUNC | `raw/posix-open.md` |
 | [[sources/posix-close]] | POSIX `close()` — fd 반납, EINTR 말고는 오류에도 닫힘, 마지막 fd에서 pipe 데이터 버림·소켓 파괴, fork 뒤 close 반복의 주의 | `raw/posix-close.md` |
 | [[sources/posix-errno]] | POSIX `errno` — 오류 번호, 반환값이 실패를 알릴 때만 의미, 아무 함수도 0으로 설정하지 않음 | `raw/posix-errno.md` |
+| [[sources/posix-fork]] | POSIX `fork()` — 자식은 부모의 복사본(fd 공유), 자식 0·부모 pid, 다른 프로그램을 돌릴 때는 곧 exec | `raw/posix-fork.md` |
 | [[sources/nginx-index-module]] | NGINX index 모듈 — `/`로 끝나는 요청, 파일 목록 순서, 내부 리다이렉트 | `raw/nginx-index-module.md` |
 | [[sources/nginx-autoindex-module]] | NGINX autoindex 모듈 — index가 없을 때 리스팅, 기본 off, 형식 | `raw/nginx-autoindex-module.md` |
 | [[sources/rfc7578]] | RFC 7578 multipart/form-data — part 구조, Content-Disposition, filename 주의 | `raw/rfc7578.txt` |
