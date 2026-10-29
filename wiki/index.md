@@ -58,6 +58,7 @@ updated: 2026-10-25
 | [[sources/posix-errno]] | POSIX `errno` — 오류 번호, 반환값이 실패를 알릴 때만 의미, 아무 함수도 0으로 설정하지 않음 | `raw/posix-errno.md` |
 | [[sources/posix-fork]] | POSIX `fork()` — 자식은 부모의 복사본(fd 공유), 자식 0·부모 pid, 다른 프로그램을 돌릴 때는 곧 exec | `raw/posix-fork.md` |
 | [[sources/posix-exec]] | POSIX `exec`(`execve` 등) — 프로세스 이미지 교체, argv·envp, FD_CLOEXEC 없는 fd 유지, SIG_IGN 유지·잡던 시그널은 기본값, 작업 디렉토리 상속 | `raw/posix-exec.md` |
+| [[sources/posix-pipe]] | POSIX `pipe()` — fildes[0] 읽는 끝·fildes[1] 쓰는 끝, FIFO, 쓰기로 연 프로세스의 정의, 쓰지 않는 끝을 닫는 습관 | `raw/posix-pipe.md` |
 | [[sources/nginx-index-module]] | NGINX index 모듈 — `/`로 끝나는 요청, 파일 목록 순서, 내부 리다이렉트 | `raw/nginx-index-module.md` |
 | [[sources/nginx-autoindex-module]] | NGINX autoindex 모듈 — index가 없을 때 리스팅, 기본 off, 형식 | `raw/nginx-autoindex-module.md` |
 | [[sources/rfc7578]] | RFC 7578 multipart/form-data — part 구조, Content-Disposition, filename 주의 | `raw/rfc7578.txt` |
