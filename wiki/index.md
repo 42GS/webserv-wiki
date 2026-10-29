@@ -60,6 +60,7 @@ updated: 2026-10-25
 | [[sources/posix-exec]] | POSIX `exec`(`execve` 등) — 프로세스 이미지 교체, argv·envp, FD_CLOEXEC 없는 fd 유지, SIG_IGN 유지·잡던 시그널은 기본값, 작업 디렉토리 상속 | `raw/posix-exec.md` |
 | [[sources/posix-pipe]] | POSIX `pipe()` — fildes[0] 읽는 끝·fildes[1] 쓰는 끝, FIFO, 쓰기로 연 프로세스의 정의, 쓰지 않는 끝을 닫는 습관 | `raw/posix-pipe.md` |
 | [[sources/posix-dup]] | POSIX `dup()`·`dup2()` — fd 복제, dup2는 지정 번호를 같은 열린 파일 설명으로 바꿔 끼움(먼저 닫음), FD_CLOEXEC 해제 | `raw/posix-dup.md` |
+| [[sources/rfc9293]] | RFC 9293 TCP — 바이트 흐름·포트·소켓, 3-way handshake, RST 조건, CLOSE와 half-close(읽지 않은 데이터면 RST SHOULD), TIME-WAIT, TCP keep-alive | `raw/rfc9293.txt` |
 | [[sources/nginx-index-module]] | NGINX index 모듈 — `/`로 끝나는 요청, 파일 목록 순서, 내부 리다이렉트 | `raw/nginx-index-module.md` |
 | [[sources/nginx-autoindex-module]] | NGINX autoindex 모듈 — index가 없을 때 리스팅, 기본 off, 형식 | `raw/nginx-autoindex-module.md` |
 | [[sources/rfc7578]] | RFC 7578 multipart/form-data — part 구조, Content-Disposition, filename 주의 | `raw/rfc7578.txt` |
