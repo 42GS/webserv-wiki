@@ -658,3 +658,8 @@
 - 생성: [[sources/posix-open]], `raw/posix-open.md`, `raw/posix-open.source.html`
 - 갱신: [[index]], [[source-wishlist]]
 - 메모: 기초 레슨 보충의 근거로 받았다. 원본 HTML 본문 전체를 변환본과 직접 읽어 대조했다(글자 차이 없음, 선택 범위 그림·코드 블록·SEE ALSO의 빈 링크 하나만 구조 차이).
+
+## [2026-10-29] ingest | POSIX close()
+- 생성: [[sources/posix-close]], `raw/posix-close.md`, `raw/posix-close.source.html`
+- 갱신: [[index]], [[source-wishlist]]
+- 메모: 기초 레슨 보충의 근거로 받았다. 원본 HTML 본문 전체를 변환본과 직접 읽어 대조했다(글자 차이 없음, 선택 범위 그림·코드 블록·SEE ALSO의 빈 링크만 구조 차이). APPLICATION USAGE가 경고하는 'fork 뒤 close 반복'이 이 서버(단일 스레드, 곧바로 execve)에 해당하지 않는 이유를 판단으로 적었다.
