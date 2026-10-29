@@ -2,7 +2,7 @@
 title: 설정 파일
 type: concept
 sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/rfc9110.txt, raw/nginx-core-module.md, raw/nginx-request-processing.md, raw/posix-bind.md, raw/nginx-index-module.md, raw/nginx-autoindex-module.md, raw/evaluation-sheet.md, raw/rfc3986.txt, raw/nginx-rewrite-module.md, raw/nginx-server-names.md, raw/os-observed-bind.md, raw/nginx-observed-directory.md]
-updated: 2026-10-17
+updated: 2026-10-29
 ---
 
 # 설정 파일
@@ -167,4 +167,5 @@ subject 기능을 NGINX에서는 어떤 지시자로 하는지 정리했다. sub
 
 ## 관련
 
+- 이 서버가 받는 설정 형식 전체: [[concepts/configuration-syntax]]
 - [[concepts/http-features]], [[concepts/cgi]], [[sources/nginx-core-module]], [[sources/nginx-request-processing]], [[sources/posix-bind]], [[sources/nginx-index-module]], [[sources/nginx-autoindex-module]]

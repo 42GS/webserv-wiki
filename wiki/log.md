@@ -719,3 +719,8 @@
 ## [2026-10-29] query | GitHub Wiki에 학습 페이지 올림
 - 갱신: [[lessons/13-cgi]] (자식 예외 처리 줄 `:212-230`이 바로 앞의 `RequestProcessor.cpp`가 아니라 `CgiProcess.cpp`임을 파일 이름으로 밝힘)
 - 메모: 사용자 요청으로 `42GS/webserv` GitHub Wiki에 레슨 21장, 개념 13장, Home, Sidebar를 한 번 올렸다(wiki 커밋 `6858710`). 원문(raw/)·analysis·sources·log는 올리지 않았다. 변환은 사본에서 했다. `[[lessons|concepts]]` 링크는 페이지 링크로, 올리지 않은 페이지 링크는 경로 텍스트로, 콜아웃은 굵은 제목의 인용으로, 확인 문제는 `<details>`로 바꿨다. 코드 위치는 제출 저장소 커밋 `5122dee`의 줄 링크로 바꿨다. 사본에서만 바꾼 문구: 코드 기준 커밋을 `5122dee`로, 개발 저장소 커밋 번호와 개인 경로·작업 기록 참조를 뺌. RFC 10개는 rfc-editor.org 원문과 바이트 단위로 같음을 확인하고 Home에 줄 번호가 같다고 적었다. 렌더링한 페이지를 받아 mermaid·`<details>`·코드 링크를 확인했다.
+
+## [2026-10-29] query | 설정 파일 문법 정리
+- 생성: [[concepts/configuration-syntax]]
+- 갱신: [[concepts/configuration-file]] 관련, [[lessons/06-config-parsing]] (새 페이지 링크), `index`
+- 메모: 사용자 요청("config 파일 문법 정리해서 Wiki에 추가해줘"). 근거는 설정 모듈 코드 전체(`src/config/*`, 기준 `4db9510` = 제출 `5122dee`)와 과제 IV.3절. 오류 메시지 19개는 제출 코드를 Ubuntu 22.04 컨테이너에서 빌드해 잘못된 설정 파일로 실행한 출력 그대로다. 코드에서 읽어 낸 주의점 두 가지(location이 문자열 prefix라 `/files`가 `/filesystem`에도 맞음, alias와 location의 끝 `/`가 다르면 경로가 붙어 버림)와 NGINX의 `limit_except` 없는 location 동작은 **판단**으로 표시했다.

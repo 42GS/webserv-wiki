@@ -2,7 +2,7 @@
 title: "레슨 6: 설정 파일 읽기"
 type: lesson
 sources: [raw/subject.md, raw/evaluation-sheet-en.md]
-updated: 2026-10-25
+updated: 2026-10-29
 ---
 
 # 레슨 6: 설정 파일 읽기
@@ -20,6 +20,8 @@ flowchart LR
 ```
 
 `src/config/ConfigLoader.cpp:36-41` — `tokenizeConfig` → `parseDirectives` → `buildServerConfigs`.
+
+지시어마다의 인자·기본값·오류 메시지는 [[concepts/configuration-syntax]]에 모았다.
 
 ## 6.1 문법: NGINX를 따라서
 

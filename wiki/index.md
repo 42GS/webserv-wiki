@@ -1,7 +1,7 @@
 ---
 title: Index
 type: overview
-updated: 2026-10-25
+updated: 2026-10-29
 ---
 
 # Index
@@ -86,6 +86,7 @@ updated: 2026-10-25
 |---|---|
 | [[concepts/io-multiplexing]] | 단일 `poll()`·non-blocking·`errno` 금지 등 9개 규칙, EAGAIN 반복 모순, `revents` 처리표, POLLOUT 관리, recv·send 반환값 처리표, 허용 함수 |
 | [[concepts/configuration-file]] | 필수 기능 10개와 평가 테스트 대응, root=NGINX alias 방식, location 매칭, server 선택, 디렉토리 요청 처리 순서, NGINX 지시자 대응표, Port issues, virtual host |
+| [[concepts/configuration-syntax]] | 이 서버의 설정 문법 전체: 글자 규칙, 블록 구조, 지시어 12개(위치·인자·기본값·검사), 물려받기, 오류 메시지 실측 19개, NGINX와 다른 점 |
 | [[concepts/cgi]] | 호출 절차 7단계, 메타변수 표, CGI 응답 파싱(4가지 유형·Status), 실패 처리(502·504), 자식 회수(waitpid), php-cgi 추가 변수 |
 | [[concepts/http-features]] | 필수 기능, 메서드별 규칙(RFC 9110), 응답 헤더 규칙, HEAD·Date 쟁점 |
 | [[concepts/status-codes]] | 과제 상황별 status code 선택표 (정상·리다이렉트·4xx·5xx), RFC 근거, reason phrase(IANA 이름) |
