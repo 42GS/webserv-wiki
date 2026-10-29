@@ -71,7 +71,7 @@ sequenceDiagram
 > - **chdir**: 스크립트가 상대 경로 파일을 읽을 수 있게 스크립트 디렉토리에서 실행한다 (raw/subject.md:181, raw/evaluation-sheet-en.md:89).
 > - **SIGPIPE 되돌리기**: 서버는 SIGPIPE를 무시하지만([[lessons/14-resilience]]), 스크립트는 보통 동작을 받게 한다.
 > - **execve 실패하면 std::exit(1)**: `exit`·`_exit`가 허용 목록에 없어 subject 51줄을 근거로 `std::exit`를 쓴다 ([[analysis/design-decisions]] 12). 부모는 출력 없이 EOF를 받으니 502가 된다. 흔한 실패를 줄이려고 `fork` 전에 `access`로 스크립트를 읽을 수 있는지, 프로그램이 있고 실행 가능한지 검사한다(403·404, `src/app/RequestProcessor.cpp:110-116`).
-> - **자식의 모든 예외를 잡기**: 자식에서 예외(`bad_alloc`)가 풀려 나가면 자식이 서버 코드로 돌아가 같은 소켓을 처리하는 두 번째 서버가 된다. 그래서 자식 코드 전체를 `try`로 감싸고 무조건 `std::exit`한다 (`:212-230`, [[analysis/test-plan]] 8절 R1).
+> - **자식의 모든 예외를 잡기**: 자식에서 예외(`bad_alloc`)가 풀려 나가면 자식이 서버 코드로 돌아가 같은 소켓을 처리하는 두 번째 서버가 된다. 그래서 자식 코드 전체를 `try`로 감싸고 무조건 `std::exit`한다 (`src/cgi/CgiProcess.cpp:212-230`, [[analysis/test-plan]] 8절 R1).
 
 ## 13.4 pipe 입출력도 poll로
 
