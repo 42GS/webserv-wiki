@@ -50,6 +50,7 @@ updated: 2026-10-25
 | [[sources/posix-exit]] | POSIX `_Exit()` — 프로세스 종료의 결과(좀비, fd 닫힘, 자식 입양) | `raw/posix-exit.md` |
 | [[sources/posix-socket]] | POSIX `socket()` — 주소 없는 소켓을 만들고 fd를 돌려줌, `SOCK_STREAM`, Issue 8의 `SOCK_NONBLOCK` | `raw/posix-socket.md` |
 | [[sources/posix-listen]] | POSIX `listen()` — 연결 받는 소켓으로 표시, backlog는 대기열 힌트(`SOMAXCONN`까지 지원) | `raw/posix-listen.md` |
+| [[sources/posix-accept]] | POSIX `accept()` — 대기열의 첫 연결을 새 소켓 fd로, 비었으면 EAGAIN, O_NONBLOCK 상속은 구현마다 다름 | `raw/posix-accept.md` |
 | [[sources/nginx-index-module]] | NGINX index 모듈 — `/`로 끝나는 요청, 파일 목록 순서, 내부 리다이렉트 | `raw/nginx-index-module.md` |
 | [[sources/nginx-autoindex-module]] | NGINX autoindex 모듈 — index가 없을 때 리스팅, 기본 off, 형식 | `raw/nginx-autoindex-module.md` |
 | [[sources/rfc7578]] | RFC 7578 multipart/form-data — part 구조, Content-Disposition, filename 주의 | `raw/rfc7578.txt` |

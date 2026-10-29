@@ -638,3 +638,8 @@
 - 생성: [[sources/posix-listen]], `raw/posix-listen.md`, `raw/posix-listen.source.html`
 - 갱신: [[index]], [[source-wishlist]]
 - 메모: 기초 레슨 보충의 근거로 받았다. 원본 HTML 본문 전체를 변환본과 직접 읽어 대조했다(차이 없음). `webserv/src/core/Listener.cpp:44` 주석이 `SOMAXCONN`을 '가장 긴 대기열'이라고 해 원문(지원해야 하는 값까지)보다 강하다는 점을 적었다.
+
+## [2026-10-29] ingest | POSIX accept()
+- 생성: [[sources/posix-accept]], `raw/posix-accept.md`, `raw/posix-accept.source.html`
+- 갱신: [[index]], [[source-wishlist]]
+- 메모: 기초 레슨 보충의 근거로 받았다. 원본 HTML 본문 전체를 변환본과 직접 읽어 대조했다(차이 없음). 받은 소켓이 O_NONBLOCK을 물려받는지는 구현이 정하므로(raw/posix-accept.md:54) 서버가 fcntl을 다시 부르는 이유를 적었다.
