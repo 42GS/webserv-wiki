@@ -705,3 +705,8 @@
 ## [2026-10-29] query | 기초 레슨 3A(URL·HTTP 자세히)
 - 생성: [[lessons/03a-urls-and-http-details]]
 - 메모: URL 구성과 origin-form, 퍼센트 인코딩, 헤더 이름 대소문자·Content-Type·Date, safe·idempotent, 쿠키, 브라우저 요청 흐름. 근거는 RFC 3986·9110·9112·6265와 코드(`RequestParser`·`HeaderMap`·`MimeTypes`·`session.py`, 기준 `4db9510`). 한글 퍼센트 인코딩 예(UTF-8 변환)와 브라우저 흐름 요약은 **판단**으로 표시했다.
+
+## [2026-10-29] query | 기초 레슨 4A(C++98 기초), 레슨 순서 갱신
+- 생성: [[lessons/04a-cpp98-basics]]
+- 갱신: [[lessons/00-guide]] 순서(2A·2B·3A·4A를 보충 장으로), 이웃 링크([[lessons/02-networking-basics]]·[[lessons/03-http-basics]]·[[lessons/04-poll]]·[[lessons/05-startup]]), [[lessons/16-glossary]](시스템 콜·TCP·URL·HTTP·C++ 용어), [[sources/cpp-core-guidelines]](I.25·F.16·C.35·C.67·R.1·R.11·Con.2를 다룬 절에 추가), `index`
+- 메모: C++98에 `= delete`·`nullptr`·`auto`(새 뜻)·`override`가 없다는 것과, private에 선언만 한 복사 생성자를 클래스 안에서 쓰면 링크 오류가 난다는 것을 2026-10-29 Ubuntu 22.04 g++ 11.4.0(`-std=c++98 -pedantic-errors -Wall -Wextra -Werror`)으로 직접 컴파일해 확인했다. C++ Core Guidelines는 C++11 이후 기준이라 규칙의 이유만 인용했다. 소멸자가 범위를 벗어날 때 반드시 불린다는 설명은 C++ 표준 절로 확인하지 않아 **판단**으로 표시했다.

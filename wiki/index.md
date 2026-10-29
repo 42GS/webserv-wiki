@@ -118,8 +118,12 @@ webserv 코드를 처음부터 배우는 학습 노트. 비유 → 이론 → �
 | [[lessons/00-guide]] | 읽는 법, 상자(콜아웃) 종류, 추천 순서 |
 | [[lessons/01-request-journey]] | 요청 한 개가 서버를 지나가는 8단계, 모듈별 책임 |
 | [[lessons/02-networking-basics]] | 프로세스, fd, 소켓·포트, TCP 스트림, 블로킹·논블로킹 |
+| [[lessons/02a-unix-system-calls]] | (보충) open·read·write·close, errno 규칙, fork·execve, pipe·dup2로 CGI 잇기 |
+| [[lessons/02b-tcp-connections]] | (보충) 3-way handshake와 소켓 함수, backlog, FIN·half-close·RST·TIME-WAIT와 DRAIN, TCP·HTTP keep-alive 차이 |
 | [[lessons/03-http-basics]] | 요청·응답 모양, 상태 코드 표, Content-Length와 chunked, keep-alive |
+| [[lessons/03a-urls-and-http-details]] | (보충) URL 부분과 origin-form, 퍼센트 인코딩, 헤더 이름·Content-Type·Date, safe·idempotent, 쿠키, 브라우저 흐름 |
 | [[lessons/04-poll]] | poll 하나 규칙(0점 조건), revents 처리, 준비 1회 I/O 1번, POLLOUT과 busy waiting |
+| [[lessons/04a-cpp98-basics]] | (보충) C++98에 없는 문법(실행 확인), const 참조, RAII, 복사 막기, 인터페이스와 virtual 소멸자, 소유, 예외 |
 | [[lessons/05-startup]] | main 순서, 파일로 만든 시계, 소멸 순서 |
 | [[lessons/06-config-parsing]] | lexer → 지시어 나무 → builder, 규칙 표, 상속, 시작을 거부하는 설정 |
 | [[lessons/07-event-loop]] | IoHandler, 한 바퀴, 지연 unwatch, accept 실패 시 listener 멈춤, Server 소유 |

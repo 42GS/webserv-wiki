@@ -33,8 +33,12 @@ webserv(C++98 HTTP 서버)가 무엇을, 왜, 어떻게 하는지 처음부터 �
 
 1. [[lessons/01-request-journey]] — 요청 한 개의 여행 (전체 그림)
 2. [[lessons/02-networking-basics]] — 컴퓨터끼리 말하는 법
+   - 2A. [[lessons/02a-unix-system-calls]] — 운영체제에게 부탁하기: 시스템 콜 기초
+   - 2B. [[lessons/02b-tcp-connections]] — TCP 연결이 맺어지고 끊어지는 과정
 3. [[lessons/03-http-basics]] — HTTP라는 약속
+   - 3A. [[lessons/03a-urls-and-http-details]] — URL과 HTTP를 조금 더 자세히
 4. [[lessons/04-poll]] — 기다리지 않는 서버와 poll
+   - 4A. [[lessons/04a-cpp98-basics]] — 이 코드를 읽기 위한 C++98 기초
 5. [[lessons/05-startup]] — 서버가 켜질 때
 6. [[lessons/06-config-parsing]] — 설정 파일 읽기
 7. [[lessons/07-event-loop]] — 이벤트 루프
@@ -48,6 +52,6 @@ webserv(C++98 HTTP 서버)가 무엇을, 왜, 어떻게 하는지 처음부터 �
 15. [[lessons/15-defense-qa]] — 평가 예상 질문
 16. [[lessons/16-glossary]] — 용어 사전
 
-추천: 1장 → 2·3·4장(기초) → 5장부터 코드 순서대로. 평가 직전에는 15장만 다시 본다.
+추천: 1장 → 2·3·4장(기초) → 5장부터 코드 순서대로. 2A·2B·3A·4A는 기초를 더 채우는 보충 장이다(2026-10-29 추가, 코드 기준 커밋 `4db9510`). 그 장의 개념이 처음이면 본 장 다음에 읽는다. 평가 직전에는 15장만 다시 본다.
 
 더 깊이: [[analysis/design]](클래스 설계), [[analysis/design-decisions]](사용자 결정), [[analysis/test-plan]](요구사항별 테스트), [[analysis/mock-evaluation]](모의 평가), 그리고 각 concept 페이지.

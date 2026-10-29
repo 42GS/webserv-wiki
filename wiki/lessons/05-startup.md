@@ -2,12 +2,12 @@
 title: "레슨 5: 서버가 켜질 때"
 type: lesson
 sources: [raw/subject.md, raw/design-checks-observed.md]
-updated: 2026-10-25
+updated: 2026-10-29
 ---
 
 # 레슨 5: 서버가 켜질 때
 
-이전: [[lessons/04-poll]] · 다음: [[lessons/06-config-parsing]]
+이전: [[lessons/04a-cpp98-basics]] · 다음: [[lessons/06-config-parsing]]
 
 > [!example] 쉬운 예
 > 가게 문을 열기 전 순서: 운영 규칙표를 읽고(설정), 벽시계를 맞추고(시계), "불나면 정리하고 나가자" 약속을 정하고(시그널), 문을 열고(listen), 손님을 맞기 시작한다(이벤트 루프).

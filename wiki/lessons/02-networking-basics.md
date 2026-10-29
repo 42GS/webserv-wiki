@@ -2,12 +2,12 @@
 title: "레슨 2: 컴퓨터끼리 말하는 법"
 type: lesson
 sources: [raw/posix-recv.md]
-updated: 2026-10-25
+updated: 2026-10-29
 ---
 
 # 레슨 2: 컴퓨터끼리 말하는 법
 
-이전: [[lessons/01-request-journey]] · 다음: [[lessons/03-http-basics]]
+이전: [[lessons/01-request-journey]] · 다음: [[lessons/02a-unix-system-calls]]
 
 ## 2.1 프로세스
 

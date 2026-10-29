@@ -2,12 +2,12 @@
 title: "레슨 3: HTTP라는 약속"
 type: lesson
 sources: [raw/subject.md, raw/rfc9112.txt, raw/rfc9110.txt, raw/evaluation-sheet-en.md]
-updated: 2026-10-27
+updated: 2026-10-29
 ---
 
 # 레슨 3: HTTP라는 약속
 
-이전: [[lessons/02-networking-basics]] · 다음: [[lessons/04-poll]]
+이전: [[lessons/02b-tcp-connections]] · 다음: [[lessons/03a-urls-and-http-details]]
 
 > [!example] 쉬운 예
 > 식당 주문서를 생각하자. 맨 윗줄에 "무엇을, 어느 메뉴로, 어떤 양식으로" 쓰고, 그 아래 "포장해 주세요", "맵지 않게" 같은 메모를 줄마다 쓴다. 빈 줄을 하나 남기고 그 밑에 첨부물을 붙인다. 식당은 같은 모양의 영수증을 돌려준다. HTTP가 바로 이런 주문서와 영수증 양식이다.

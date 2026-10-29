@@ -2,12 +2,12 @@
 title: "레슨 4: 기다리지 않는 서버와 poll"
 type: lesson
 sources: [raw/subject.md, raw/evaluation-sheet-en.md, raw/posix-poll.md]
-updated: 2026-10-25
+updated: 2026-10-29
 ---
 
 # 레슨 4: 기다리지 않는 서버와 poll
 
-이전: [[lessons/03-http-basics]] · 다음: [[lessons/05-startup]]
+이전: [[lessons/03a-urls-and-http-details]] · 다음: [[lessons/04a-cpp98-basics]]
 
 > [!example] 쉬운 예
 > 선생님 한 명이 학생 30명의 질문을 받는다고 하자.

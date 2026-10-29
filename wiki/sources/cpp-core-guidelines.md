@@ -2,7 +2,7 @@
 title: C++ Core Guidelines
 type: source
 sources: [raw/cpp-core-guidelines.md]
-updated: 2026-10-17
+updated: 2026-10-29
 ---
 
 # C++ Core Guidelines
@@ -18,8 +18,15 @@ C++ 코드 작성 지침이다. webserv에서는 [[analysis/design]] 1절의 "�
 |---|---|---|
 | SF.21 (19758) | 헤더에 이름 없는 namespace를 쓰지 않는다 | [[analysis/design]] 1절 |
 | SF.22 (19791) | 내보내지 않는 것은 모두 이름 없는 namespace에 둔다 | [[analysis/design]] 1절 |
+| I.25 (2166) | 데이터 없는 추상 클래스를 인터페이스로 | [[lessons/04a-cpp98-basics]] 4A.5 |
+| F.16 (2996) | 읽기 인자는 싼 타입은 값, 나머지는 `const` 참조 | [[lessons/04a-cpp98-basics]] 4A.2 |
+| C.35 (5368) | 기반 클래스 소멸자는 public virtual 또는 protected non-virtual | [[lessons/04a-cpp98-basics]] 4A.5 |
+| C.67 (6592) | 다형 클래스의 복사는 막는다 (slicing) | [[lessons/04a-cpp98-basics]] 4A.4 |
+| R.1 (9464) | 자원은 RAII로 관리 | [[lessons/04a-cpp98-basics]] 4A.3 |
+| R.11 (9785) | `new`·`delete`를 직접 부르지 않는다 (결과는 소유자에게) | [[lessons/04a-cpp98-basics]] 4A.6 |
+| Con.2 (16982) | 상태를 바꾸지 않는 멤버 함수는 `const` | [[lessons/04a-cpp98-basics]] 4A.2 |
 
-다루지 않는 절: 나머지 전부. 2026-10-17에 위 두 절만 읽었다.
+다루지 않는 절: 나머지 전부. 2026-10-17에 SF.21·SF.22를, 2026-10-29에 위 일곱 절의 제목과 Reason(F.16은 첫 예제까지)만 읽었다. 이 문서는 C++11 이후를 기준으로 해서 예제에 C++98에 없는 문법이 나온다. 레슨은 규칙의 이유만 인용한다.
 
 ## 핵심
 
