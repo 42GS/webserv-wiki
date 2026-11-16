@@ -728,3 +728,9 @@
 ## [2026-10-29] query | 평가 PC 도구 상황과 sudo 없이 siege 쓰기
 - 갱신: [[sources/ubuntu2204-observed-tools]] (평가 PC 사용자 보고), [[concepts/testing]] ("sudo 없이 siege 쓰기" 절)
 - 메모: 사용자 보고: 평가 PC에 siege가 없고 sudo가 없다. `php-cgi -v`가 동작하고 `/usr/bin/php-cgi`에 있다. 질문("스크립트를 직접 작성할지, docker image로 대체할지")에는 siege `.deb`를 `apt-get download`로 받아 `dpkg -x`로 홈에 푸는 방법을 권했다. 깨끗한 `ubuntu:22.04` 컨테이너의 일반 사용자로 시험해 siege 4.0.7이 동작함을 확인했다. 함께 든 `siege.config`는 `~/.siege`를 만들지 않아 실패해서 `etc/siege/siegerc`를 복사한다. 평가 PC에서 `apt-get download`가 되는지, Docker를 sudo 없이 쓸 수 있는지는 **미확인**.
+
+
+## [2026-11-16] schema | 포트폴리오용 README·라이선스·릴리스 보완
+- 생성: `README.md` (국문 기본), `README.en.md` (영문), `LICENSE` (MIT + `raw/` 외부 원문 라이선스 고지)
+- 포함: `AGENTS.md` (기존 `CLAUDE.md` 심볼릭 링크 추적)
+- 메모: 포트폴리오 공개용으로 저장소 루트 문서와 마일스톤 태그(`v0.1.0`~`v0.5.0`, `v1.0.0`) 및 GitHub Release를 정비했다. 로컬 Obsidian UI 상태 diff(`.obsidian/appearance.json`)는 복원해 제외했다.
