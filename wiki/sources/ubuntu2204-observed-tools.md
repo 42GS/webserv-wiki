@@ -49,7 +49,7 @@ updated: 2026-10-29
 
 | 파일 | 차이 | 위키 내용에 주는 영향 | 근거 |
 |---|---|---|---|
-| `src/sock.c` | 이름 해석 부분(97~236줄)의 조건부 컴파일 매크로, 오류 메시지, 주석 오타뿐. 줄 수가 같다 | 없음. [[sources/siege-sock]]이 인용한 범위 중 다른 줄은 `new_socket` 안의 236줄(`#if` 조건 매크로) 하나다. 그 뒤의 준비 검사·timeout·`socket_read` 부분은 diff에 나오지 않는다 | raw/ubuntu2204-observed-tools.md:246-275 |
+| `src/sock.c` | 이름 해석 부분(97~236줄)의 조건부 컴파일 매크로, 오류 메시지, 주석 오타뿐. 줄 수가 같다 | 없음. [[sources/siege-sock]]이 인용한 범위 중 다른 줄은 `new_socket` 안의 236줄(`#if` 조건 매크로) 하나다. 그 뒤의 준비 검사·timeout·`socket_read` 부분은 diff에 나오지 않는다 | raw/ubuntu2204-observed-tools.md:246-274 |
 | `doc/siegerc.in` | `json_output` 기본값(4.0.7은 `true`, master는 `false`), `auth-url` 설명 추가, 오타 | [[sources/siegerc]]가 다룬 설정(connection, protocol, timeout, failures, concurrent, limit, delay, benchmark, cache)은 차이 없음 | raw/ubuntu2204-observed-tools.md:219-244 |
 | `doc/siege.pod` | urls.txt 변수 설명 추가, 오타, 예시 수치 | 없음 | raw/ubuntu2204-observed-tools.md:201-217 |
 

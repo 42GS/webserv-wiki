@@ -734,3 +734,12 @@
 - 생성: `README.md` (국문 기본), `README.en.md` (영문), `LICENSE` (MIT + `raw/` 외부 원문 라이선스 고지)
 - 포함: `AGENTS.md` (기존 `CLAUDE.md` 심볼릭 링크 추적)
 - 메모: 포트폴리오 공개용으로 저장소 루트 문서와 마일스톤 태그(`v0.1.0`~`v0.5.0`, `v1.0.0`) 및 GitHub Release를 정비했다. 로컬 Obsidian UI 상태 diff(`.obsidian/appearance.json`)는 복원해 제외했다.
+
+## [2026-11-17] lint | 전체 점검 (4회차, 학습 노트·포트폴리오 보완 뒤)
+- 범위: 3회차 점검(`acc3ab8`, 2026-10-25) 이후 추가·변경된 문서(새 `sources/` 13편, `sources/cpp-core-guidelines`·`ubuntu2204-observed-tools`, `concepts/configuration-syntax`·`cgi`·`testing`, `analysis/design`·`design-decisions`·`test-plan`·`mock-evaluation`, `lessons/` 21편)와 전체 111편 구조·미확인·기능별 공백. 인용과 원문은 직접 열어 대조했고, 검색은 위치 찾기(목록 추출)에만 썼다.
+- 수정:
+  - [[sources/ubuntu2204-observed-tools]]: `raw/ubuntu2204-observed-tools.md:246-275`의 빈 끝 줄(275)을 `246-274`로 정정.
+  - [[index]]: `[[analysis/design-decisions]]` 요약의 "18건"을 "19건"으로 고치고 결정 19(`운영 로그는 일반 파일 두 개`) 추가.
+  - [[overview]]: 근거 소스에 2026-10-29 추가분 13편([[sources/rfc9293]], `posix-socket`~`posix-dup`)과 [[concepts/configuration-syntax]] 링크 추가.
+  - [[lessons/14-resilience]]: 14.3 점검 표의 단위 102·통합 118 행에 시점(모의 평가 뒤 → 로그 뒤 `105·124`)을 명시해 기준 혼동을 없앰.
+- 구조·미확인·공백: 111편 중 깨진 위키링크(백틱 안 패턴 예시 `log.md:721` 제외)·고아 페이지·frontmatter `sources` 누락·표 칸 수 불일치 0건. 남은 `**미확인**`은 평가 PC 실제 상태·허용 함수 해석·미측정 항목뿐이며 `analysis/subject-vs-evaluation` 6절 및 `overview` "열린 질문"과 일치한다. 과제 필수·보너스 기능별 공백 없음.
